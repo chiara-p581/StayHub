@@ -1,0 +1,10 @@
+package com.stayhub.reservas.exception;
+
+public enum CodigoErrorReserva {
+    SOLICITUD_INVALIDA,
+    RESERVA_NO_ENCONTRADA,
+    RESERVA_DUPLICADA,
+    SIN_DISPONIBILIDAD,
+    DEPENDENCIA_NO_DISPONIBLE,
+    TRANSICION_DE_ESTADO_INVALIDA
+}
