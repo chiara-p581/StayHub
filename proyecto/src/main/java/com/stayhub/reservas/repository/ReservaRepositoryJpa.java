@@ -20,7 +20,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class ReservaRepositoryJpa implements ReservaRepository {
 
-    @PersistenceContext(unitName = "stayhubPU")
+    @PersistenceContext(unitName = "StayHubPU")
     private EntityManager em;
 
     @Override
