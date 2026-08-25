@@ -7,6 +7,7 @@ import com.stayhub.notificaciones.dto.TipoEvento;
 import com.stayhub.servicioDeOverbooking.contrato.ServicioDeOverbooking;
 import com.stayhub.servicioDeOverbooking.contrato.interno.ServicioDeInventarioYTarifasPort;
 import com.stayhub.servicioDeOverbooking.dto.ConflictoReservaDTO;
+import com.stayhub.servicioDeOverbooking.dto.DisponibilidadDTO;
 import com.stayhub.servicioDeOverbooking.dto.ResultadoResolucionOverbookingDTO;
 import com.stayhub.servicioDeOverbooking.exception.CodigoErrorOverbooking;
 import com.stayhub.servicioDeOverbooking.exception.OverbookingException;
@@ -16,6 +17,8 @@ import com.stayhub.servicioDeOverbooking.repository.ConflictoOverbookingReposito
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import java.util.List;
+import java.util.Optional;
 
 @Stateless
 public class ServicioDeOverbookingImpl implements ServicioDeOverbooking {
@@ -29,17 +32,34 @@ public class ServicioDeOverbookingImpl implements ServicioDeOverbooking {
         validar(dto);
 
         ConflictoOverbooking conflicto = OverbookingMapper.nuevo(dto);
-
-        // TODO: cuando ServicioDeInventarioYTarifas esté disponible, usar
-        // inventario() para buscar una habitación/hotel alternativo real
-        // en lugar de asumir REUBICACION por defecto.
-        conflicto.resolver(EstrategiaResolucion.REUBICACION, null,
-                "Conflicto resuelto por reubicación (lógica preliminar, pendiente de integración con Inventario y Tarifas)");
+        resolver(conflicto);
 
         repositorio.guardar(conflicto);
         notificarSiDisponible(conflicto);
 
         return OverbookingMapper.aResultado(conflicto);
+    }
+
+    /**
+     * Busca en ServicioDeInventarioYTarifas un tipo de habitación distinto
+     * del conflictivo con cupo en el mismo hotel y período; si lo encuentra,
+     * reubica, si no, ofrece compensación.
+     */
+    private void resolver(ConflictoOverbooking conflicto) {
+        List<DisponibilidadDTO> disponibilidad = inventario().consultarDisponibilidad(
+                conflicto.getHotelId(), conflicto.getCheckIn(), conflicto.getCheckOut());
+
+        Optional<DisponibilidadDTO> alternativa = disponibilidad.stream()
+                .filter(d -> !d.tipoHabitacion().equals(conflicto.getTipoHabitacion()) && d.unidadesDisponibles() > 0)
+                .findFirst();
+
+        if (alternativa.isPresent()) {
+            conflicto.resolver(EstrategiaResolucion.REUBICACION, null,
+                    "Reubicado a tipoHabitacion=" + alternativa.get().tipoHabitacion());
+        } else {
+            conflicto.resolver(EstrategiaResolucion.COMPENSACION, null,
+                    "Sin disponibilidad alternativa en el hotel para el período: se ofrece compensación");
+        }
     }
 
     private ServicioDeInventarioYTarifasPort inventario() {
