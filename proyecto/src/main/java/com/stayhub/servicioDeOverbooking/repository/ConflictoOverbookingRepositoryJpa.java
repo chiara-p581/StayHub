@@ -9,7 +9,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class ConflictoOverbookingRepositoryJpa implements ConflictoOverbookingRepository {
 
-    @PersistenceContext(unitName = "stayhubPU")
+    @PersistenceContext(unitName = "StayHubPU")
     private EntityManager em;
 
     @Override
