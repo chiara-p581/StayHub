@@ -31,18 +31,30 @@ public class InventarioResource {
 
     @GET
     @Path("/disponibilidad")
-    public List<DisponibilidadDTO> disponibilidad(@QueryParam("hotelId") Long hotelId,
-                                                    @QueryParam("desde") LocalDate desde,
-                                                    @QueryParam("hasta") LocalDate hasta) {
-        return servicio.consultarDisponibilidad(hotelId, desde, hasta);
+    public List<DisponibilidadDTO> disponibilidad(
+            @QueryParam("hotelId") Long hotelId,
+            @QueryParam("desde") String desde,
+            @QueryParam("hasta") String hasta) {
+
+        return servicio.consultarDisponibilidad(
+                hotelId,
+                LocalDate.parse(desde),
+                LocalDate.parse(hasta)
+        );
     }
 
     @GET
     @Path("/tarifas")
-    public List<TarifaDTO> tarifas(@QueryParam("hotelId") Long hotelId,
-                                    @QueryParam("desde") LocalDate desde,
-                                    @QueryParam("hasta") LocalDate hasta) {
-        return servicio.consultarTarifas(hotelId, desde, hasta);
+    public List<TarifaDTO> tarifas(
+            @QueryParam("hotelId") Long hotelId,
+            @QueryParam("desde") String desde,
+            @QueryParam("hasta") String hasta) {
+
+        return servicio.consultarTarifas(
+                hotelId,
+                LocalDate.parse(desde),
+                LocalDate.parse(hasta)
+        );
     }
 
     @POST
