@@ -1,1 +1,2 @@
-/.m2/
+.DS_Store
+proyecto/target/
