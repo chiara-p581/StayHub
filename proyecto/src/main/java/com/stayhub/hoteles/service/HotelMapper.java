@@ -4,6 +4,10 @@ import com.stayhub.hoteles.dto.*;
 import com.stayhub.hoteles.model.*;
 import java.util.List;
 
+/**
+ * Data Mapper del componente: traduce entidades del dominio a DTOs de salida sin exponer el
+ * modelo persistente a la capa de presentación ni a otros componentes.
+ */
 final class HotelMapper {
     private HotelMapper() { }
     static HotelResponse hotel(Hotel h, List<TipoHabitacion> tipos, List<Habitacion> habitaciones) {

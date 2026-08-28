@@ -11,6 +11,13 @@ import java.util.*;
 
 import static com.stayhub.hoteles.exception.CodigoErrorHotel.*;
 
+/**
+ * Implementación stateless de la Facade de ServicioDeHoteles.
+ *
+ * <p>Cada operación recibe todos los datos que necesita y conserva el estado de negocio en
+ * PostgreSQL mediante el DAO. Por eso no existe estado conversacional asociado a una instancia
+ * del componente y WildFly puede administrar libremente el pool de EJBs.</p>
+ */
 @Stateless
 public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotelesPort {
     private static final int MAX_NOMBRE_HOTEL = 120;

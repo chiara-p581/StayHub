@@ -4,6 +4,11 @@ import com.stayhub.hoteles.model.*;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Abstracción DAO/Repository de la capa de datos de ServicioDeHoteles.
+ *
+ * <p>La capa de negocio depende de este contrato y no de JPA, Hibernate o PostgreSQL.</p>
+ */
 public interface HotelRepository {
     Hotel guardar(Hotel hotel);
     TipoHabitacion guardar(TipoHabitacion tipo);

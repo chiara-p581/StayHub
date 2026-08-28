@@ -21,6 +21,55 @@ activas.
 Este componente no calcula disponibilidad por fecha, cupos, tarifas, reservas ni overbooking. Esas
 responsabilidades pertenecen a los demás componentes de StayHub.
 
+## Arquitectura en capas
+
+| Capa | Paquetes y clases principales | Responsabilidad |
+| --- | --- | --- |
+| Presentación | `api/HotelResource`, `HotelExceptionMapper` | Adaptar HTTP/JSON y códigos de estado |
+| Negocio | `service/ServicioDeHotelesImpl`, `ServicioDeHoteles`, `contrato/ServicioDeHotelesPort` | Casos de uso, reglas y validaciones |
+| Datos | `repository/HotelRepository`, `HotelRepositoryJpa`, `model/*` | Persistencia JPA y modelo del dominio |
+
+```mermaid
+flowchart LR
+    Cliente[Postman u otro cliente] --> Resource[HotelResource - Presentación]
+    Resource --> Facade[ServicioDeHoteles - Facade]
+    Otros[Reservas / Inventario] --> Port[ServicioDeHotelesPort]
+    Facade --> Impl[ServicioDeHotelesImpl - Negocio]
+    Port --> Impl
+    Impl --> Mapper[HotelMapper - Data Mapper]
+    Impl --> DAO[HotelRepository - DAO]
+    DAO --> JPA[HotelRepositoryJpa]
+    JPA --> DB[(PostgreSQL)]
+```
+
+Las dependencias avanzan hacia contratos: la presentación conoce la Facade, el negocio conoce el
+DAO y solamente la implementación JPA conoce `EntityManager` y PostgreSQL.
+
+## Patrones aplicados
+
+### Facade
+
+`ServicioDeHoteles` ofrece una entrada única y de alto nivel para administrar hoteles, tipos y
+habitaciones. `HotelResource` delega en esa interfaz y no coordina repositorios ni entidades. El
+mismo componente implementa `ServicioDeHotelesPort`, una vista de lectura acotada para otros
+componentes.
+
+### DAO / Repository
+
+`HotelRepository` define las operaciones de persistencia que necesita el negocio y
+`HotelRepositoryJpa` las resuelve con JPA. Esto evita acoplar las reglas de negocio a Hibernate,
+PostgreSQL o consultas JPQL concretas y permite sustituir la implementación en pruebas.
+
+### Data Mapper
+
+`HotelMapper` transforma `Hotel`, `TipoHabitacion` y `Habitacion` en DTOs de respuesta. Así las
+entidades JPA, sus relaciones lazy y sus detalles internos no se filtran hacia REST ni hacia otros
+componentes.
+
+No se incorporó Factory o Strategy de manera artificial: actualmente no existen familias de objetos
+ni algoritmos intercambiables que justifiquen esos patrones. Para el requisito global de tres patrones
+del TP, el equipo también cuenta con Adapter en los componentes de integración externa.
+
 ## API REST
 
 Con el WAR `StayHub.war`, la URL base predeterminada es:

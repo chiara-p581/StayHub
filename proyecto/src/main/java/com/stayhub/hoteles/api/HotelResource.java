@@ -8,6 +8,10 @@ import jakarta.ws.rs.core.*;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Capa de presentación REST de ServicioDeHoteles. Solo adapta HTTP a llamadas de la Facade y no
+ * contiene reglas de negocio ni acceso directo a datos.
+ */
 @Path("/hoteles")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

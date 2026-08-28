@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+/** Implementación del patrón DAO/Repository mediante Jakarta Persistence. */
 @ApplicationScoped
 public class HotelRepositoryJpa implements HotelRepository {
     @PersistenceContext(unitName = "StayHubPU")

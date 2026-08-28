@@ -3,6 +3,12 @@ package com.stayhub.hoteles.service;
 import com.stayhub.hoteles.dto.*;
 import java.util.List;
 
+/**
+ * Facade pública del componente ServicioDeHoteles.
+ *
+ * <p>Concentra los casos de uso administrativos y de consulta para que la capa REST no dependa
+ * de entidades JPA ni de detalles de persistencia. Las operaciones reciben y devuelven DTOs.</p>
+ */
 public interface ServicioDeHoteles {
     HotelResponse crearHotel(HotelRequest solicitud);
     HotelResponse modificarHotel(Long id, HotelRequest solicitud);
