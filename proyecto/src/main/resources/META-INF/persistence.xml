@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
                                  https://jakarta.ee/xml/ns/persistence/persistence_3_1.xsd"
              version="3.1">
 
-    <persistence-unit name="stayhubPU" transaction-type="JTA">
-        <jta-data-source>java:jboss/datasources/ExampleDS</jta-data-source>
+    <persistence-unit name="StayHubPU" transaction-type="JTA">
 
-        <!-- Base H2 incluida en WildFly, adecuada para pruebas locales. -->
+        <jta-data-source>java:/PostgresDS</jta-data-source>
+
         <properties>
-            <property name="jakarta.persistence.schema-generation.database.action"
-                      value="drop-and-create"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
         </properties>
+
     </persistence-unit>
+
 </persistence>

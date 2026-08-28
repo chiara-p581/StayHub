@@ -12,15 +12,14 @@ import java.util.Optional;
  * Implementación JPA del DAO. @ApplicationScoped (bean CDI) para que se
  * pueda inyectar con @Inject en el EJB de servicio.
  *
- * Nota: el nombre de la unidad de persistencia ("stayhubPU") es un
- * placeholder — hay que alinearlo con el persistence.xml real que defina el
- * equipo (probablemente compartido entre todos los componentes, ya que es
- * un único WAR).
+ * La unidad de persistencia "StayHubPU" es la que quedó definida en
+ * proyecto/src/main/resources/META-INF/persistence.xml (compartida por
+ * todos los componentes, ya que es un único WAR sobre PostgreSQL).
  */
 @ApplicationScoped
 public class ReservaRepositoryJpa implements ReservaRepository {
 
-    @PersistenceContext(unitName = "stayhubPU")
+    @PersistenceContext(unitName = "StayHubPU")
     private EntityManager em;
 
     @Override

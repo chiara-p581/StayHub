@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @ApplicationScoped
 public class HotelRepositoryJpa implements HotelRepository {
-    @PersistenceContext(unitName = "stayhubPU")
+    @PersistenceContext(unitName = "StayHubPU")
     private EntityManager em;
 
     @Override public Hotel guardar(Hotel hotel) { return persistirOMezclar(hotel, hotel.getId()); }
