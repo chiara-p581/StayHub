@@ -4,6 +4,7 @@ import com.stayhub.hoteles.model.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -31,13 +32,13 @@ public class HotelRepositoryJpa implements HotelRepository {
     @Override
     public Optional<TipoHabitacion> buscarTipoPorCodigo(Long hotelId, String codigo) {
         return unico("SELECT t FROM TipoHabitacion t WHERE t.hotel.id=:hotelId AND UPPER(t.codigo)=:codigo",
-                TipoHabitacion.class, hotelId, codigo.toUpperCase());
+                TipoHabitacion.class, hotelId, codigo.toUpperCase(Locale.ROOT));
     }
 
     @Override
     public Optional<Habitacion> buscarHabitacionPorNumero(Long hotelId, String numero) {
         return unico("SELECT h FROM Habitacion h WHERE h.hotel.id=:hotelId AND UPPER(h.numero)=:codigo",
-                Habitacion.class, hotelId, numero.toUpperCase());
+                Habitacion.class, hotelId, numero.toUpperCase(Locale.ROOT));
     }
 
     private <T> Optional<T> unico(String jpql, Class<T> tipo, Long hotelId, String codigo) {
