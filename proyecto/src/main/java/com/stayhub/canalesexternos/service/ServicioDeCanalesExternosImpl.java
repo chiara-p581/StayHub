@@ -1,11 +1,10 @@
 package com.stayhub.canalesexternos.service;
 
-import com.stayhub.canalesexternos.client.ota.OtaRestClient;
-import com.stayhub.canalesexternos.client.pms.*;
 import com.stayhub.canalesexternos.contrato.ServicioDeCanalesExternos;
 import com.stayhub.canalesexternos.contrato.interno.*;
 import com.stayhub.canalesexternos.dto.*;
 import com.stayhub.canalesexternos.exception.*;
+import com.stayhub.canalesexternos.messaging.PublicadorSincronizacion;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -16,8 +15,7 @@ import java.util.List;
 public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos {
     @Inject Instance<ServicioDeReservasPort> reservas;
     @Inject Instance<ServicioDeInventarioYTarifasPort> inventarioYTarifas;
-    @Inject OtaRestClient otaClient;
-    @Inject PmsLegacyClient pmsClient;
+    @Inject PublicadorSincronizacion publicadorSincronizacion;
 
     @Override
     public List<DisponibilidadDTO> consultarDisponibilidad(Long hotelId, LocalDate desde, LocalDate hasta) {
@@ -50,26 +48,15 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     public ResultadoSincronizacionDTO sincronizarOta(Long hotelId, Canal canal, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
         if (canal == null) invalida("El canal es obligatorio");
-        var dependencia = inventario();
-        List<DisponibilidadDTO> disponibilidad = dependencia.consultarDisponibilidad(hotelId, desde, hasta);
-        List<TarifaDTO> tarifas = dependencia.consultarTarifas(hotelId, desde, hasta);
-        otaClient.publicarDisponibilidad(canal, disponibilidad);
-        otaClient.publicarTarifas(canal, tarifas);
-        return ResultadoSincronizacionDTO.exitoso(canal.name(), "Disponibilidad y tarifas sincronizadas",
-                disponibilidad.size() + tarifas.size());
+        publicadorSincronizacion.publicarOta(hotelId, canal, desde, hasta);
+        return ResultadoSincronizacionDTO.encolado(canal.name());
     }
 
     @Override
     public ResultadoSincronizacionDTO sincronizarPms(Long hotelId, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
-        var dependencia = inventario();
-        List<DisponibilidadDTO> disponibilidad = dependencia.consultarDisponibilidad(hotelId, desde, hasta);
-        List<TarifaDTO> tarifas = dependencia.consultarTarifas(hotelId, desde, hasta);
-        RespuestaPms respuesta = pmsClient.sincronizar(hotelId, disponibilidad, tarifas);
-        if (!respuesta.exitoso) throw new CanalExternoException(CodigoErrorCanal.ERROR_COMUNICACION_PMS,
-                respuesta.mensaje == null ? "El PMS rechazó la sincronización" : respuesta.mensaje);
-        return ResultadoSincronizacionDTO.exitoso("PMS", respuesta.mensaje,
-                disponibilidad.size() + tarifas.size());
+        publicadorSincronizacion.publicarPms(hotelId, desde, hasta);
+        return ResultadoSincronizacionDTO.encolado("PMS");
     }
 
     private ServicioDeReservasPort reservas() {
