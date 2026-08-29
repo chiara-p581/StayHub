@@ -4,6 +4,12 @@ Componente de integración de StayHub. Expone webhooks/endpoints REST para OTAs,
 inventario y tarifas mediante JAX-RS Client y sincroniza un PMS legado mediante JAX-WS/SOAP.
 No calcula disponibilidad, tarifas ni reglas de reservas.
 
+Las solicitudes de sincronización se publican en una cola JMS y se procesan de forma
+asincrónica mediante un Message-Driven Bean. La respuesta confirma que la solicitud fue
+encolada, no que el sistema externo ya haya recibido los datos. Si el procesamiento falla,
+la transacción del consumidor se revierte para que el proveedor JMS pueda aplicar su política
+de reentrega.
+
 ## Contratos internos
 
 - `ServicioDeReservasPort`: crear, modificar y cancelar una reserva originada en un canal.
