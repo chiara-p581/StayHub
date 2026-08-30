@@ -4,16 +4,16 @@ Plataforma de reservas de hotel desarrollada como Trabajo Práctico de **Desarro
 
 ## Componentes y responsables
 
-| Componente | Responsabilidad | Responsable |
-| --- | --- | --- |
-| `ServicioDeHoteles` | Alta, baja, modificación y consulta de hoteles, tipos de habitación y habitaciones | Agostina |
-| `ServicioDeInventarioYTarifas` | Disponibilidad, holds de reserva y tarifas por hotel/tipo/período | Sabrina |
-| `ServicioDeReservas` | Ciclo de vida de una reserva (crear, confirmar, modificar, cancelar) | Magui |
-| `ServicioDeCanalesExternos` | Integración con OTAs (Booking, Expedia, Airbnb, Despegar) vía REST y con el PMS legado vía SOAP | Chiara |
-| `ServicioDePagos` | Procesamiento de pagos asociados a una reserva | Matilda |
-| `ServicioDeOverbooking` | Resolución asincrónica de conflictos de sobreventa | Delfina |
-| `ServicioDeNotificaciones` | Envío de notificaciones (email/SMS/push) | Delfina |
-| `ServicioDeUsuarios` | Gestión de usuarios con dos roles: **Huésped** y **Administrador** | Matilda |
+| Componente | Responsabilidad |
+| --- | --- |
+| `ServicioDeHoteles` | Alta, baja, modificación y consulta de hoteles, tipos de habitación y habitaciones |
+| `ServicioDeInventarioYTarifas` | Disponibilidad, holds de reserva y tarifas por hotel/tipo/período |
+| `ServicioDeReservas` | Ciclo de vida de una reserva (crear, confirmar, modificar, cancelar) |
+| `ServicioDeCanalesExternos` | Integración con OTAs (Booking, Expedia, Airbnb, Despegar) vía REST y con el PMS legado vía SOAP |
+| `ServicioDePagos` | Procesamiento de pagos asociados a una reserva |
+| `ServicioDeOverbooking` | Resolución asincrónica de conflictos de sobreventa |
+| `ServicioDeNotificaciones` | Envío de notificaciones (email/SMS/push) |
+| `ServicioDeUsuarios` | Gestión de usuarios con dos roles: **Huésped** y **Administrador** |
 
 Son 7 componentes de EJB (mínimo exigido por la cátedra: 6) más el componente de usuarios.
 
@@ -80,13 +80,11 @@ Las colecciones para probar cada componente están en [`postman/`](postman/), ju
 
 ## Documentación técnica
 
-En [`docs/`](docs/) se encuentra la documentación de arquitectura por componente (entregas parciales) y las auditorías técnicas realizadas sobre el proyecto (ver [`docs/auditorias/`](docs/auditorias/)).
+En [`docs/`](docs/) se encuentra la documentación de arquitectura por componente.
 
 ## Enlaces y recursos del proyecto
 
-- [Consigna del TP](https://docs.google.com/document/d/1ayBCj8IYczsX330MOjszmPCZdyv3srn9vVeUWR9JhRo/edit?usp=sharing)
-- [Documento de definición de componentes](https://docs.google.com/document/d/1OHKajV9d0QYh7teHyW9VJay1nTK1IWuUwMmoXS4Tee4/edit?usp=sharing)
-- [Documento entregado — Entrega Parcial N.º 1](https://docs.google.com/document/d/1hc6s02mDkNvDzavMGNb4RZ-cR2EbvUFKLdLUXj0c6zs/edit?usp=sharing)
+- [Documentación del proyecto](https://docs.google.com/document/d/1OHKajV9d0QYh7teHyW9VJay1nTK1IWuUwMmoXS4Tee4/edit?usp=sharing)
 - [Diagrama de arquitectura y de secuencia (draw.io)](https://app.diagrams.net/#G1Y206m_Rv1K3_qSDoBOPVlus0hMbEFMl_#%7B%22pageId%22%3A%22LHUSm1YBXf8T-E9KNyiL%22%7D)
 - [Bocetos de frontend (Stitch)](https://stitch.withgoogle.com/projects/17811897327251791753)
-- [Tablero de Jira](https://agostinabernard.atlassian.net/)
+- [Tablero de Jira](https://agostinabernard.atlassian.net/jira/software/projects/KAN/boards/2?filter=&groupBy=none)
