@@ -4,6 +4,8 @@ import com.stayhub.notificaciones.contrato.ServicioDeNotificaciones;
 import com.stayhub.notificaciones.dto.CanalNotificacion;
 import com.stayhub.notificaciones.dto.SolicitudNotificacionDTO;
 import com.stayhub.notificaciones.dto.TipoEvento;
+import com.stayhub.reservas.contrato.GestionDeDisponibilidadPort;
+import com.stayhub.reservas.contrato.SinDisponibilidadException;
 import com.stayhub.servicioDeOverbooking.contrato.ServicioDeOverbooking;
 import com.stayhub.servicioDeOverbooking.contrato.interno.ServicioDeInventarioYTarifasPort;
 import com.stayhub.servicioDeOverbooking.dto.ConflictoReservaDTO;
@@ -12,7 +14,6 @@ import com.stayhub.servicioDeOverbooking.dto.ResultadoResolucionOverbookingDTO;
 import com.stayhub.servicioDeOverbooking.exception.CodigoErrorOverbooking;
 import com.stayhub.servicioDeOverbooking.exception.OverbookingException;
 import com.stayhub.servicioDeOverbooking.model.ConflictoOverbooking;
-import com.stayhub.servicioDeOverbooking.model.EstrategiaResolucion;
 import com.stayhub.servicioDeOverbooking.repository.ConflictoOverbookingRepository;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
@@ -24,7 +25,8 @@ import java.util.Optional;
 public class ServicioDeOverbookingImpl implements ServicioDeOverbooking {
 
     @Inject private ConflictoOverbookingRepository repositorio;
-    @Inject private Instance<ServicioDeInventarioYTarifasPort> inventarioYTarifas;
+    @Inject private Instance<ServicioDeInventarioYTarifasPort> inventarioLectura;
+    @Inject private Instance<GestionDeDisponibilidadPort> disponibilidad; // mismo puerto que usa Reservas
     @Inject private Instance<ServicioDeNotificaciones> notificaciones;
 
     @Override
@@ -35,44 +37,64 @@ public class ServicioDeOverbookingImpl implements ServicioDeOverbooking {
         resolver(conflicto);
 
         repositorio.guardar(conflicto);
-        notificarSiDisponible(conflicto);
+        notificarSiCorresponde(conflicto);
 
         return OverbookingMapper.aResultado(conflicto);
     }
 
     /**
-     * Busca en ServicioDeInventarioYTarifas un tipo de habitación distinto
-     * del conflictivo con cupo en el mismo hotel y período; si lo encuentra,
-     * reubica, si no, ofrece compensación.
+     * Busca un tipo de habitación distinto del conflictivo con cupo suficiente
+     * (>= cantidadHabitaciones) en el mismo hotel y período, e intenta RETENER
+     * ese cupo con un hold real antes de dar la reubicación por buena — así no
+     * queda "prometida" una habitación que otra solicitud puede tomar después.
+     * Si no hay alternativa, o si el hold falla por una carrera (alguien lo
+     * tomó primero), se cae a COMPENSACION.
      */
     private void resolver(ConflictoOverbooking conflicto) {
-        List<DisponibilidadDTO> disponibilidad = inventario().consultarDisponibilidad(
+        List<DisponibilidadDTO> candidatos = inventarioLectura().consultarDisponibilidad(
                 conflicto.getHotelId(), conflicto.getCheckIn(), conflicto.getCheckOut());
 
-        Optional<DisponibilidadDTO> alternativa = disponibilidad.stream()
-                .filter(d -> !d.tipoHabitacion().equals(conflicto.getTipoHabitacion()) && d.unidadesDisponibles() > 0)
+        Optional<DisponibilidadDTO> alternativa = candidatos.stream()
+                .filter(d -> !d.tipoHabitacion().equals(conflicto.getTipoHabitacion()))
+                .filter(d -> d.unidadesDisponibles() >= conflicto.getCantidadHabitaciones())
                 .findFirst();
 
-        if (alternativa.isPresent()) {
-            conflicto.resolver(EstrategiaResolucion.REUBICACION, null,
+        if (alternativa.isEmpty()) {
+            conflicto.resolverPorCompensacion("Sin disponibilidad alternativa en el hotel para el período: se ofrece compensación");
+            return;
+        }
+
+        try {
+            String holdId = disponibilidad().crearHold(conflicto.getHotelId(), alternativa.get().tipoHabitacion(),
+                    conflicto.getCantidadHabitaciones(), conflicto.getCheckIn(), conflicto.getCheckOut());
+            disponibilidad().confirmarHold(holdId);
+            conflicto.resolverPorReubicacion(alternativa.get().tipoHabitacion(), holdId,
                     "Reubicado a tipoHabitacion=" + alternativa.get().tipoHabitacion());
-        } else {
-            conflicto.resolver(EstrategiaResolucion.COMPENSACION, null,
-                    "Sin disponibilidad alternativa en el hotel para el período: se ofrece compensación");
+        } catch (SinDisponibilidadException ex) {
+            // otra solicitud tomó el cupo entre la consulta y el hold: fallback
+            conflicto.resolverPorCompensacion("La alternativa dejó de estar disponible al intentar retenerla: se ofrece compensación");
         }
     }
 
-    private ServicioDeInventarioYTarifasPort inventario() {
-        if (!inventarioYTarifas.isResolvable())
+    private ServicioDeInventarioYTarifasPort inventarioLectura() {
+        if (!inventarioLectura.isResolvable())
             throw new OverbookingException(CodigoErrorOverbooking.DEPENDENCIA_NO_DISPONIBLE,
                     "ServicioDeInventarioYTarifas todavía no posee una implementación disponible");
-        return inventarioYTarifas.get();
+        return inventarioLectura.get();
     }
 
-    private void notificarSiDisponible(ConflictoOverbooking conflicto) {
+    private GestionDeDisponibilidadPort disponibilidad() {
+        if (!disponibilidad.isResolvable())
+            throw new OverbookingException(CodigoErrorOverbooking.DEPENDENCIA_NO_DISPONIBLE,
+                    "ServicioDeInventarioYTarifas todavía no posee una implementación disponible");
+        return disponibilidad.get();
+    }
+
+    private void notificarSiCorresponde(ConflictoOverbooking conflicto) {
         if (!notificaciones.isResolvable()) return; // best-effort
+        if (conflicto.getHuespedEmail() == null || conflicto.getHuespedEmail().isBlank()) return; // sin email real, no mandamos nada
         SolicitudNotificacionDTO solicitud = new SolicitudNotificacionDTO(
-                conflicto.getReferenciaExterna(),
+                conflicto.getHuespedEmail(),
                 TipoEvento.RESULTADO_OVERBOOKING,
                 CanalNotificacion.EMAIL,
                 "Cambio en tu reserva",
@@ -82,8 +104,12 @@ public class ServicioDeOverbookingImpl implements ServicioDeOverbooking {
     }
 
     private void validar(ConflictoReservaDTO dto) {
-        if (dto == null || dto.reservaIdConflictiva() == null || dto.hotelId() == null)
+        if (dto == null || dto.reservaIdConflictiva() == null || dto.hotelId() == null
+                || dto.tipoHabitacion() == null || dto.tipoHabitacion().isBlank()
+                || dto.cantidadHabitaciones() < 1
+                || dto.checkIn() == null || dto.checkOut() == null || !dto.checkOut().isAfter(dto.checkIn())) {
             throw new OverbookingException(CodigoErrorOverbooking.SOLICITUD_INVALIDA,
-                    "Faltan datos obligatorios del conflicto (reservaIdConflictiva / hotelId)");
+                    "Faltan datos obligatorios o inválidos del conflicto (hotelId / tipoHabitacion / cantidadHabitaciones / checkIn-checkOut)");
+        }
     }
 }

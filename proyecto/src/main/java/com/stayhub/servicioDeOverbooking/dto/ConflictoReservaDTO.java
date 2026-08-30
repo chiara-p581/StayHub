@@ -6,7 +6,9 @@ public record ConflictoReservaDTO(
         Long reservaIdConflictiva,
         Long hotelId,
         String tipoHabitacion,
+        int cantidadHabitaciones,
         LocalDate checkIn,
         LocalDate checkOut,
         String canalOrigen,
-        String referenciaExterna) { }
+        String referenciaExterna,
+        String huespedEmail) { }

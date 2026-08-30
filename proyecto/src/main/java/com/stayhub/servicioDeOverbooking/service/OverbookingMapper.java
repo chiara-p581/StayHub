@@ -11,11 +11,13 @@ final class OverbookingMapper {
 
     static ConflictoOverbooking nuevo(ConflictoReservaDTO dto) {
         return new ConflictoOverbooking(dto.reservaIdConflictiva(), dto.hotelId(), dto.tipoHabitacion(),
-                dto.checkIn(), dto.checkOut(), dto.canalOrigen(), dto.referenciaExterna());
+                dto.cantidadHabitaciones(), dto.checkIn(), dto.checkOut(), dto.canalOrigen(),
+                dto.referenciaExterna(), dto.huespedEmail());
     }
 
     static ResultadoResolucionOverbookingDTO aResultado(ConflictoOverbooking c) {
         return new ResultadoResolucionOverbookingDTO(c.getId(), c.getReservaIdConflictiva(), c.isResuelto(),
-                c.getEstrategiaAplicada(), c.getReservaAlternativaId(), c.getMensaje(), OffsetDateTime.now());
+                c.getEstrategiaAplicada(), c.getTipoHabitacionAlternativa(), c.getHoldAlternativoId(),
+                c.getMensaje(), OffsetDateTime.now());
     }
 }
