@@ -7,6 +7,8 @@ import com.stayhub.pagos.dto.PagoRequest;
 import com.stayhub.pagos.dto.PagoResponse;
 import com.stayhub.pagos.exception.CodigoErrorPago;
 import com.stayhub.pagos.exception.PagoException;
+import com.stayhub.pagos.messaging.EventoPagoAprobado;
+import com.stayhub.pagos.messaging.PublicadorEventoPago;
 import com.stayhub.pagos.model.Pago;
 import com.stayhub.pagos.repository.PagoRepository;
 
@@ -22,6 +24,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
     @Inject
     private PasarelaDePagoClient pasarela;
 
+    @Inject
+    private PublicadorEventoPago publicadorEventos;
+
     @Override
     public PagoResponse procesarPago(PagoRequest solicitud) {
         validar(solicitud);
@@ -35,6 +40,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         if (resultado.aprobado()) {
             pago.aprobar(resultado.referenciaExterna());
             repositorio.guardar(pago);
+            publicadorEventos.publicarPagoAprobado(new EventoPagoAprobado(
+                    pago.getId(), pago.getReservaId(), pago.getMonto(), pago.getMoneda(),
+                    pago.getReferenciaPasarela(), pago.getFechaPago()));
             return PagoMapper.aResponse(pago);
         }
 
