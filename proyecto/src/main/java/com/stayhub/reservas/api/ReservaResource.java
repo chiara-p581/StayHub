@@ -6,8 +6,10 @@ import com.stayhub.reservas.service.ServicioDeReservas;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
 
@@ -27,10 +29,18 @@ public class ReservaResource {
     @Inject
     private ServicioDeReservas servicio;
 
+    @Context
+    private UriInfo uriInfo;
+
     @POST
     public Response crear(ReservaRequest solicitud) {
         ReservaResponse creada = servicio.crearReserva(solicitud);
-        return Response.created(URI.create("api/reservas/" + creada.id())).entity(creada).build();
+        // UriInfo.getAbsolutePathBuilder() ya apunta a la URL completa de este
+        // POST (con esquema, host y puerto reales); antes se armaba a mano
+        // como "api/reservas/<id>", una URL relativa que no sigue el estándar
+        // REST (el header Location debería ser una URL absoluta).
+        URI location = uriInfo.getAbsolutePathBuilder().path(String.valueOf(creada.id())).build();
+        return Response.created(location).entity(creada).build();
     }
 
     @GET

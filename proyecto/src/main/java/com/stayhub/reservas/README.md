@@ -12,10 +12,16 @@ canales externos a través de ServicioDeCanalesExternos.
 - Retener disponibilidad (hold) contra ServicioDeInventarioYTarifas antes de
   confirmar, y liberarla si la reserva se cancela o se modifica.
 - Administrar el ciclo de estados: PENDIENTE, CONFIRMADA, MODIFICADA,
-  CANCELADA, RECHAZADA.
+  CANCELADA, RECHAZADA. (Nota: en la implementación actual, MODIFICADA es un
+  estado transitorio dentro de `modificarDesdeCanal` — se reemplaza por
+  CONFIRMADA o RECHAZADA en la misma operación, antes de guardar, así que no
+  queda persistido como estado final.)
 - Evitar duplicados usando la combinación (canal, referenciaExterna) como
   clave única — importante para reservas que llegan de una OTA, que puede
-  reenviar el mismo evento más de una vez.
+  reenviar el mismo evento más de una vez. Esta combinación además tiene una
+  restricción única a nivel de base de datos (no solo en el código), y las
+  operaciones de canal externo están protegidas contra condiciones de
+  carrera (dos pedidos casi simultáneos para la misma reserva).
 
 No calcula disponibilidad ni tarifas (eso es de ServicioDeInventarioYTarifas),
 no procesa pagos (ServicioDePagos), no resuelve conflictos de overbooking
@@ -52,14 +58,14 @@ lo único que cambia es el mapeo de entrada/salida (ver `ReservaMapper`).
   (definido por ServicioDeCanalesExternos). Se registra como bean CDI/EJB
   para que WildFly lo descubra automáticamente vía
   `Instance<ServicioDeReservasPort>`.
-- **Consume** (propuesta, a confirmar con quien implemente
-  ServicioDeInventarioYTarifas) `com.stayhub.reservas.contrato.GestionDeDisponibilidadPort`,
-  con el mismo patrón de tolerancia a falta de dependencia
-  (`Instance<T>` + `isResolvable()`) que usa ServicioDeCanalesExternos:
-  mientras ServicioDeInventarioYTarifas no exista, las operaciones que
-  necesitan disponibilidad responden `503 DEPENDENCIA_NO_DISPONIBLE`.
+- **Consume** `com.stayhub.reservas.contrato.GestionDeDisponibilidadPort`, ya
+  implementado por `ServicioDeInventarioYTarifasImpl`, con el mismo patrón
+  de tolerancia a falta de dependencia (`Instance<T>` + `isResolvable()`)
+  que usa ServicioDeCanalesExternos: si ServicioDeInventarioYTarifas alguna
+  vez no estuviera disponible, las operaciones que necesitan disponibilidad
+  responden `503 DEPENDENCIA_NO_DISPONIBLE`.
 
-  > El puerto de solo lectura que ya definió Chiara
+  > El puerto de solo lectura que definió Chiara
   > (`ServicioDeInventarioYTarifasPort`, con `consultarDisponibilidad` /
   > `consultarTarifas`) está pensado para que CanalesExternos publique
   > info en las OTAs, no para pedir/soltar un hold — por eso hace falta
@@ -70,7 +76,7 @@ lo único que cambia es el mapeo de entrada/salida (ver `ReservaMapper`).
 ```
 com.stayhub.reservas
 ├── api/           # capa de presentación (JAX-RS): ReservaResource, manejo de errores
-├── contrato/       # puerto que ServicioDeReservas espera de InventarioYTarifas (propuesta)
+├── contrato/       # puerto que ServicioDeReservas espera de InventarioYTarifas
 ├── dto/            # entrada/salida del API propio (ReservaRequest, ReservaResponse)
 ├── exception/       # ReservaException + CodigoErrorReserva
 ├── model/          # entidad Reserva (JPA), Huesped (embeddable), EstadoReserva
@@ -80,11 +86,6 @@ com.stayhub.reservas
 
 ## Pendiente / a coordinar con el equipo
 
-- Confirmar con quien haga ServicioDeInventarioYTarifas el contrato real de
-  `GestionDeDisponibilidadPort` (nombres de métodos, si el hold expira solo
-  o hay que liberarlo explícitamente, etc.).
-- `persistence.xml` / nombre de la unidad de persistencia (`stayhubPU` es un
-  placeholder).
 - Cuándo y cómo se dispara ServicioDePagos al confirmar una reserva directa.
 - Cómo se deriva un conflicto de disponibilidad hacia ServicioDeOverbooking
   (async, vía JMS) en lugar de rechazar directamente.

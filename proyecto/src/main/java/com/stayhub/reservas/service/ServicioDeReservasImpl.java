@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Núcleo de ServicioDeReservas.
@@ -54,6 +55,31 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Inject
     private Instance<GestionDeDisponibilidadPort> disponibilidad;
 
+    /**
+     * Candado en memoria por combinación canal+referenciaExterna, para
+     * evitar la condición de carrera "revisar y después actuar" en
+     * crearDesdeCanal/modificarDesdeCanal/cancelarDesdeCanal: los tres
+     * primero preguntan si la reserva ya existe (o en qué estado está) y
+     * recién después actúan, con una ventana en el medio donde dos pedidos
+     * casi simultáneos para la MISMA reserva podrían pisarse (p. ej. crear
+     * dos veces la misma reserva de una OTA). Serializar por clave hace que
+     * pedidos sobre reservas DISTINTAS sigan corriendo en paralelo sin
+     * bloquearse entre sí -- solo se sincronizan los que comparten la misma
+     * combinación canal+referencia.
+     *
+     * static porque el contenedor puede crear varias instancias de este
+     * @Stateless para atender pedidos en paralelo: el mapa tiene que ser
+     * compartido por todas para que el candado sirva de algo. Esto protege
+     * un único nodo de WildFly (que es el despliegue real de este
+     * proyecto); no alcanzaría si algún día StayHub corriera en más de un
+     * servidor al mismo tiempo.
+     */
+    private static final ConcurrentHashMap<String, Object> candadosPorReferencia = new ConcurrentHashMap<>();
+
+    private Object candadoPara(String canal, String referenciaExterna) {
+        return candadosPorReferencia.computeIfAbsent(canal + "|" + referenciaExterna, k -> new Object());
+    }
+
     // ------------------------------------------------------------------
     // ServicioDeReservasPort (llamado por ServicioDeCanalesExternos)
     // ------------------------------------------------------------------
@@ -61,41 +87,61 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Override
     public ResultadoOperacionReserva crearDesdeCanal(SolicitudReserva solicitud) {
         validar(solicitud);
-        Optional<Reserva> existente = repositorio.buscarPorCanalYReferencia(
-                solicitud.canal(), solicitud.referenciaExterna());
-        if (existente.isPresent()) {
-            // La OTA reenvió el mismo evento: no duplicamos, devolvemos el estado actual.
-            return ReservaMapper.aResultadoOperacion(existente.get());
-        }
+        synchronized (candadoPara(solicitud.canal(), solicitud.referenciaExterna())) {
+            Optional<Reserva> existente = repositorio.buscarPorCanalYReferencia(
+                    solicitud.canal(), solicitud.referenciaExterna());
+            if (existente.isPresent()) {
+                // La OTA reenvió el mismo evento: no duplicamos, devolvemos el estado actual.
+                return ReservaMapper.aResultadoOperacion(existente.get());
+            }
 
-        Reserva reserva = ReservaMapper.nuevaDesdeCanal(solicitud);
-        holdYConfirmarEnUnPaso(reserva);
-        repositorio.guardar(reserva);
-        return ReservaMapper.aResultadoOperacion(reserva);
+            Reserva reserva = ReservaMapper.nuevaDesdeCanal(solicitud);
+            holdYConfirmarEnUnPaso(reserva);
+            repositorio.guardar(reserva);
+            return ReservaMapper.aResultadoOperacion(reserva);
+        }
     }
 
     @Override
     public ResultadoOperacionReserva modificarDesdeCanal(SolicitudReserva solicitud) {
         validar(solicitud);
-        Reserva reserva = repositorio.buscarPorCanalYReferencia(solicitud.canal(), solicitud.referenciaExterna())
-                .orElseThrow(() -> noEncontrada(solicitud.canal(), solicitud.referenciaExterna()));
+        synchronized (candadoPara(solicitud.canal(), solicitud.referenciaExterna())) {
+            Reserva reserva = repositorio.buscarPorCanalYReferencia(solicitud.canal(), solicitud.referenciaExterna())
+                    .orElseThrow(() -> noEncontrada(solicitud.canal(), solicitud.referenciaExterna()));
 
-        liberarHoldSiExiste(reserva);
-        reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
-                solicitud.cantidadHabitaciones(), solicitud.precioTotal());
-        holdYConfirmarEnUnPaso(reserva);
-        repositorio.guardar(reserva);
-        return ReservaMapper.aResultadoOperacion(reserva);
+            if (reserva.getEstado() == EstadoReserva.CANCELADA) {
+                // Mensaje de modificación fuera de orden sobre una reserva ya cancelada
+                // (p. ej. llegó después de un mensaje de cancelación más reciente, algo
+                // posible con entrega asincrónica): no la revivimos.
+                return ReservaMapper.aResultadoOperacion(reserva);
+            }
+
+            liberarHoldSiExiste(reserva);
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            holdYConfirmarEnUnPaso(reserva);
+            repositorio.guardar(reserva);
+            return ReservaMapper.aResultadoOperacion(reserva);
+        }
     }
 
     @Override
     public ResultadoOperacionReserva cancelarDesdeCanal(String canal, String referenciaExterna) {
-        Reserva reserva = repositorio.buscarPorCanalYReferencia(canal, referenciaExterna)
-                .orElseThrow(() -> noEncontrada(canal, referenciaExterna));
-        liberarHoldSiExiste(reserva);
-        reserva.cancelar();
-        repositorio.guardar(reserva);
-        return ReservaMapper.aResultadoOperacion(reserva);
+        synchronized (candadoPara(canal, referenciaExterna)) {
+            Reserva reserva = repositorio.buscarPorCanalYReferencia(canal, referenciaExterna)
+                    .orElseThrow(() -> noEncontrada(canal, referenciaExterna));
+
+            if (reserva.getEstado() == EstadoReserva.CANCELADA) {
+                // Cancelación duplicada/fuera de orden: ya está cancelada, no repetimos
+                // la liberación del hold (evita tocar cupo que ya fue devuelto).
+                return ReservaMapper.aResultadoOperacion(reserva);
+            }
+
+            liberarHoldSiExiste(reserva);
+            reserva.cancelar();
+            repositorio.guardar(reserva);
+            return ReservaMapper.aResultadoOperacion(reserva);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -104,6 +150,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
 
     @Override
     public ReservaResponse crearReserva(ReservaRequest solicitud) {
+        validarDirecta(solicitud);
         Reserva reserva = ReservaMapper.nuevaDirecta(solicitud);
         iniciarHold(reserva);
         repositorio.guardar(reserva);
@@ -131,6 +178,11 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Override
     public ReservaResponse cancelarReserva(Long id) {
         Reserva reserva = buscarOFallar(id);
+        if (reserva.getEstado() == EstadoReserva.CANCELADA) {
+            // Cancelación repetida sobre la misma reserva: no repetimos la
+            // liberación del hold (mismo criterio que cancelarDesdeCanal).
+            return ReservaMapper.aResponse(reserva);
+        }
         liberarHoldSiExiste(reserva);
         reserva.cancelar();
         repositorio.guardar(reserva);
@@ -217,6 +269,30 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
                 || s.precioTotal().signum() < 0 || s.moneda() == null || s.moneda().isBlank()) {
             throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
                     "La solicitud de reserva está incompleta o contiene valores inválidos");
+        }
+    }
+
+    /**
+     * Antes NO existía ninguna validación para las reservas directas (a
+     * diferencia de validar(SolicitudReserva), que sí se aplica a las que
+     * llegan por canal externo). Sin esto, un pedido con fechas invertidas,
+     * sin hotelId o con datos incompletos llegaba directo a crearHold()/al
+     * repositorio y podía romper con un error interno (500) en lugar de
+     * devolver un 400 claro.
+     */
+    private void validarDirecta(ReservaRequest s) {
+        if (s == null || s.hotelId() == null
+                || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
+                || s.cantidadHabitaciones() < 1
+                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.huespedNombre() == null || s.huespedNombre().isBlank()
+                || s.huespedApellido() == null || s.huespedApellido().isBlank()
+                || s.huespedEmail() == null || s.huespedEmail().isBlank()
+                || s.huespedTelefono() == null || s.huespedTelefono().isBlank()
+                || s.precioTotal() == null || s.precioTotal().signum() < 0
+                || s.moneda() == null || s.moneda().isBlank()) {
+            throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                    "La reserva está incompleta o contiene valores inválidos");
         }
     }
 }
