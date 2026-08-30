@@ -1,0 +1,102 @@
+{
+  "info": {
+    "_postman_id": "d1f2a3b4-5c6d-4e7f-8a9b-0c1d2e3f4a5b",
+    "name": "StayHub - Pagos",
+    "description": "Requests de ServicioDePagos: procesar un pago (aprobado y rechazado) y consultarlo por id.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Procesar pago (aprobado)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reservaId\": 1,\n  \"monto\": 15000.00,\n  \"moneda\": \"ARS\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/StayHub/api/pagos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "StayHub",
+            "api",
+            "pagos"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Procesar pago (rechazado - monto invalido)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reservaId\": 2,\n  \"monto\": 0,\n  \"moneda\": \"ARS\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/StayHub/api/pagos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "StayHub",
+            "api",
+            "pagos"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar pago por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/StayHub/api/pagos/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "StayHub",
+            "api",
+            "pagos",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
