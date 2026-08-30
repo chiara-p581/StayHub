@@ -6,6 +6,8 @@ import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
 import com.stayhub.usuarios.exception.CodigoErrorUsuario;
 import com.stayhub.usuarios.exception.UsuarioException;
+import com.stayhub.usuarios.messaging.EventoUsuarioRegistrado;
+import com.stayhub.usuarios.messaging.PublicadorEventoUsuario;
 import com.stayhub.usuarios.model.Usuario;
 import com.stayhub.usuarios.repository.UsuarioRepository;
 
@@ -21,6 +23,9 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
     @Inject
     private PasswordHasher passwordHasher;
 
+    @Inject
+    private PublicadorEventoUsuario publicadorEventos;
+
     @Override
     public UsuarioResponse registrar(RegistroUsuarioRequest solicitud) {
         validar(solicitud);
@@ -34,6 +39,9 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
         Usuario usuario = new Usuario(solicitud.email(), hash, solicitud.nombre(),
                 solicitud.apellido(), solicitud.rol());
         repositorio.guardar(usuario);
+
+        publicadorEventos.publicarUsuarioRegistrado(new EventoUsuarioRegistrado(
+                usuario.getId(), usuario.getEmail(), usuario.getNombre(), usuario.getRol().name()));
 
         return UsuarioMapper.aResponse(usuario);
     }
