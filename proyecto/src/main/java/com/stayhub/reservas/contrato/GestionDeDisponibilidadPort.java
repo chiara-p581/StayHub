@@ -32,4 +32,29 @@ public interface GestionDeDisponibilidadPort {
 
     /** Libera el cupo retenido (reserva rechazada, cancelada o expirada). */
     void liberarHold(String holdId);
+
+    /**
+     * Cambia una retención por otra de forma atómica, para MODIFICAR una
+     * reserva que ya tiene cupo tomado.
+     *
+     * Existe porque hacerlo con los métodos de arriba —liberarHold(viejo) y
+     * después crearHold(nuevo), como dos llamadas independientes— trata una
+     * reserva confirmada como si fuese una retención temporal: la liberación
+     * devuelve el cupo al inventario, y si el pedido nuevo no tiene
+     * disponibilidad la reserva se queda sin el cupo que ya tenía ganado. En
+     * una sola operación, ServicioDeInventarioYTarifas puede verificar el
+     * pedido nuevo antes de soltar el viejo.
+     *
+     * Si no hay disponibilidad lanza SinDisponibilidadException sin haber
+     * modificado nada: el hold anterior conserva su cupo y su estado. El hold
+     * anterior solo pasa a LIBERADO cuando el nuevo quedó efectivamente tomado.
+     *
+     * El hold nuevo nace PENDIENTE: confirmarlo sigue siendo responsabilidad de
+     * quien llama, igual que con crearHold.
+     *
+     * @param holdAnteriorId hold a reemplazar; debe existir y ser del mismo hotel.
+     * @return el id del hold nuevo.
+     */
+    String reemplazarHold(String holdAnteriorId, Long hotelId, String tipoHabitacion,
+                          int cantidadHabitaciones, LocalDate checkIn, LocalDate checkOut);
 }
