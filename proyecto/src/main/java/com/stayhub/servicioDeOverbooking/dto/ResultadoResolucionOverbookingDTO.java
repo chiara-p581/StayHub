@@ -8,6 +8,7 @@ public record ResultadoResolucionOverbookingDTO(
         Long reservaIdConflictiva,
         boolean resuelto,
         EstrategiaResolucion estrategia,
-        Long reservaAlternativaId,
+        String tipoHabitacionAlternativa,
+        String holdAlternativoId,
         String mensaje,
         OffsetDateTime fecha) { }
