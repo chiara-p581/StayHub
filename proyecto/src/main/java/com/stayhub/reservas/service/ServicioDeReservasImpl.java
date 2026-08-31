@@ -116,10 +116,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
                 return ReservaMapper.aResultadoOperacion(reserva);
             }
 
-            liberarHoldSiExiste(reserva);
-            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
-                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
-            holdYConfirmarEnUnPaso(reserva);
+            reemplazarHoldYConfirmar(reserva, solicitud);
             repositorio.guardar(reserva);
             return ReservaMapper.aResultadoOperacion(reserva);
         }
@@ -233,6 +230,52 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         } catch (SinDisponibilidadException ex) {
             reserva.rechazar();
         }
+    }
+
+    /**
+     * Flujo de MODIFICACIÓN por canal externo. Antes esto era
+     * liberarHold(viejo) + crearHold(nuevo) como dos llamadas independientes, y
+     * eso convertía una reserva confirmada en una retención temporal: la
+     * liberación devolvía el cupo al inventario y, si el pedido nuevo no tenía
+     * disponibilidad, la reserva quedaba rechazada con su cupo original ya
+     * regalado a cualquier otro pedido.
+     *
+     * Ahora la sustitución es una sola operación de ServicioDeInventarioYTarifas
+     * (GestionDeDisponibilidadPort.reemplazarHold), que verifica el cupo del pedido nuevo
+     * antes de soltar el viejo. Si no alcanza, no se modificó nada: la reserva
+     * conserva su hold, sus datos y su estado, y se responde 409
+     * SIN_DISPONIBILIDAD. Es deliberado que acá NO se rechace la reserva como
+     * hace crearDesdeCanal: en un alta no hay nada que preservar, pero en una
+     * modificación fallida destruir la reserva original sería peor que no
+     * aplicar el cambio.
+     */
+    private void reemplazarHoldYConfirmar(Reserva reserva, SolicitudReserva solicitud) {
+        if (reserva.getHoldId() == null) {
+            // La reserva nunca llegó a retener cupo (p. ej. quedó RECHAZADA al
+            // crearse porque no había disponibilidad): no hay nada que
+            // reemplazar, así que la modificación es un intento nuevo y sí
+            // corresponde el rechazo si tampoco hay cupo ahora.
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            holdYConfirmarEnUnPaso(reserva);
+            return;
+        }
+
+        String nuevoHoldId;
+        try {
+            nuevoHoldId = disponibilidad().reemplazarHold(reserva.getHoldId(), reserva.getHotelId(),
+                    solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(),
+                    solicitud.checkIn(), solicitud.checkOut());
+        } catch (SinDisponibilidadException ex) {
+            throw new ReservaException(CodigoErrorReserva.SIN_DISPONIBILIDAD,
+                    "No hay disponibilidad para la modificación pedida sobre canal=" + solicitud.canal()
+                            + " referenciaExterna=" + solicitud.referenciaExterna()
+                            + ": la reserva se mantiene sin cambios", ex);
+        }
+        disponibilidad().confirmarHold(nuevoHoldId);
+        reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+        reserva.confirmar(nuevoHoldId);
     }
 
     private void liberarHoldSiExiste(Reserva reserva) {

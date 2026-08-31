@@ -14,6 +14,7 @@ public class InventarioTarifasExceptionMapper implements ExceptionMapper<Inventa
             case SOLICITUD_INVALIDA -> 400;
             case HOLD_NO_ENCONTRADO -> 404;
             case TRANSICION_DE_ESTADO_INVALIDA -> 409;
+            case SOBREVENTA_DETECTADA -> 409;
         };
         return Response.status(estado)
                 .entity(new ErrorDTO(ex.getCodigo().name(), ex.getMessage(), OffsetDateTime.now()))

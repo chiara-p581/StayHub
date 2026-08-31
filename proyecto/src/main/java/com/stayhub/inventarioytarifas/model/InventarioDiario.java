@@ -1,5 +1,8 @@
 package com.stayhub.inventarioytarifas.model;
 
+import com.stayhub.inventarioytarifas.exception.CodigoErrorInventarioTarifas;
+import com.stayhub.inventarioytarifas.exception.InventarioTarifasException;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -46,7 +49,14 @@ public class InventarioDiario {
     @Column(nullable = false, length = 3)
     private String moneda;
 
-    /** Varios holds pueden competir por el mismo día; evita pisar ocupaciones concurrentes. */
+    /**
+     * Red de seguridad ante ocupaciones concurrentes. La protección principal
+     * es el bloqueo pesimista que toma ServicioDeInventarioYTarifasImpl antes
+     * de leer el cupo (ver InventarioDiarioRepository.buscarPorHotelTipoYFechaBloqueando):
+     * con ese lock, dos transacciones que compiten por la misma fila se
+     * serializan y la segunda ve el cupo ya descontado. @Version queda igual
+     * para los caminos que no pasan por ese bloqueo.
+     */
     @Version
     private Long version;
 
@@ -71,7 +81,20 @@ public class InventarioDiario {
         this.moneda = moneda;
     }
 
+    /**
+     * Descuenta cupo. Invariante del dominio: unidadesOcupadas nunca puede
+     * superar unidadesTotales. Quien llama ya debería haber verificado la
+     * disponibilidad (y, en el flujo de holds, bajo bloqueo pesimista); esta
+     * validación es el último guardarraíl para que una sobreventa falle acá
+     * en vez de quedar persistida.
+     */
     public void ocupar(int cantidad) {
+        if (cantidad > getUnidadesDisponibles()) {
+            throw new InventarioTarifasException(CodigoErrorInventarioTarifas.SOBREVENTA_DETECTADA,
+                    "No se puede ocupar " + cantidad + " unidad/es de hotelId=" + hotelId
+                            + ", tipoHabitacion=" + tipoHabitacion + " el " + fecha
+                            + ": solo hay " + getUnidadesDisponibles() + " disponible/s");
+        }
         this.unidadesOcupadas += cantidad;
     }
 
