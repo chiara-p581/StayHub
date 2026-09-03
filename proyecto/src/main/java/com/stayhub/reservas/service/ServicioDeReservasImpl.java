@@ -13,6 +13,8 @@ import com.stayhub.reservas.model.EstadoReserva;
 import com.stayhub.reservas.model.Reserva;
 import com.stayhub.reservas.repository.ReservaRepository;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -39,8 +41,16 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Ambos caminos convergen en los métodos privados crear/confirmar/cancelar,
  * para no duplicar la lógica de negocio.
+ *
+ * @DeclareRoles + @RolesAllowed en cancelarReserva: seguridad declarativa
+ * mínima pedida por el TP. Cancelar una reserva directa queda restringido
+ * al rol ADMIN; el contenedor EJB valida esto solo, sin que el código de
+ * negocio tenga que preguntar "¿este usuario tiene permiso?". Se apoya en
+ * el login BASIC configurado en web.xml/jboss-web.xml, que autentica al
+ * llamador antes de que el pedido llegue hasta acá.
  */
 @Stateless
+@DeclareRoles({"ADMIN"})
 public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioDeReservas {
 
     @Inject
@@ -173,6 +183,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
+    @RolesAllowed({"ADMIN"})
     public ReservaResponse cancelarReserva(Long id) {
         Reserva reserva = buscarOFallar(id);
         if (reserva.getEstado() == EstadoReserva.CANCELADA) {

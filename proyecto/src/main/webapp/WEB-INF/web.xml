@@ -4,4 +4,28 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+
+  <!-- Seguridad declarativa mínima pedida por el TP: solo un usuario con el
+       rol ADMIN puede cancelar una reserva directa (DELETE /api/reservas/{id}).
+       El resto de la API queda sin cambios. -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>CancelarReserva</web-resource-name>
+      <url-pattern>/api/reservas/*</url-pattern>
+      <http-method>DELETE</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>ADMIN</role-name>
+    </auth-constraint>
+  </security-constraint>
+
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>ApplicationRealm</realm-name>
+  </login-config>
+
+  <security-role>
+    <role-name>ADMIN</role-name>
+  </security-role>
+
 </web-app>
