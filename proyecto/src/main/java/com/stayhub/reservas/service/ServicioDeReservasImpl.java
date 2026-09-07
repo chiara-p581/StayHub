@@ -14,6 +14,7 @@ import com.stayhub.reservas.model.Reserva;
 import com.stayhub.reservas.repository.ReservaRepository;
 
 import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
@@ -48,6 +49,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * negocio tenga que preguntar "¿este usuario tiene permiso?". Se apoya en
  * el login BASIC configurado en web.xml/jboss-web.xml, que autentica al
  * llamador antes de que el pedido llegue hasta acá.
+ *
+ * @PermitAll en el resto de los métodos: WildFly, apenas detecta CUALQUIER
+ * @RolesAllowed en un bean, pasa a denegar por defecto cualquier otro
+ * método del mismo bean que no tenga una anotación de seguridad explícita
+ * (default-missing-method-permissions-deny-access). Sin @PermitAll acá,
+ * crearReserva y el resto quedarían bloqueados para cualquiera —incluido
+ * CarritoDeReserva, que los invoca sin pasar por un login HTTP— por ese
+ * comportamiento del contenedor, no por el estándar Jakarta EE.
  */
 @Stateless
 @DeclareRoles({"ADMIN"})
@@ -95,6 +104,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     // ------------------------------------------------------------------
 
     @Override
+    @PermitAll
     public ResultadoOperacionReserva crearDesdeCanal(SolicitudReserva solicitud) {
         validar(solicitud);
         synchronized (candadoPara(solicitud.canal(), solicitud.referenciaExterna())) {
@@ -113,6 +123,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
+    @PermitAll
     public ResultadoOperacionReserva modificarDesdeCanal(SolicitudReserva solicitud) {
         validar(solicitud);
         synchronized (candadoPara(solicitud.canal(), solicitud.referenciaExterna())) {
@@ -133,6 +144,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
+    @PermitAll
     public ResultadoOperacionReserva cancelarDesdeCanal(String canal, String referenciaExterna) {
         synchronized (candadoPara(canal, referenciaExterna)) {
             Reserva reserva = repositorio.buscarPorCanalYReferencia(canal, referenciaExterna)
@@ -156,6 +168,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     // ------------------------------------------------------------------
 
     @Override
+    @PermitAll
     public ReservaResponse crearReserva(ReservaRequest solicitud) {
         validarDirecta(solicitud);
         Reserva reserva = ReservaMapper.nuevaDirecta(solicitud);
@@ -165,11 +178,13 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
+    @PermitAll
     public ReservaResponse consultarReserva(Long id) {
         return ReservaMapper.aResponse(buscarOFallar(id));
     }
 
     @Override
+    @PermitAll
     public ReservaResponse confirmarReserva(Long id) {
         Reserva reserva = buscarOFallar(id);
         if (reserva.getEstado() != EstadoReserva.PENDIENTE) {
@@ -198,6 +213,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
+    @PermitAll
     public List<ReservaResponse> listarPorHotel(Long hotelId) {
         return repositorio.listarPorHotel(hotelId).stream().map(ReservaMapper::aResponse).toList();
     }
