@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Inventario y Tarifas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+</head>
+<body class="bg-background text-on-background font-body-lg flex flex-col md:flex-row min-h-screen">
+<!-- Mobile TopAppBar -->
+<header class="md:hidden w-full top-0 sticky bg-background shadow-sm flex justify-between items-center px-lg py-md z-40">
+<a href="admin-dashboard.html" class="text-primary p-2 rounded-full flex items-center justify-center"><span class="material-symbols-outlined">arrow_back</span></a>
+<h1 class="font-display-lg text-headline-md text-primary">StayHub</h1>
+<span class="w-8"></span>
+</header>
+<!-- Desktop NavigationDrawer -->
+<nav class="hidden md:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 flex-col py-xl z-30 shadow-none">
+<div class="px-gutter mb-8">
+<h1 class="font-headline-md text-headline-md text-primary">StayHub Admin</h1>
+</div>
+<div class="flex-1 overflow-y-auto hide-scrollbar">
+<ul class="flex flex-col space-y-2">
+<li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="admin-dashboard.html"><span class="material-symbols-outlined mr-4">dashboard</span>Dashboard</a></li>
+<li><a class="flex items-center px-gutter py-3 text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out font-body-md text-body-md" href="inventory.html"><span class="material-symbols-outlined mr-4" style="font-variation-settings: 'FILL' 1;">inventory_2</span>Inventory</a></li>
+<li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined mr-4">event_available</span>Reservations</a></li>
+<li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="channels-sync.html"><span class="material-symbols-outlined mr-4">hub</span>Channels</a></li>
+<li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="payments.html"><span class="material-symbols-outlined mr-4">payments</span>Payments</a></li>
+<li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="alerts.html"><span class="material-symbols-outlined mr-4">notifications</span>Alerts</a></li>
+</ul>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 md:ml-64 bg-background w-full min-h-screen pb-24 md:pb-8">
+<div class="max-w-container-max mx-auto px-gutter py-8 md:py-xxl">
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-xl gap-4">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Inventario y Tarifas</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Cargá capacidad y precio por tipo de habitación, y consultá lo que ya está cargado.</p>
+</div>
+</div>
+
+<div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+<div id="acceso-denegado" class="hidden p-lg rounded-xl bg-surface-container-lowest border border-outline-variant/20 text-center">
+<p class="font-body-lg text-body-lg text-on-surface-variant">Esta sección es solo para personal (rol ADMIN). <a href="index.html" class="text-primary underline">Volver al inicio</a>.</p>
+</div>
+
+<div id="panel" class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Cargar inventario -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] border border-outline-variant/20">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-lg">Cargar inventario y tarifa</h3>
+<div id="carga-error" class="hidden mb-md p-sm rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+<div id="carga-ok" class="hidden mb-md p-sm rounded-DEFAULT bg-secondary-container text-on-secondary-container font-body-md text-body-md"></div>
+<div class="flex flex-col gap-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-hotel">Hotel</label>
+<select id="carga-hotel" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"></select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-tipo">Tipo de habitación (código)</label>
+<select id="carga-tipo" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"></select>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-desde">Desde</label>
+<input id="carga-desde" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-hasta">Hasta</label>
+<input id="carga-hasta" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-unidades">Unidades</label>
+<input id="carga-unidades" type="number" min="0" value="1" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-precio">Precio / noche</label>
+<input id="carga-precio" type="number" min="0" step="0.01" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-moneda">Moneda</label>
+<input id="carga-moneda" type="text" value="ARS" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+</div>
+<button id="btn-cargar" class="bg-primary-container text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg hover:bg-primary transition-colors shadow-md">
+                        Cargar
+                    </button>
+</div>
+</div>
+
+<!-- Consultar -->
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] border border-outline-variant/20">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-lg">Consultar disponibilidad y tarifas</h3>
+<div class="flex flex-col gap-md mb-lg">
+<div class="grid grid-cols-2 gap-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="consulta-desde">Desde</label>
+<input id="consulta-desde" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="consulta-hasta">Hasta</label>
+<input id="consulta-hasta" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+</div>
+<button id="btn-consultar" class="bg-surface text-primary border border-outline font-label-md text-label-md px-6 py-3 rounded-lg hover:bg-surface-container-low transition-colors">
+                        Consultar
+                    </button>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Disponibilidad</h4>
+<div class="overflow-x-auto mb-lg">
+<table class="w-full text-left text-body-md font-body-md">
+<thead><tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant"><th class="py-xs pr-md">Tipo</th><th class="py-xs pr-md">Desde</th><th class="py-xs pr-md">Hasta</th><th class="py-xs pr-md">Disponibles</th></tr></thead>
+<tbody id="disponibilidad-body"></tbody>
+</table>
+<p id="disponibilidad-vacio" class="hidden text-on-surface-variant font-body-md text-body-md py-sm">Sin datos para ese rango.</p>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Tarifas</h4>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-body-md font-body-md">
+<thead><tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant"><th class="py-xs pr-md">Tipo</th><th class="py-xs pr-md">Desde</th><th class="py-xs pr-md">Hasta</th><th class="py-xs pr-md">Importe</th></tr></thead>
+<tbody id="tarifas-body"></tbody>
+</table>
+<p id="tarifas-vacio" class="hidden text-on-surface-variant font-body-md text-body-md py-sm">Sin datos para ese rango.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface-container-lowest border-t border-outline-variant/30 shadow-[0_-4px_20px_-4px_rgba(37,52,79,0.08)] rounded-t-xl font-label-md text-label-md">
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 px-4 py-1 rounded-full" href="admin-dashboard.html">
+<span class="material-symbols-outlined mb-1">dashboard</span>Dashboard
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 transition-transform active:scale-90" href="inventory.html">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">inventory_2</span>Inventory
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 px-4 py-1 rounded-full" href="channels-sync.html">
+<span class="material-symbols-outlined mb-1">hub</span>Channels
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 px-4 py-1 rounded-full" href="settings.html">
+<span class="material-symbols-outlined mb-1">person</span>Perfil
+</a>
+</nav>
+
+<script src="assets/js/api.js"></script>
+<script>
+(function () {
+    var errorBanner = document.getElementById("error-banner");
+    var acceso = document.getElementById("acceso-denegado");
+    var panel = document.getElementById("panel");
+
+    if (!Api.requireLogin()) return;
+    var usuario = Api.currentUser();
+    if (usuario.rol !== "ADMIN") {
+        acceso.classList.remove("hidden");
+        panel.classList.add("hidden");
+        return;
+    }
+
+    var hotelSelect = document.getElementById("carga-hotel");
+    var tipoSelect = document.getElementById("carga-tipo");
+    var tiposPorHotel = {};
+
+    function cargarHoteles() {
+        return Api.listarHoteles(false).then(function (hoteles) {
+            if (!hoteles.length) {
+                mostrarError(errorBanner, new Error("Todavía no hay hoteles cargados."));
+                return;
+            }
+            hotelSelect.innerHTML = hoteles.map(function (h) {
+                return '<option value="' + h.id + '">' + h.nombre + ' (' + h.ciudad + ')</option>';
+            }).join("");
+            return refrescarTipos(hoteles[0].id);
+        });
+    }
+
+    function refrescarTipos(hotelId) {
+        return Api.listarTiposHabitacion(hotelId).then(function (tipos) {
+            tiposPorHotel[hotelId] = tipos;
+            tipoSelect.innerHTML = tipos.length
+                ? tipos.map(function (t) { return '<option value="' + t.codigo + '">' + t.codigo + ' - ' + t.nombre + '</option>'; }).join("")
+                : '<option value="">Este hotel no tiene tipos de habitación cargados</option>';
+        });
+    }
+
+    hotelSelect.addEventListener("change", function () { refrescarTipos(this.value); });
+
+    document.getElementById("btn-cargar").addEventListener("click", function () {
+        var cargaError = document.getElementById("carga-error");
+        var cargaOk = document.getElementById("carga-ok");
+        ocultarError(cargaError);
+        cargaOk.classList.add("hidden");
+
+        var dto = {
+            hotelId: Number(hotelSelect.value),
+            tipoHabitacion: tipoSelect.value,
+            desde: document.getElementById("carga-desde").value,
+            hasta: document.getElementById("carga-hasta").value,
+            unidadesTotales: Number(document.getElementById("carga-unidades").value || 0),
+            precio: Number(document.getElementById("carga-precio").value || 0),
+            moneda: document.getElementById("carga-moneda").value.trim() || "ARS",
+        };
+        if (!dto.tipoHabitacion) { mostrarError(cargaError, new Error("Este hotel no tiene tipos de habitación.")); return; }
+        if (!dto.desde || !dto.hasta) { mostrarError(cargaError, new Error("Completá el rango de fechas.")); return; }
+
+        Api.cargarInventario(dto)
+            .then(function (resp) {
+                cargaOk.textContent = "Cargado: " + resp.diasCargados + " día(s) para " + resp.tipoHabitacion + ".";
+                cargaOk.classList.remove("hidden");
+            })
+            .catch(function (err) { mostrarError(cargaError, err); });
+    });
+
+    document.getElementById("btn-consultar").addEventListener("click", function () {
+        ocultarError(errorBanner);
+        var hotelId = hotelSelect.value;
+        var desde = document.getElementById("consulta-desde").value;
+        var hasta = document.getElementById("consulta-hasta").value;
+        if (!hotelId || !desde || !hasta) { mostrarError(errorBanner, new Error("Elegí hotel y rango de fechas.")); return; }
+
+        Api.consultarDisponibilidad(hotelId, desde, hasta)
+            .then(function (lista) {
+                var body = document.getElementById("disponibilidad-body");
+                body.innerHTML = lista.map(function (d) {
+                    return '<tr class="border-b border-surface-container-high"><td class="py-xs pr-md">' + d.tipoHabitacion + '</td><td class="py-xs pr-md">' + d.desde + '</td><td class="py-xs pr-md">' + d.hasta + '</td><td class="py-xs pr-md">' + d.unidadesDisponibles + '</td></tr>';
+                }).join("");
+                document.getElementById("disponibilidad-vacio").classList.toggle("hidden", lista.length > 0);
+            })
+            .catch(function (err) { mostrarError(errorBanner, err); });
+
+        Api.consultarTarifas(hotelId, desde, hasta)
+            .then(function (lista) {
+                var body = document.getElementById("tarifas-body");
+                body.innerHTML = lista.map(function (t) {
+                    return '<tr class="border-b border-surface-container-high"><td class="py-xs pr-md">' + t.tipoHabitacion + '</td><td class="py-xs pr-md">' + t.desde + '</td><td class="py-xs pr-md">' + t.hasta + '</td><td class="py-xs pr-md">' + t.importe + ' ' + t.moneda + '</td></tr>';
+                }).join("");
+                document.getElementById("tarifas-vacio").classList.toggle("hidden", lista.length > 0);
+            })
+            .catch(function (err) { mostrarError(errorBanner, err); });
+    });
+
+    cargarHoteles().catch(function (err) { mostrarError(errorBanner, err); });
+})();
+</script>
+</body></html>

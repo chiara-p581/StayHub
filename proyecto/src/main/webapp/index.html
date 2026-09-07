@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+<style>
+.hero-shadow { box-shadow: 0 4px 60px rgba(37, 52, 79, 0.08); }
+</style>
+</head>
+<body class="font-body-md text-body-md antialiased flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface text-primary border-b border-outline-variant docked full-width top-0 z-50">
+<div class="flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto">
+<!-- Brand -->
+<div class="font-headline-lg text-headline-lg text-primary flex items-center gap-2">
+                StayHub
+            </div>
+<!-- Desktop Navigation Links -->
+<nav class="hidden md:flex gap-lg items-center">
+<a class="text-primary font-bold font-label-md text-label-md uppercase tracking-wider" href="index.html">Home</a>
+<a class="text-on-surface-variant hover:bg-surface-container-high px-sm py-xs rounded transition-colors duration-200 ease-in-out font-label-md text-label-md uppercase tracking-wider" href="#hoteles">Search</a>
+<a id="nav-admin" class="hidden text-on-surface-variant hover:bg-surface-container-high px-sm py-xs rounded transition-colors duration-200 ease-in-out font-label-md text-label-md uppercase tracking-wider" href="admin-dashboard.html">Bookings</a>
+</nav>
+<!-- Trailing Action -->
+<div class="flex items-center gap-4">
+<a href="alerts.html" class="text-on-surface-variant hover:bg-surface-container-high p-xs rounded-full transition-colors duration-200 ease-in-out flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</a>
+<div id="session-area" class="flex items-center gap-sm"></div>
+</div>
+</div>
+</header>
+<main class="flex-grow">
+<!-- Hero Section -->
+<section class="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="bg-cover bg-center w-full h-full" data-alt="A breathtaking wide shot of a luxury boutique hotel exterior at dusk. The architecture is modern yet warm, featuring large glass windows reflecting a stunning sunset. The foreground shows a pristine infinity pool glowing invitingly, surrounded by elegant loungers and lush tropical landscaping. The mood is serene, aspirational, and deeply relaxing." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBI_LttHwfNYmCRMZpJu85ujqqil5GEH8Y1ATrLB4sq3DXNFhN4DcHd_M-hwN5zMfL1xSTW-x31Y9N--u8nOFpnPpcmY5Cw3SWbiUsDndeQmT_d1nLEwEniu4N2fAkHqeOPEDfU95piZZbk1K-zJBSXhAV1HbaBqNCNdjQTYx3HyfElZoFKjfg-_sBAIDvryiVzUwJc57RxffdAC-SYVnz5rEW6gtN6xR9uwzxnYIEaPbZFEkhEnflo2g')"></div>
+<div class="absolute inset-0 bg-primary/40 backdrop-blur-[2px]"></div>
+</div>
+<div class="relative z-10 w-full max-w-container-max mx-auto px-md flex flex-col items-center text-center gap-lg">
+<h1 class="font-display-lg text-display-lg text-on-primary">Discover Your Next Escape</h1>
+<p class="font-title-lg text-title-lg text-on-primary/90 max-w-2xl">Curated stays in the world's most captivating destinations.</p>
+<!-- Search Bar -->
+<div class="mt-xl w-full max-w-4xl bg-surface rounded-full p-sm hero-shadow flex flex-col md:flex-row items-center gap-sm md:gap-0 border border-outline-variant/50">
+<div class="flex-1 flex items-center gap-sm px-lg py-sm border-b md:border-b-0 md:border-r border-outline-variant/30 w-full">
+<span class="material-symbols-outlined text-outline">location_on</span>
+<div class="flex flex-col text-left">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Where to?</label>
+<input id="search-destino" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="Ciudad, país u hotel" type="text"/>
+</div>
+</div>
+<div class="flex-1 flex items-center gap-sm px-lg py-sm border-b md:border-b-0 md:border-r border-outline-variant/30 w-full">
+<span class="material-symbols-outlined text-outline">calendar_today</span>
+<div class="flex flex-col text-left">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Dates</label>
+<input id="search-fecha" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="Se eligen en el detalle del hotel" type="text" disabled/>
+</div>
+</div>
+<div class="flex-1 flex items-center justify-between px-lg py-sm w-full">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-outline">group</span>
+<div class="flex flex-col text-left">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Guests</label>
+<input id="search-guests" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="Se elige en el detalle del hotel" type="text" disabled/>
+</div>
+</div>
+<button id="btn-buscar" class="bg-primary hover:bg-primary-container text-on-primary rounded-full p-md transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Hoteles (datos reales de GET /api/hoteles) -->
+<section id="hoteles" class="max-w-container-max mx-auto px-md py-xxl">
+<div class="flex items-end justify-between mb-xl">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Hoteles disponibles</h2>
+<p id="hoteles-subtitulo" class="font-body-lg text-body-lg text-on-surface-variant">Explorá nuestras propiedades.</p>
+</div>
+</div>
+<div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+<div id="hoteles-loading" class="font-body-lg text-body-lg text-on-surface-variant">Cargando hoteles...</div>
+<div id="hoteles-grid" class="grid grid-cols-1 md:grid-cols-3 gap-gutter"></div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="bg-surface text-primary border-t border-outline-variant shadow-lg fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden">
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 scale-95 transition-all duration-200" href="index.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md-mobile text-label-md-mobile mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-1 transition-all duration-200" href="#hoteles">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-md-mobile text-label-md-mobile mt-1">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-1 transition-all duration-200" href="settings.html">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md-mobile text-label-md-mobile mt-1">Profile</span>
+</a>
+</nav>
+
+<script src="assets/js/api.js"></script>
+<script>
+(function () {
+    var errorBanner = document.getElementById("error-banner");
+    var sessionArea = document.getElementById("session-area");
+    var loading = document.getElementById("hoteles-loading");
+    var grid = document.getElementById("hoteles-grid");
+    var subtitulo = document.getElementById("hoteles-subtitulo");
+    var todosLosHoteles = [];
+
+    function pintarSesion() {
+        var usuario = Api.currentUser();
+        if (usuario) {
+            document.getElementById("nav-admin").classList.toggle("hidden", usuario.rol !== "ADMIN");
+            sessionArea.innerHTML =
+                '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">' + usuario.nombre + '</a>' +
+                '<button id="btn-logout" class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container" title="Cerrar sesión"><span class="material-symbols-outlined" style="font-size:18px;">logout</span></button>';
+            document.getElementById("btn-logout").addEventListener("click", function () {
+                Api.clearSession();
+                location.reload();
+            });
+        } else {
+            sessionArea.innerHTML =
+                '<a href="login.html" class="bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-full hover:bg-primary-container transition-colors">Iniciar sesión</a>';
+        }
+    }
+
+    function tarjetaHotel(hotel) {
+        var div = document.createElement("div");
+        div.className = "group cursor-pointer rounded-xl overflow-hidden relative h-72 hero-shadow bg-surface-container-lowest border border-outline-variant/20 flex flex-col";
+        div.innerHTML =
+            '<div class="h-40 bg-primary-container flex items-center justify-center">' +
+                '<span class="material-symbols-outlined text-on-primary-container" style="font-size:48px;">hotel</span>' +
+            '</div>' +
+            '<div class="p-lg flex-1 flex flex-col justify-between">' +
+                '<div>' +
+                    '<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">' + escapeHtml(hotel.nombre) + '</h3>' +
+                    '<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">' +
+                        '<span class="material-symbols-outlined" style="font-size:16px;">location_on</span>' +
+                        escapeHtml(hotel.ciudad) + ', ' + escapeHtml(hotel.pais) +
+                    '</p>' +
+                '</div>' +
+                '<a href="hotel-details.html?hotelId=' + hotel.id + '" class="mt-md inline-flex items-center gap-xs font-label-md text-label-md text-primary uppercase tracking-wider hover:text-primary-container transition-colors">' +
+                    'Ver hotel <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>' +
+                '</a>' +
+            '</div>';
+        return div;
+    }
+
+    function escapeHtml(s) {
+        var d = document.createElement("div");
+        d.textContent = s == null ? "" : s;
+        return d.innerHTML;
+    }
+
+    function pintarGrid(lista) {
+        grid.innerHTML = "";
+        if (!lista.length) {
+            grid.innerHTML = '<p class="font-body-lg text-body-lg text-on-surface-variant col-span-full">No encontramos hoteles con ese criterio.</p>';
+            return;
+        }
+        lista.forEach(function (h) { grid.appendChild(tarjetaHotel(h)); });
+    }
+
+    function buscar() {
+        var texto = (document.getElementById("search-destino").value || "").trim().toLowerCase();
+        if (!texto) { pintarGrid(todosLosHoteles); return; }
+        var filtrados = todosLosHoteles.filter(function (h) {
+            return (h.nombre + " " + h.ciudad + " " + h.pais).toLowerCase().indexOf(texto) !== -1;
+        });
+        pintarGrid(filtrados);
+    }
+
+    document.getElementById("btn-buscar").addEventListener("click", function (ev) {
+        ev.preventDefault();
+        buscar();
+        document.getElementById("hoteles").scrollIntoView({ behavior: "smooth" });
+    });
+    document.getElementById("search-destino").addEventListener("keyup", function (ev) {
+        if (ev.key === "Enter") buscar();
+    });
+
+    pintarSesion();
+    ocultarError(errorBanner);
+    Api.listarHoteles(false)
+        .then(function (hoteles) {
+            todosLosHoteles = hoteles;
+            subtitulo.textContent = hoteles.length + " propiedad" + (hoteles.length === 1 ? "" : "es") + " disponible" + (hoteles.length === 1 ? "" : "s") + ".";
+            pintarGrid(hoteles);
+        })
+        .catch(function (err) { mostrarError(errorBanner, err); })
+        .finally(function () { loading.classList.add("hidden"); });
+})();
+</script>
+</body></html>

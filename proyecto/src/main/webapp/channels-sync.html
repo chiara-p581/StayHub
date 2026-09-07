@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Channels &amp; Sync</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+<style>
+.ambient-shadow { box-shadow: 0 4px 20px -4px rgba(37,52,79,0.08); }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased flex">
+<!-- NavigationDrawer (Desktop) -->
+<nav class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 py-xl z-40">
+<div class="px-lg mb-xl">
+<h1 class="font-headline-md text-headline-md text-primary">StayHub Admin</h1>
+</div>
+<ul class="flex flex-col w-full flex-grow space-y-sm">
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html"><span class="material-symbols-outlined mr-md">dashboard</span><span class="font-title-lg text-title-lg text-[16px]">Dashboard</span></a></li>
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="inventory.html"><span class="material-symbols-outlined mr-md">inventory_2</span><span class="font-title-lg text-title-lg text-[16px]">Inventory</span></a></li>
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined mr-md">event_available</span><span class="font-title-lg text-title-lg text-[16px]">Reservations</span></a></li>
+<li><a class="flex items-center px-lg py-md text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out" href="channels-sync.html"><span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 1;">hub</span><span class="font-title-lg text-title-lg text-[16px]">Channels</span></a></li>
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="payments.html"><span class="material-symbols-outlined mr-md">payments</span><span class="font-title-lg text-title-lg text-[16px]">Payments</span></a></li>
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="alerts.html"><span class="material-symbols-outlined mr-md">notifications</span><span class="font-title-lg text-title-lg text-[16px]">Alerts</span></a></li>
+</ul>
+</nav>
+<!-- TopAppBar (Mobile) -->
+<header class="md:hidden flex justify-between items-center px-lg py-md w-full top-0 sticky bg-background shadow-sm z-50">
+<a href="admin-dashboard.html" class="text-primary p-sm rounded-full flex items-center justify-center"><span class="material-symbols-outlined">arrow_back</span></a>
+<h1 class="font-display-lg text-headline-md-mobile text-primary">StayHub</h1>
+<span class="w-8"></span>
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full md:ml-64 flex-1 flex flex-col min-h-screen">
+<div class="px-gutter md:px-xl py-lg md:py-xxl max-w-container-max mx-auto w-full flex-1">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-xl gap-md">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-sm">Channels &amp; Sync</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Sincronizá disponibilidad con las OTAs y con el PMS del hotel.</p>
+</div>
+<div class="flex items-end gap-sm flex-wrap">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="hotel-select">Hotel</label>
+<select id="hotel-select" class="border border-outline-variant rounded-DEFAULT px-md py-sm"></select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="desde">Desde</label>
+<input id="desde" type="date" class="border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="hasta">Hasta</label>
+<input id="hasta" type="date" class="border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<button id="btn-sync-pms" class="bg-primary-container text-on-primary-container font-label-md text-label-md uppercase px-lg py-md rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">sync</span> Sync PMS
+</button>
+</div>
+</div>
+
+<div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+
+<!-- Channels Bento Grid -->
+<div id="canales-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter mb-xxl"></div>
+
+<!-- Sync Log Section (se llena con resultados REALES de cada sincronización que hagas en esta pantalla) -->
+<div class="bg-surface-container-lowest rounded-xl ambient-shadow overflow-hidden mb-xxl">
+<div class="p-lg border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
+<h3 class="font-headline-md text-title-lg text-primary">Registro de sincronizaciones (esta sesión)</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30 bg-background text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+<th class="p-lg font-semibold">Hora</th>
+<th class="p-lg font-semibold">Destino</th>
+<th class="p-lg font-semibold">Resultado</th>
+<th class="p-lg font-semibold">Elementos</th>
+<th class="p-lg font-semibold">Mensaje</th>
+</tr>
+</thead>
+<tbody id="log-body" class="font-body-md text-body-md"></tbody>
+</table>
+<p id="log-vacio" class="text-on-surface-variant font-body-md text-body-md p-lg text-center">Todavía no sincronizaste nada en esta sesión.</p>
+</div>
+</div>
+
+<!-- Disponibilidad consolidada -->
+<div class="bg-surface-container-lowest rounded-xl ambient-shadow overflow-hidden">
+<div class="p-lg border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
+<h3 class="font-headline-md text-title-lg text-primary">Disponibilidad consolidada (vista de canales)</h3>
+<button id="btn-ver-disponibilidad" class="text-secondary hover:text-primary transition-colors flex items-center gap-xs font-label-md text-label-md uppercase">
+<span class="material-symbols-outlined text-[18px]">refresh</span> Actualizar
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30 bg-background text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+<th class="p-lg font-semibold">Tipo</th>
+<th class="p-lg font-semibold">Desde</th>
+<th class="p-lg font-semibold">Hasta</th>
+<th class="p-lg font-semibold">Disponibles</th>
+</tr>
+</thead>
+<tbody id="disponibilidad-body" class="font-body-md text-body-md"></tbody>
+</table>
+<p id="disponibilidad-vacio" class="hidden text-on-surface-variant font-body-md text-body-md p-lg text-center">Sin datos para ese rango.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface-container-lowest border-t border-outline-variant/30 shadow-[0_-4px_20px_-4px_rgba(37,52,79,0.08)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 p-2 rounded-lg" href="admin-dashboard.html">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span class="font-label-md text-label-md text-[10px]">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 p-2 rounded-lg" href="inventory.html">
+<span class="material-symbols-outlined mb-1">inventory_2</span>
+<span class="font-label-md text-label-md text-[10px]">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container transition-transform active:scale-90 p-2 rounded-lg" href="channels-sync.html">
+<span class="material-symbols-outlined mb-1">hub</span>
+<span class="font-label-md text-label-md text-[10px]">Channels</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 p-2 rounded-lg" href="settings.html">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-md text-label-md text-[10px]">Perfil</span>
+</a>
+</nav>
+
+<script src="assets/js/api.js"></script>
+<script>
+(function () {
+    var errorBanner = document.getElementById("error-banner");
+    var hotelSelect = document.getElementById("hotel-select");
+    var CANALES = ["BOOKING", "EXPEDIA", "AIRBNB", "DESPEGAR"];
+    var CANAL_LABEL = { BOOKING: "Booking.com", EXPEDIA: "Expedia", AIRBNB: "Airbnb", DESPEGAR: "Despegar" };
+
+    if (!Api.requireLogin()) return;
+    var usuario = Api.currentUser();
+    if (usuario.rol !== "ADMIN") {
+        document.querySelector("main .max-w-container-max").innerHTML =
+            '<p class="font-body-lg text-body-lg text-on-surface-variant text-center py-xxl">Esta sección es solo para personal (rol ADMIN). <a href="index.html" class="text-primary underline">Volver al inicio</a>.</p>';
+        return;
+    }
+
+    function pintarCanales() {
+        var grid = document.getElementById("canales-grid");
+        grid.innerHTML = CANALES.map(function (canal) {
+            return '<div class="bg-surface-container-lowest border-t-2 border-tertiary-fixed rounded-xl ambient-shadow p-lg flex flex-col justify-between h-full">' +
+                '<div>' +
+                    '<h3 class="font-title-lg text-title-lg text-primary mb-xs">' + CANAL_LABEL[canal] + '</h3>' +
+                    '<p id="estado-' + canal + '" class="font-body-md text-body-md text-on-surface-variant mb-lg">Sin sincronizar todavía en esta sesión.</p>' +
+                '</div>' +
+                '<button data-canal="' + canal + '" class="btn-sync-canal w-full py-sm border border-secondary text-secondary font-label-md text-label-md rounded-lg uppercase hover:bg-secondary/5 transition-colors flex justify-center items-center gap-sm">' +
+                    '<span class="material-symbols-outlined text-[16px]">refresh</span> Sincronizar' +
+                '</button>' +
+            '</div>';
+        }).join("");
+
+        grid.querySelectorAll(".btn-sync-canal").forEach(function (btn) {
+            btn.addEventListener("click", function () { sincronizarCanal(btn.dataset.canal, btn); });
+        });
+    }
+
+    function agregarLog(destino, resultado) {
+        document.getElementById("log-vacio").classList.add("hidden");
+        var tbody = document.getElementById("log-body");
+        var tr = document.createElement("tr");
+        tr.className = "border-b border-outline-variant/10";
+        var hora = new Date(resultado.fecha).toLocaleTimeString("es-AR");
+        var estadoTxt = resultado.exitoso
+            ? '<span class="inline-flex items-center gap-xs text-secondary font-medium"><span class="material-symbols-outlined text-[16px]">check_circle</span>OK</span>'
+            : '<span class="inline-flex items-center gap-xs text-error font-medium"><span class="material-symbols-outlined text-[16px]">cancel</span>Error</span>';
+        tr.innerHTML =
+            '<td class="p-lg text-on-surface-variant whitespace-nowrap">' + hora + '</td>' +
+            '<td class="p-lg font-medium text-primary">' + destino + '</td>' +
+            '<td class="p-lg">' + estadoTxt + '</td>' +
+            '<td class="p-lg">' + resultado.elementosProcesados + '</td>' +
+            '<td class="p-lg text-on-surface-variant max-w-md">' + resultado.mensaje + '</td>';
+        tbody.prepend(tr);
+    }
+
+    function requiereRango() {
+        var hotelId = hotelSelect.value;
+        var desde = document.getElementById("desde").value;
+        var hasta = document.getElementById("hasta").value;
+        if (!hotelId || !desde || !hasta) {
+            mostrarError(errorBanner, new Error("Elegí hotel y el rango de fechas primero."));
+            return null;
+        }
+        ocultarError(errorBanner);
+        return { hotelId: hotelId, desde: desde, hasta: hasta };
+    }
+
+    function sincronizarCanal(canal, btn) {
+        var rango = requiereRango();
+        if (!rango) return;
+        btn.disabled = true;
+        Api.sincronizarOta(canal, rango.hotelId, rango.desde, rango.hasta)
+            .then(function (resultado) {
+                document.getElementById("estado-" + canal).textContent =
+                    (resultado.exitoso ? "OK · " : "Error · ") + resultado.mensaje;
+                agregarLog(CANAL_LABEL[canal], resultado);
+            })
+            .catch(function (err) { mostrarError(errorBanner, err); })
+            .finally(function () { btn.disabled = false; });
+    }
+
+    document.getElementById("btn-sync-pms").addEventListener("click", function () {
+        var rango = requiereRango();
+        if (!rango) return;
+        Api.sincronizarPms(rango.hotelId, rango.desde, rango.hasta)
+            .then(function (resultado) { agregarLog("PMS", resultado); })
+            .catch(function (err) { mostrarError(errorBanner, err); });
+    });
+
+    document.getElementById("btn-ver-disponibilidad").addEventListener("click", function () {
+        var rango = requiereRango();
+        if (!rango) return;
+        Api.disponibilidadCanales(rango.hotelId, rango.desde, rango.hasta)
+            .then(function (lista) {
+                lista = Array.isArray(lista) ? lista : [];
+                var body = document.getElementById("disponibilidad-body");
+                body.innerHTML = lista.map(function (d) {
+                    return '<tr class="border-b border-outline-variant/10"><td class="p-lg">' + d.tipoHabitacion + '</td><td class="p-lg">' + d.desde + '</td><td class="p-lg">' + d.hasta + '</td><td class="p-lg">' + d.unidadesDisponibles + '</td></tr>';
+                }).join("");
+                document.getElementById("disponibilidad-vacio").classList.toggle("hidden", lista.length > 0);
+            })
+            .catch(function (err) { mostrarError(errorBanner, err); });
+    });
+
+    pintarCanales();
+    Api.listarHoteles(false)
+        .then(function (hoteles) {
+            if (!hoteles.length) { mostrarError(errorBanner, new Error("Todavía no hay hoteles cargados.")); return; }
+            hotelSelect.innerHTML = hoteles.map(function (h) { return '<option value="' + h.id + '">' + h.nombre + '</option>'; }).join("");
+        })
+        .catch(function (err) { mostrarError(errorBanner, err); });
+})();
+</script>
+</body></html>

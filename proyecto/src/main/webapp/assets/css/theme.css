@@ -1,0 +1,44 @@
+/* ============================================================
+   StayHub - theme.css
+   Reglas compartidas por TODAS las pantallas del front (Stitch).
+   Antes estaban repetidas (y en varios casos incompletas) en cada
+   code.html exportado; unificarlas acá también corrige pantallas
+   que no traían la regla completa de Material Symbols y por eso
+   iban a mostrar el nombre del ícono como texto en vez del dibujo.
+   ============================================================ */
+
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: theme('colors.background');
+    color: theme('colors.on-background');
+}
+
+/* Oculta la barra de scroll manteniendo el scroll funcional
+   (usado en listados largos / nav inferior mobile) */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Respeta el "notch"/home-indicator en mobile para la bottom nav */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+}

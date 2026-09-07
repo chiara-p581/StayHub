@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Iniciar sesión</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+</head>
+<body class="h-full bg-background flex flex-col">
+<!-- Transactional Screen - No Navigation Shell -->
+<main class="flex-grow flex items-center justify-center p-gutter">
+<div class="w-full max-w-[480px]">
+<!-- Header -->
+<div class="text-center mb-xl">
+<h1 class="font-display-lg text-display-lg text-primary mb-sm">StayHub</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Iniciá sesión para reservar o administrar</p>
+</div>
+<!-- Card Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-lg border-t-2 border-tertiary-fixed-dim/30 p-xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-tertiary-fixed-dim/50 to-transparent"></div>
+<div class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-sm">Iniciar sesión</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Usá el mismo email y contraseña con los que te registraste.
+                    </p>
+</div>
+
+<div id="error-banner" class="hidden mb-md p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+
+<form id="login-form" class="space-y-lg">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-xs" for="email">Email</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">mail</span>
+</div>
+<input class="block w-full pl-[48px] pr-md py-sm bg-surface-container-lowest border-outline-variant rounded-DEFAULT focus:ring-primary focus:border-primary font-body-md text-body-md text-on-surface" id="email" name="email" placeholder="huesped@stayhub.com" required type="email"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-xs" for="password">Contraseña</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">lock</span>
+</div>
+<input class="block w-full pl-[48px] pr-md py-sm bg-surface-container-lowest border-outline-variant rounded-DEFAULT focus:ring-primary focus:border-primary font-body-md text-body-md text-on-surface" id="password" name="password" required type="password"/>
+</div>
+</div>
+<div class="pt-sm">
+<button id="submit-btn" class="w-full flex justify-center items-center gap-xs py-[16px] px-md border border-transparent rounded-DEFAULT shadow-sm font-label-md text-label-md text-on-primary bg-primary hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200" type="submit">
+                            Iniciar sesión
+                        </button>
+</div>
+</form>
+</div>
+<!-- Links -->
+<div class="mt-lg text-center flex flex-col gap-sm">
+<a class="inline-flex items-center justify-center font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="recover-password.html">
+                    ¿Olvidaste tu contraseña?
+                </a>
+<a class="inline-flex items-center justify-center font-label-md text-label-md text-primary font-bold hover:text-primary-container transition-colors duration-200" href="register.html">
+                    ¿No tenés cuenta? Registrate
+                </a>
+<a class="inline-flex items-center justify-center font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="index.html">
+<span class="material-symbols-outlined text-[16px] mr-xs" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+                    Volver al inicio
+                </a>
+</div>
+</div>
+</main>
+
+<script src="assets/js/api.js"></script>
+<script>
+(function () {
+    var form = document.getElementById("login-form");
+    var errorBanner = document.getElementById("error-banner");
+    var submitBtn = document.getElementById("submit-btn");
+
+    // Si ya había una sesión activa, la mostramos como pre-cargada
+    // (no auto-redirige: el usuario puede querer loguearse con otra cuenta).
+
+    form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        ocultarError(errorBanner);
+
+        var email = document.getElementById("email").value.trim();
+        var password = document.getElementById("password").value;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Ingresando...";
+
+        Api.loginUsuario({ email: email, password: password })
+            .then(function (usuario) {
+                // Guardamos las credenciales para el header HTTP Basic
+                // (protege operaciones como cancelar una reserva) y el
+                // perfil del usuario de negocio (nombre/rol) para la UI.
+                Api.setSession(email, password, usuario);
+
+                var params = new URLSearchParams(location.search);
+                var next = params.get("next");
+                if (next) {
+                    location.href = decodeURIComponent(next);
+                } else if (usuario.rol === "ADMIN") {
+                    location.href = "admin-dashboard.html";
+                } else {
+                    location.href = "index.html";
+                }
+            })
+            .catch(function (err) {
+                mostrarError(
+                    errorBanner,
+                    err.status === 401 || err.status === 404
+                        ? new Error("Email o contraseña incorrectos.")
+                        : err
+                );
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Iniciar sesión";
+            });
+    });
+})();
+</script>
+</body></html>
