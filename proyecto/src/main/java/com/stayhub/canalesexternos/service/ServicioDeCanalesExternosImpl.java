@@ -48,15 +48,15 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     public ResultadoSincronizacionDTO sincronizarOta(Long hotelId, Canal canal, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
         if (canal == null) invalida("El canal es obligatorio");
-        publicadorSincronizacion.publicarOta(hotelId, canal, desde, hasta);
-        return ResultadoSincronizacionDTO.encolado(canal.name());
+        String solicitudId = publicadorSincronizacion.publicarOta(hotelId, canal, desde, hasta);
+        return ResultadoSincronizacionDTO.encolado(solicitudId, canal.name());
     }
 
     @Override
     public ResultadoSincronizacionDTO sincronizarPms(Long hotelId, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
-        publicadorSincronizacion.publicarPms(hotelId, desde, hasta);
-        return ResultadoSincronizacionDTO.encolado("PMS");
+        String solicitudId = publicadorSincronizacion.publicarPms(hotelId, desde, hasta);
+        return ResultadoSincronizacionDTO.encolado(solicitudId, "PMS");
     }
 
     private ServicioDeReservasPort reservas() {
@@ -87,7 +87,10 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
                 r.hotelId() == null || r.checkIn() == null || r.checkOut() == null ||
                 !r.checkOut().isAfter(r.checkIn()) || r.tipoHabitacion() == null ||
                 r.tipoHabitacion().isBlank() || r.cantidadHabitaciones() < 1 || r.huesped() == null ||
-                r.precioTotal() == null || r.precioTotal().signum() < 0 || r.moneda() == null || r.moneda().isBlank())
+                r.precioTotal() == null || r.precioTotal().signum() < 0 || r.moneda() == null || r.moneda().isBlank() ||
+                r.huesped().nombre() == null || r.huesped().nombre().isBlank() ||
+                r.huesped().apellido() == null || r.huesped().apellido().isBlank() ||
+                r.huesped().email() == null || r.huesped().email().isBlank())
             invalida("La reserva externa está incompleta o contiene valores inválidos");
     }
     private void invalida(String mensaje) {

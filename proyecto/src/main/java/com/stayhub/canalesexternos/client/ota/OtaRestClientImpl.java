@@ -7,13 +7,17 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 @ApplicationScoped
 public class OtaRestClientImpl implements OtaRestClient {
     @Inject ConfiguracionCanales configuracion;
     public void publicarDisponibilidad(Canal canal, List<DisponibilidadDTO> datos) { publicar(canal, "inventario", datos); }
     public void publicarTarifas(Canal canal, List<TarifaDTO> datos) { publicar(canal, "tarifas", datos); }
     private void publicar(Canal canal, String ruta, Object cuerpo) {
-        try (Client client = ClientBuilder.newClient()) {
+        try (Client client = ClientBuilder.newBuilder()
+                .connectTimeout(configuracion.timeoutConexionMs(), TimeUnit.MILLISECONDS)
+                .readTimeout(configuracion.timeoutLecturaMs(), TimeUnit.MILLISECONDS)
+                .build()) {
             Invocation.Builder request = client.target(configuracion.urlOta(canal)).path(ruta).request(MediaType.APPLICATION_JSON_TYPE);
             String token = configuracion.tokenOta(canal);
             if (token != null && !token.isBlank()) request.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);

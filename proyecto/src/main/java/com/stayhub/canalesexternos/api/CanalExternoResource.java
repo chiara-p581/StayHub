@@ -8,7 +8,6 @@ import com.stayhub.canalesexternos.exception.CodigoErrorCanal;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
-import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -26,10 +25,10 @@ public class CanalExternoResource {
 
     @POST @Path("/otas/{canal}/reservas")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response recibir(@PathParam("canal") String canal, ReservaExternaDTO reserva) {
+    public Response recibir(@PathParam("canal") String canal, ReservaExternaDTO reserva, @Context UriInfo uriInfo) {
         ReservaExternaDTO normalizada = conCanal(reserva, Canal.desde(canal));
         ResultadoReservaDTO resultado = servicio.recibirReserva(normalizada);
-        return Response.created(URI.create("api/canales-externos/otas/" + canal + "/reservas/" + resultado.idExterno()))
+        return Response.created(uriInfo.getAbsolutePathBuilder().path(resultado.idExterno()).build())
                 .entity(resultado).build();
     }
 
@@ -46,15 +45,17 @@ public class CanalExternoResource {
     }
 
     @POST @Path("/otas/{canal}/sincronizaciones")
-    public ResultadoSincronizacionDTO sincronizarOta(@PathParam("canal") String canal,
+    public Response sincronizarOta(@PathParam("canal") String canal,
             @QueryParam("hotelId") Long hotelId, @QueryParam("desde") String desde, @QueryParam("hasta") String hasta) {
-        return servicio.sincronizarOta(hotelId, Canal.desde(canal), fecha(desde, "desde"), fecha(hasta, "hasta"));
+        return Response.accepted(servicio.sincronizarOta(hotelId, Canal.desde(canal),
+                fecha(desde, "desde"), fecha(hasta, "hasta"))).build();
     }
 
     @POST @Path("/pms/sincronizaciones")
-    public ResultadoSincronizacionDTO sincronizarPms(@QueryParam("hotelId") Long hotelId,
+    public Response sincronizarPms(@QueryParam("hotelId") Long hotelId,
             @QueryParam("desde") String desde, @QueryParam("hasta") String hasta) {
-        return servicio.sincronizarPms(hotelId, fecha(desde, "desde"), fecha(hasta, "hasta"));
+        return Response.accepted(servicio.sincronizarPms(hotelId,
+                fecha(desde, "desde"), fecha(hasta, "hasta"))).build();
     }
 
     private ReservaExternaDTO conCanal(ReservaExternaDTO r, Canal canal) {
