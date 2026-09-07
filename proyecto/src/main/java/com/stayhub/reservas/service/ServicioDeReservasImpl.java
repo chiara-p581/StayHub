@@ -44,11 +44,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * para no duplicar la lógica de negocio.
  *
  * @DeclareRoles + @RolesAllowed en cancelarReserva: seguridad declarativa
- * mínima pedida por el TP. Cancelar una reserva directa queda restringido
- * al rol ADMIN; el contenedor EJB valida esto solo, sin que el código de
- * negocio tenga que preguntar "¿este usuario tiene permiso?". Se apoya en
- * el login BASIC configurado en web.xml/jboss-web.xml, que autentica al
- * llamador antes de que el pedido llegue hasta acá.
+ * mínima pedida por el TP. Cancelar una reserva directa exige estar
+ * autenticado y tener el rol ADMIN o HUESPED; el contenedor EJB valida
+ * esto solo, sin que el código de negocio tenga que preguntar "¿este
+ * usuario tiene permiso?". Se apoya en el login BASIC configurado en
+ * web.xml/jboss-web.xml, que autentica al llamador antes de que el pedido
+ * llegue hasta acá.
+ *
+ * Nota: esto es autorización POR ROL, no por "dueño" de la reserva — un
+ * HUESPED cualquiera puede cancelar cualquier reserva, no solo la propia.
+ * Verificar que la reserva le pertenece al huésped autenticado sería una
+ * capa distinta (comparar identidad contra el huésped de la reserva), más
+ * allá de lo que pide la seguridad declarativa por rol de esta entrega.
  *
  * @PermitAll en el resto de los métodos: WildFly, apenas detecta CUALQUIER
  * @RolesAllowed en un bean, pasa a denegar por defecto cualquier otro
@@ -59,7 +66,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * comportamiento del contenedor, no por el estándar Jakarta EE.
  */
 @Stateless
-@DeclareRoles({"ADMIN"})
+@DeclareRoles({"ADMIN", "HUESPED"})
 public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioDeReservas {
 
     @Inject
@@ -198,7 +205,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
-    @RolesAllowed({"ADMIN"})
+    @RolesAllowed({"ADMIN", "HUESPED"})
     public ReservaResponse cancelarReserva(Long id) {
         Reserva reserva = buscarOFallar(id);
         if (reserva.getEstado() == EstadoReserva.CANCELADA) {
