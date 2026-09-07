@@ -5,6 +5,7 @@ import com.stayhub.canalesexternos.exception.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.xml.ws.Service;
+import jakarta.xml.ws.BindingProvider;
 import java.net.URL;
 import java.util.List;
 import javax.xml.namespace.QName;
@@ -15,6 +16,10 @@ public class PmsLegacyClientImpl implements PmsLegacyClient {
         try {
             Service service=Service.create(new URL(configuracion.wsdlPms()), new QName(PmsSoapPort.NAMESPACE,"PmsLegacyService"));
             PmsSoapPort port=service.getPort(PmsSoapPort.class);
+            if (port instanceof BindingProvider binding) {
+                binding.getRequestContext().put("jakarta.xml.ws.client.connectionTimeout", configuracion.timeoutConexionMs());
+                binding.getRequestContext().put("jakarta.xml.ws.client.receiveTimeout", configuracion.timeoutLecturaMs());
+            }
             var inventario=disponibilidad.stream().map(d->new DisponibilidadPms(d.tipoHabitacion(),d.desde().toString(),d.hasta().toString(),d.unidadesDisponibles())).toList();
             var precios=tarifas.stream().map(t->new TarifaPms(t.tipoHabitacion(),t.desde().toString(),t.hasta().toString(),t.importe(),t.moneda())).toList();
             RespuestaPms respuesta=port.sincronizarInventario(hotelId,inventario,precios);
