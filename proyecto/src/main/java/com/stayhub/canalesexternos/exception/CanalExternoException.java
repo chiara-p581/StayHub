@@ -1,5 +1,8 @@
 package com.stayhub.canalesexternos.exception;
 
+import jakarta.ejb.ApplicationException;
+
+@ApplicationException(rollback = true)
 public class CanalExternoException extends RuntimeException {
     private final CodigoErrorCanal codigo;
 
