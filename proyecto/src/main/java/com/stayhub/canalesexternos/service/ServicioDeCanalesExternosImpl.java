@@ -5,6 +5,8 @@ import com.stayhub.canalesexternos.contrato.interno.*;
 import com.stayhub.canalesexternos.dto.*;
 import com.stayhub.canalesexternos.exception.*;
 import com.stayhub.canalesexternos.messaging.PublicadorSincronizacion;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -12,18 +14,21 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Stateless
+@DeclareRoles({"ADMIN", "CANAL_EXTERNO"})
 public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos {
     @Inject Instance<ServicioDeReservasPort> reservas;
     @Inject Instance<ServicioDeInventarioYTarifasPort> inventarioYTarifas;
     @Inject PublicadorSincronizacion publicadorSincronizacion;
 
     @Override
+    @RolesAllowed("ADMIN")
     public List<DisponibilidadDTO> consultarDisponibilidad(Long hotelId, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
         return inventario().consultarDisponibilidad(hotelId, desde, hasta);
     }
 
     @Override
+    @RolesAllowed({"ADMIN", "CANAL_EXTERNO"})
     public ResultadoReservaDTO recibirReserva(ReservaExternaDTO reserva) {
         validarReserva(reserva);
         ResultadoOperacionReserva resultado = reservas().crearDesdeCanal(mapear(reserva));
@@ -31,6 +36,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     }
 
     @Override
+    @RolesAllowed({"ADMIN", "CANAL_EXTERNO"})
     public ResultadoReservaDTO modificarReserva(ReservaExternaDTO reserva) {
         validarReserva(reserva);
         ResultadoOperacionReserva resultado = reservas().modificarDesdeCanal(mapear(reserva));
@@ -38,6 +44,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     }
 
     @Override
+    @RolesAllowed({"ADMIN", "CANAL_EXTERNO"})
     public ResultadoReservaDTO cancelarReserva(Canal canal, String idExterno) {
         if (canal == null || idExterno == null || idExterno.isBlank()) invalida("Canal e idExterno son obligatorios");
         ResultadoOperacionReserva resultado = reservas().cancelarDesdeCanal(canal.name(), idExterno);
@@ -45,6 +52,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     }
 
     @Override
+    @RolesAllowed("ADMIN")
     public ResultadoSincronizacionDTO sincronizarOta(Long hotelId, Canal canal, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
         if (canal == null) invalida("El canal es obligatorio");
@@ -53,6 +61,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     }
 
     @Override
+    @RolesAllowed("ADMIN")
     public ResultadoSincronizacionDTO sincronizarPms(Long hotelId, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
         String solicitudId = publicadorSincronizacion.publicarPms(hotelId, desde, hasta);

@@ -32,6 +32,18 @@ La base de la aplicación es `/StayHub/api`.
 Las fechas usan ISO-8601 (`AAAA-MM-DD`). Los canales iniciales son `BOOKING`, `EXPEDIA`,
 `AIRBNB`, `DESPEGAR` y `OTRO`.
 
+## Seguridad
+
+Toda la API de Canales Externos exige autenticación HTTP BASIC contra el realm de
+WildFly configurado para la aplicación. Las consultas de disponibilidad y las
+sincronizaciones requieren el rol `ADMIN`. Los webhooks de reservas OTA permiten
+`CANAL_EXTERNO` y `ADMIN`.
+
+Para dar de alta una cuenta técnica de una OTA se ejecuta `add-user.bat` en WildFly,
+se elige `Application User` y se asigna el grupo `CANAL_EXTERNO`. Las llamadas deben
+enviar esa cuenta mediante el encabezado `Authorization: Basic ...`; nunca se deben
+incluir esas credenciales en el código ni en el repositorio.
+
 ## Configuración
 
 Puede suministrarse como propiedad de sistema de WildFly o variable de entorno:
