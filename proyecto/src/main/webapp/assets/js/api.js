@@ -180,7 +180,7 @@ const Api = (() => {
 
         // ---- canales externos ----
         disponibilidadCanales: (hotelId, desde, hasta) =>
-            request("canales-externos/disponibilidad", { params: { hotelId, desde, hasta } }),
+            request("canales-externos/disponibilidad", { params: { hotelId, desde, hasta }, auth: true }),
         sincronizarOta: (canal, hotelId, desde, hasta) =>
             request(`canales-externos/otas/${canal}/sincronizaciones`, {
                 method: "POST",
