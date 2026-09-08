@@ -7,7 +7,9 @@ import com.stayhub.hoteles.model.*;
 import com.stayhub.hoteles.repository.HotelRepository;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
+import java.sql.SQLException;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.stayhub.hoteles.exception.CodigoErrorHotel.*;
 
@@ -34,6 +36,12 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
     @Inject
     private HotelRepository repositorio;
 
+    public ServicioDeHotelesImpl() { }
+
+    ServicioDeHotelesImpl(HotelRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+
     @Override
     public HotelResponse crearHotel(HotelRequest s) {
         validarHotel(s);
@@ -46,7 +54,7 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
     @Override
     public HotelResponse modificarHotel(Long id, HotelRequest s) {
         validarHotel(s);
-        Hotel hotel = hotel(id);
+        Hotel hotel = hotelActivo(id);
         hotel.actualizar(limpiar(s.nombre()), limpiar(s.direccion()), limpiar(s.ciudad()), limpiar(s.pais()),
                 limpiarOpcional(s.descripcion()), normalizar(s.servicios()));
         repositorio.guardar(hotel);
@@ -73,27 +81,31 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
     @Override
     public TipoHabitacionResponse crearTipo(Long hotelId, TipoHabitacionRequest s) {
         Hotel hotel = hotelActivo(hotelId);
-        validarTipo(s);
+        int capacidadMaxima = validarTipo(s);
         String codigo = codigo(s.codigo());
         if (repositorio.buscarTipoPorCodigo(hotelId, codigo).isPresent())
             throw error(CODIGO_DUPLICADO, "Ya existe el tipo " + codigo + " en el hotel " + hotelId);
         TipoHabitacion tipo = new TipoHabitacion(hotel, codigo, limpiar(s.nombre()), limpiarOpcional(s.descripcion()),
-                s.capacidadMaxima(), normalizar(s.caracteristicas()));
-        return HotelMapper.tipo(repositorio.guardar(tipo));
+                capacidadMaxima, normalizar(s.caracteristicas()));
+        return HotelMapper.tipo(guardarUnico(() -> repositorio.guardar(tipo), CODIGO_DUPLICADO,
+                "Ya existe el tipo " + codigo + " en el hotel " + hotelId));
     }
 
     @Override
     public TipoHabitacionResponse modificarTipo(Long hotelId, Long tipoId, TipoHabitacionRequest s) {
         hotelActivo(hotelId);
-        validarTipo(s);
+        int capacidadMaxima = validarTipo(s);
         TipoHabitacion tipo = tipoDelHotel(hotelId, tipoId);
+        if (!tipo.isActivo())
+            throw error(TIPO_HABITACION_INACTIVO, "El tipo de habitación " + tipoId + " está dado de baja");
         String codigo = codigo(s.codigo());
         repositorio.buscarTipoPorCodigo(hotelId, codigo)
                 .filter(otro -> !otro.getId().equals(tipoId))
                 .ifPresent(otro -> { throw error(CODIGO_DUPLICADO, "Ya existe el tipo " + codigo); });
-        tipo.actualizar(codigo, limpiar(s.nombre()), limpiarOpcional(s.descripcion()), s.capacidadMaxima(),
+        tipo.actualizar(codigo, limpiar(s.nombre()), limpiarOpcional(s.descripcion()), capacidadMaxima,
                 normalizar(s.caracteristicas()));
-        return HotelMapper.tipo(repositorio.guardar(tipo));
+        return HotelMapper.tipo(guardarUnico(() -> repositorio.guardar(tipo), CODIGO_DUPLICADO,
+                "Ya existe el tipo " + codigo + " en el hotel " + hotelId));
     }
 
     @Override
@@ -126,11 +138,13 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
         validarHabitacion(s);
         TipoHabitacion tipo = tipoDelHotel(hotelId, s.tipoHabitacionId());
         if (!tipo.isActivo()) throw error(TIPO_HABITACION_NO_ENCONTRADO, "El tipo de habitación está inactivo");
-        String numero = limpiar(s.numero());
+        String numero = numero(s.numero());
         if (repositorio.buscarHabitacionPorNumero(hotelId, numero).isPresent())
             throw error(NUMERO_HABITACION_DUPLICADO, "Ya existe la habitación " + numero + " en el hotel");
-        return HotelMapper.habitacion(repositorio.guardar(new Habitacion(hotel, tipo, numero, s.piso(),
-                normalizar(s.caracteristicas()))));
+        Habitacion habitacion = new Habitacion(hotel, tipo, numero, s.piso(), normalizar(s.caracteristicas()));
+        return HotelMapper.habitacion(guardarUnico(() -> repositorio.guardar(habitacion),
+                NUMERO_HABITACION_DUPLICADO,
+                "Ya existe la habitación " + numero + " en el hotel " + hotelId));
     }
 
     @Override
@@ -138,14 +152,18 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
         hotelActivo(hotelId);
         validarHabitacion(s);
         Habitacion habitacion = habitacionDelHotel(hotelId, habitacionId);
+        if (!habitacion.isActiva())
+            throw error(HABITACION_INACTIVA, "La habitación " + habitacionId + " está dada de baja");
         TipoHabitacion tipo = tipoDelHotel(hotelId, s.tipoHabitacionId());
         if (!tipo.isActivo()) throw error(TIPO_HABITACION_NO_ENCONTRADO, "El tipo de habitación está inactivo");
-        String numero = limpiar(s.numero());
+        String numero = numero(s.numero());
         repositorio.buscarHabitacionPorNumero(hotelId, numero)
                 .filter(otra -> !otra.getId().equals(habitacionId))
                 .ifPresent(otra -> { throw error(NUMERO_HABITACION_DUPLICADO, "Ya existe la habitación " + numero); });
         habitacion.actualizar(tipo, numero, s.piso(), normalizar(s.caracteristicas()));
-        return HotelMapper.habitacion(repositorio.guardar(habitacion));
+        return HotelMapper.habitacion(guardarUnico(() -> repositorio.guardar(habitacion),
+                NUMERO_HABITACION_DUPLICADO,
+                "Ya existe la habitación " + numero + " en el hotel " + hotelId));
     }
 
     @Override
@@ -226,13 +244,22 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
         validarLongitud("descripción", s.descripcion(), MAX_DESCRIPCION_HOTEL);
         validarColeccion("servicio", s.servicios(), MAX_SERVICIO);
     }
-    private void validarTipo(TipoHabitacionRequest s) {
-        if (s == null || vacio(s.codigo()) || vacio(s.nombre()) || s.capacidadMaxima() < 1)
+    private int validarTipo(TipoHabitacionRequest s) {
+        if (s == null || vacio(s.codigo()) || vacio(s.nombre()) || s.capacidadMaxima() == null)
+            throw error(SOLICITUD_INVALIDA, "Código, nombre y capacidad máxima positiva son obligatorios");
+        final int capacidadMaxima;
+        try {
+            capacidadMaxima = s.capacidadMaxima().intValueExact();
+        } catch (ArithmeticException ex) {
+            throw error(SOLICITUD_INVALIDA, "La capacidad máxima debe ser un número entero positivo");
+        }
+        if (capacidadMaxima < 1)
             throw error(SOLICITUD_INVALIDA, "Código, nombre y capacidad máxima positiva son obligatorios");
         validarLongitud("código", s.codigo(), MAX_CODIGO_TIPO);
         validarLongitud("nombre", s.nombre(), MAX_NOMBRE_TIPO);
         validarLongitud("descripción", s.descripcion(), MAX_DESCRIPCION_TIPO);
         validarColeccion("característica", s.caracteristicas(), MAX_CARACTERISTICA);
+        return capacidadMaxima;
     }
     private void validarHabitacion(HabitacionRequest s) {
         if (s == null || s.tipoHabitacionId() == null || vacio(s.numero()))
@@ -264,12 +291,33 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
                 });
     }
 
+    private <T> T guardarUnico(Supplier<T> operacion, CodigoErrorHotel codigo, String mensaje) {
+        try {
+            T guardado = operacion.get();
+            // El flush hace visible aquí la carrera de la restricción única, antes de que el EJB
+            // devuelva 201/200 y WildFly confirme la transacción.
+            repositorio.sincronizar();
+            return guardado;
+        } catch (RuntimeException ex) {
+            if (esViolacionUnicidad(ex)) throw error(codigo, mensaje);
+            throw ex;
+        }
+    }
+
+    static boolean esViolacionUnicidad(Throwable error) {
+        for (Throwable causa = error; causa != null; causa = causa.getCause()) {
+            if (causa instanceof SQLException sql && "23505".equals(sql.getSQLState())) return true;
+        }
+        return false;
+    }
+
     private static HotelException error(CodigoErrorHotel codigo, String mensaje) { return new HotelException(codigo, mensaje); }
     private static boolean esIdValido(Long id) { return id != null && id > 0; }
     private static boolean vacio(String valor) { return valor == null || valor.isBlank(); }
     private static String limpiar(String valor) { return valor.trim(); }
     private static String limpiarOpcional(String valor) { return valor == null ? null : valor.trim(); }
     private static String codigo(String valor) { return limpiar(valor).toUpperCase(Locale.ROOT); }
+    private static String numero(String valor) { return limpiar(valor).toUpperCase(Locale.ROOT); }
     private static Set<String> normalizar(Set<String> valores) {
         if (valores == null) return Set.of();
         Set<String> resultado = new LinkedHashSet<>();

@@ -46,7 +46,6 @@ public class Hotel {
     }
 
     public void darDeBaja() { activo = false; }
-    public void reactivar() { activo = true; }
     public Long getId() { return id; }
     public String getNombre() { return nombre; }
     public String getDireccion() { return direccion; }
