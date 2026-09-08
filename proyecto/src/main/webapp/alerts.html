@@ -1,143 +1,58 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>StayHub - Notifications</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Operaciones</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/><link href="assets/css/theme.css" rel="stylesheet"/>
 </head>
-<body class="bg-background text-on-background font-body-lg min-h-screen flex flex-col md:flex-row">
-<!-- Mobile Top App Bar -->
-<header class="md:hidden bg-background dark:bg-surface-dim text-primary dark:text-primary-fixed font-headline-md text-headline-md-mobile md:text-headline-md w-full top-0 sticky shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] z-40">
-<div class="flex justify-between items-center px-lg py-md w-full">
-<button class="text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high transition-colors active:scale-95 duration-200 p-2 rounded-full">
-<span class="material-symbols-outlined" data-icon="menu">menu</span>
-</button>
-<h1 class="font-display-lg text-headline-md text-primary dark:text-primary-fixed">StayHub</h1>
-<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant/30 flex items-center justify-center">
-<span class="material-symbols-outlined text-on-surface-variant text-sm">person</span>
-</div>
-</div>
-</header>
-<!-- Desktop Navigation Drawer -->
-<nav class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant/20 z-40">
-<div class="flex flex-col h-full py-xl">
-<div class="px-gutter mb-xl">
-<h2 class="font-headline-md text-headline-md text-primary dark:text-primary-fixed">StayHub Admin</h2>
-</div>
-<ul class="flex flex-col gap-2 font-body-md text-body-md w-full">
-<li><a class="flex items-center gap-sm px-gutter py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span>Dashboard</a></li>
-<li><a class="flex items-center gap-sm px-gutter py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="inventory.html"><span class="material-symbols-outlined">inventory_2</span>Inventory</a></li>
-<li><a class="flex items-center gap-sm px-gutter py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined">event_available</span>Reservations</a></li>
-<li><a class="flex items-center gap-sm px-gutter py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="channels-sync.html"><span class="material-symbols-outlined">hub</span>Channels</a></li>
-<li><a class="flex items-center gap-sm px-gutter py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="payments.html"><span class="material-symbols-outlined">payments</span>Payments</a></li>
-<li><a class="flex items-center gap-sm px-gutter py-md text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out" href="alerts.html"><span class="material-symbols-outlined">notifications</span>Alerts</a></li>
-</ul>
-</div>
-</nav>
-<!-- Main Content Canvas -->
-<main class="flex-1 md:ml-64 p-gutter md:p-xl pb-24 md:pb-xl flex flex-col gap-gutter max-w-container-max mx-auto w-full">
-<header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
-<div>
-<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">System Alerts</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant mt-sm">Monitor and resolve critical operational issues.</p>
-</div>
-<div class="flex items-center gap-md w-full md:w-auto">
-<button class="flex items-center justify-center gap-sm px-md py-sm bg-surface-container-high text-on-surface rounded-full font-label-md text-label-md hover:bg-surface-variant transition-colors flex-1 md:flex-none">
-<span class="material-symbols-outlined text-[18px]">filter_list</span>
-                    Filter
-                </button>
-<button class="flex items-center justify-center gap-sm px-md py-sm bg-primary-container text-on-primary rounded-full font-label-md text-label-md hover:bg-primary transition-colors flex-1 md:flex-none">
-<span class="material-symbols-outlined text-[18px]">done_all</span>
-                    Mark All Read
-                </button>
-</div>
-</header>
-<div id="aviso-mock" class="p-md rounded-DEFAULT bg-tertiary-fixed/40 text-on-tertiary-fixed-variant font-body-md text-body-md">
-Estas alertas son una maqueta visual: <code>ServicioDeNotificaciones</code> hoy solo expone <code>POST /notificaciones/enviar</code> (enviar una notificación puntual), no un endpoint para listar alertas del sistema. Queda documentado como pendiente.
-</div>
-<!-- Alerts Container -->
-<div class="flex flex-col gap-md">
-<!-- Critical Alert -->
-<div class="bg-surface-container-lowest rounded-xl p-md border-l-4 border-error shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] flex flex-col sm:flex-row gap-md sm:items-center relative">
-<div class="flex-shrink-0 w-12 h-12 bg-error-container rounded-full flex items-center justify-center text-on-error-container">
-<span class="material-symbols-outlined">gpp_bad</span>
-</div>
-<div class="flex-1">
-<div class="flex items-center gap-sm mb-xs">
-<span class="bg-error text-on-error font-label-md text-label-md px-2 py-0.5 rounded-sm uppercase">Critical</span>
-<span class="font-body-md text-body-md text-on-surface-variant">Just now</span>
-</div>
-<h3 class="font-title-lg text-title-lg text-primary">Overbooking Risk: Deluxe Suite</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Conflicting reservations detected from Booking.com and Expedia for dates Oct 12 - Oct 15.</p>
-</div>
-<div class="flex gap-sm sm:flex-col sm:items-end mt-md sm:mt-0">
-<button class="px-md py-sm bg-primary-container text-on-primary rounded font-label-md text-label-md hover:bg-primary transition-colors whitespace-nowrap">
-                        Resolve Issue
-                    </button>
-<button class="px-md py-sm border border-outline-variant text-secondary rounded font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">
-                        Dismiss
-                    </button>
-</div>
-</div>
-<!-- Warning Alert -->
-<div class="bg-surface-container-lowest rounded-xl p-md border-l-4 border-tertiary shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] flex flex-col sm:flex-row gap-md sm:items-center relative">
-<div class="flex-shrink-0 w-12 h-12 bg-tertiary-container rounded-full flex items-center justify-center text-on-tertiary-container">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">credit_card_off</span>
-</div>
-<div class="flex-1">
-<div class="flex items-center gap-sm mb-xs">
-<span class="bg-tertiary text-on-tertiary font-label-md text-label-md px-2 py-0.5 rounded-sm uppercase">Warning</span>
-<span class="font-body-md text-body-md text-on-surface-variant">2 hours ago</span>
-</div>
-<h3 class="font-title-lg text-title-lg text-primary">Payment Failed: Res #4829</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Pre-authorization failed for guest John Smith. Action required to secure booking.</p>
-</div>
-<div class="flex gap-sm sm:flex-col sm:items-end mt-md sm:mt-0">
-<button class="px-md py-sm bg-primary-container text-on-primary rounded font-label-md text-label-md hover:bg-primary transition-colors whitespace-nowrap">
-                        Retry Payment
-                    </button>
-</div>
-</div>
-<!-- Info Alert -->
-<div class="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/30 shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] flex flex-col sm:flex-row gap-md sm:items-center relative">
-<div class="flex-shrink-0 w-12 h-12 bg-secondary-fixed rounded-full flex items-center justify-center text-on-secondary-fixed">
-<span class="material-symbols-outlined">sync_problem</span>
-</div>
-<div class="flex-1">
-<div class="flex items-center gap-sm mb-xs">
-<span class="bg-secondary text-on-secondary font-label-md text-label-md px-2 py-0.5 rounded-sm uppercase">Info</span>
-<span class="font-body-md text-body-md text-on-surface-variant">5 hours ago</span>
-</div>
-<h3 class="font-title-lg text-title-lg text-primary">Channel Sync Delay</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Airbnb calendar sync is currently experiencing a 15-minute delay. System is retrying automatically.</p>
-</div>
-<div class="flex gap-sm sm:flex-col sm:items-end mt-md sm:mt-0">
-<button class="px-md py-sm border border-outline-variant text-secondary rounded font-label-md text-label-md hover:bg-surface-container-high transition-colors whitespace-nowrap">
-                        View Logs
-                    </button>
-</div>
-</div>
-</div>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 p-md z-40">
+ <div class="px-md py-lg mb-md font-headline-md text-headline-md text-primary">StayHub</div>
+ <nav class="flex flex-col gap-xs"><a class="nav" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span>Dashboard</a><a class="nav" href="hotel-management.html"><span class="material-symbols-outlined">domain</span>Hoteles</a><a class="nav" href="inventory.html"><span class="material-symbols-outlined">inventory_2</span>Inventario</a><a class="nav" href="channels-sync.html"><span class="material-symbols-outlined">hub</span>Canales</a><a class="nav" href="payments.html"><span class="material-symbols-outlined">payments</span>Pagos</a><a class="nav bg-secondary-container text-on-secondary-container font-bold" href="alerts.html"><span class="material-symbols-outlined">crisis_alert</span>Operaciones</a></nav>
+</aside>
+<main class="flex-1 md:ml-64 p-lg md:p-xxl pb-24 max-w-container-max mx-auto w-full">
+ <header class="mb-xl"><h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Centro de operaciones</h1><p class="text-on-surface-variant mt-xs">Resolvé conflictos y enviá comunicaciones usando los servicios reales de StayHub.</p></header>
+ <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container"></div><div id="success-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-secondary-fixed text-on-secondary-fixed"></div>
+ <div id="acceso-denegado" class="hidden card text-center">Esta sección requiere el rol ADMIN. <a class="text-primary underline" href="index.html">Volver</a>.</div>
+ <div id="panel" class="grid grid-cols-1 xl:grid-cols-2 gap-gutter">
+  <section class="card">
+   <div class="flex gap-md items-start mb-lg"><div class="icon bg-error-container text-on-error-container"><span class="material-symbols-outlined">sync_problem</span></div><div><h2 class="font-title-lg text-title-lg text-primary">Resolver overbooking</h2><p class="text-on-surface-variant text-sm mt-xs">Busca una alternativa y retiene cupo para la reserva conflictiva.</p></div></div>
+   <form id="overbooking-form" class="grid grid-cols-1 md:grid-cols-2 gap-md">
+    <label class="field">Reserva conflictiva<input id="ov-reserva" type="number" min="1" required/></label><label class="field">Hotel<select id="ov-hotel" required></select></label>
+    <label class="field">Tipo de habitación<select id="ov-tipo" required></select></label><label class="field">Cantidad<input id="ov-cantidad" type="number" min="1" value="1" required/></label>
+    <label class="field">Check-in<input id="ov-checkin" type="date" required/></label><label class="field">Check-out<input id="ov-checkout" type="date" required/></label>
+    <label class="field">Canal de origen<select id="ov-canal"><option>BOOKING</option><option>EXPEDIA</option><option>AIRBNB</option><option>DESPEGAR</option><option>DIRECTO</option></select></label><label class="field">Referencia externa<input id="ov-referencia" required/></label>
+    <label class="field md:col-span-2">Email del huésped<input id="ov-email" type="email" required/></label><div class="md:col-span-2 flex justify-end"><button class="btn-primary"><span class="material-symbols-outlined">rule</span>Resolver conflicto</button></div>
+   </form>
+   <div id="ov-resultado" class="hidden mt-lg rounded-lg bg-surface-container-low p-md"></div>
+  </section>
+  <section class="card">
+   <div class="flex gap-md items-start mb-lg"><div class="icon bg-secondary-fixed text-on-secondary-fixed"><span class="material-symbols-outlined">send</span></div><div><h2 class="font-title-lg text-title-lg text-primary">Enviar notificación</h2><p class="text-on-surface-variant text-sm mt-xs">Comunicación puntual por email, SMS o push.</p></div></div>
+   <form id="notificacion-form" class="grid grid-cols-1 md:grid-cols-2 gap-md">
+    <label class="field md:col-span-2">Destinatario<input id="notif-destinatario" required placeholder="email, teléfono o token push"/></label>
+    <label class="field">Canal<select id="notif-canal"><option>EMAIL</option><option>SMS</option><option>PUSH</option></select></label>
+    <label class="field">Evento<select id="notif-evento"><option>CONFIRMACION_RESERVA</option><option>CANCELACION</option><option>RECORDATORIO</option><option>RESULTADO_OVERBOOKING</option><option>AVISO_PAGO</option></select></label>
+    <label class="field md:col-span-2">Asunto<input id="notif-asunto" required/></label><label class="field md:col-span-2">Mensaje<textarea id="notif-mensaje" rows="6" required></textarea></label>
+    <div class="md:col-span-2 flex justify-end"><button class="btn-primary"><span class="material-symbols-outlined">send</span>Enviar notificación</button></div>
+   </form>
+   <div id="notif-resultado" class="hidden mt-lg rounded-lg bg-surface-container-low p-md"></div>
+  </section>
+ </div>
 </main>
-<!-- Mobile Bottom Nav Bar -->
-<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl border-t border-outline-variant/30 bg-surface-container-lowest shadow-[0_-4px_20px_-4px_rgba(37,52,79,0.08)] font-label-md text-label-md text-primary flex justify-around items-center px-4 pb-safe pt-2">
-<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 p-2 rounded-lg" href="index.html">
-<span class="material-symbols-outlined mb-1">home</span>
-            Home
-        </a>
-<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 p-2 rounded-lg" href="settings.html">
-<span class="material-symbols-outlined mb-1">person</span>
-            Perfil
-        </a>
-</nav>
-
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around p-sm z-50"><a href="admin-dashboard.html" class="mobile-nav"><span class="material-symbols-outlined">dashboard</span>Inicio</a><a href="hotel-management.html" class="mobile-nav"><span class="material-symbols-outlined">domain</span>Hoteles</a><a href="channels-sync.html" class="mobile-nav"><span class="material-symbols-outlined">hub</span>Canales</a><a href="alerts.html" class="mobile-nav text-primary"><span class="material-symbols-outlined">crisis_alert</span>Operaciones</a></nav>
+<style>.nav{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:.5rem;color:#45464f}.nav:hover{background:#e4e2e4}.card{background:#fff;border:1px solid rgba(213,184,147,.3);border-radius:.75rem;padding:1.25rem;box-shadow:0 4px 20px -4px rgba(37,52,79,.08)}.field{display:flex;flex-direction:column;gap:.35rem;color:#45464f;font-size:.875rem}.field input,.field textarea,.field select{border:1px solid #c5c6ce;border-radius:.5rem;background:#fff;padding:.65rem .75rem;color:#1b1b1f}.btn-primary{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.65rem 1.1rem;background:#9fcaaf;color:#123724;font-weight:600}.btn-primary:disabled{opacity:.55}.icon{width:3rem;height:3rem;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}.mobile-nav{display:flex;flex-direction:column;align-items:center;font-size:.7rem;color:#5d5f68}</style>
 <script src="assets/js/api.js"></script>
 <script>
-(function () { Api.requireLogin(); })();
+(function(){
+ var usuario,error=document.getElementById('error-banner'),ok=document.getElementById('success-banner');if(!Api.requireLogin())return;usuario=Api.currentUser();if(!usuario||usuario.rol!=='ADMIN'){document.getElementById('acceso-denegado').classList.remove('hidden');document.getElementById('panel').classList.add('hidden');return}
+ function fallo(e){mostrarError(error,e);window.scrollTo({top:0,behavior:'smooth'})}function exito(m){ok.textContent=m;ok.classList.remove('hidden');error.classList.add('hidden');setTimeout(function(){ok.classList.add('hidden')},3000)}
+ var hotelSelect=document.getElementById('ov-hotel'),tipoSelect=document.getElementById('ov-tipo');
+ function cargarTipos(){if(!hotelSelect.value)return;Api.listarTiposHabitacion(hotelSelect.value).then(function(ts){tipoSelect.innerHTML=(ts||[]).map(function(t){return '<option value="'+t.codigo+'">'+t.codigo+' · '+t.nombre+'</option>'}).join('')}).catch(fallo)}
+ Api.listarHoteles(false).then(function(hs){hotelSelect.innerHTML=(hs||[]).map(function(h){return '<option value="'+h.id+'">'+h.nombre+'</option>'}).join('');return cargarTipos()}).catch(fallo);hotelSelect.onchange=cargarTipos;
+ document.getElementById('overbooking-form').onsubmit=function(e){e.preventDefault();var b=e.submitter;b.disabled=true;var dto={reservaIdConflictiva:Number(document.getElementById('ov-reserva').value),hotelId:Number(hotelSelect.value),tipoHabitacion:tipoSelect.value,cantidadHabitaciones:Number(document.getElementById('ov-cantidad').value),checkIn:document.getElementById('ov-checkin').value,checkOut:document.getElementById('ov-checkout').value,canalOrigen:document.getElementById('ov-canal').value,referenciaExterna:document.getElementById('ov-referencia').value.trim(),huespedEmail:document.getElementById('ov-email').value.trim()};Api.resolverOverbooking(dto).then(function(r){var c=document.getElementById('ov-resultado');c.classList.remove('hidden');c.innerHTML='<p class="font-semibold text-primary">'+(r.resuelto?'Conflicto resuelto':'No se encontró alternativa')+'</p><p class="text-sm text-on-surface-variant mt-xs">'+r.mensaje+'</p><dl class="grid grid-cols-2 gap-xs mt-md text-sm"><dt>Estrategia</dt><dd>'+r.estrategia+'</dd><dt>Tipo alternativo</dt><dd>'+(r.tipoHabitacionAlternativa||'—')+'</dd><dt>Hold</dt><dd>'+(r.holdAlternativoId||'—')+'</dd></dl>';exito('Resolución procesada.')}).catch(fallo).finally(function(){b.disabled=false})};
+ document.getElementById('notificacion-form').onsubmit=function(e){e.preventDefault();var b=e.submitter;b.disabled=true;var dto={destinatario:document.getElementById('notif-destinatario').value.trim(),tipoEvento:document.getElementById('notif-evento').value,canalPreferido:document.getElementById('notif-canal').value,asunto:document.getElementById('notif-asunto').value.trim(),mensaje:document.getElementById('notif-mensaje').value.trim()};Api.enviarNotificacion(dto).then(function(r){var c=document.getElementById('notif-resultado');c.classList.remove('hidden');c.innerHTML='<p class="font-semibold text-primary">'+(r.enviado?'Notificación enviada':'No se pudo enviar')+'</p><p class="text-sm text-on-surface-variant mt-xs">Canal: '+r.canalUtilizado+' · '+new Date(r.fecha).toLocaleString('es-AR')+'</p>';exito('Notificación procesada.')}).catch(fallo).finally(function(){b.disabled=false})};
+})();
 </script>
 </body></html>

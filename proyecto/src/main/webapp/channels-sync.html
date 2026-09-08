@@ -22,10 +22,11 @@
 <ul class="flex flex-col w-full flex-grow space-y-sm">
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html"><span class="material-symbols-outlined mr-md">dashboard</span><span class="font-title-lg text-title-lg text-[16px]">Dashboard</span></a></li>
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="inventory.html"><span class="material-symbols-outlined mr-md">inventory_2</span><span class="font-title-lg text-title-lg text-[16px]">Inventory</span></a></li>
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="hotel-management.html"><span class="material-symbols-outlined mr-md">domain</span><span class="font-title-lg text-title-lg text-[16px]">Hotels</span></a></li>
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined mr-md">event_available</span><span class="font-title-lg text-title-lg text-[16px]">Reservations</span></a></li>
 <li><a class="flex items-center px-lg py-md text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out" href="channels-sync.html"><span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 1;">hub</span><span class="font-title-lg text-title-lg text-[16px]">Channels</span></a></li>
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="payments.html"><span class="material-symbols-outlined mr-md">payments</span><span class="font-title-lg text-title-lg text-[16px]">Payments</span></a></li>
-<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="alerts.html"><span class="material-symbols-outlined mr-md">notifications</span><span class="font-title-lg text-title-lg text-[16px]">Alerts</span></a></li>
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="alerts.html"><span class="material-symbols-outlined mr-md">crisis_alert</span><span class="font-title-lg text-title-lg text-[16px]">Operations</span></a></li>
 </ul>
 </nav>
 <!-- TopAppBar (Mobile) -->
@@ -182,7 +183,7 @@
             '<td class="p-lg text-on-surface-variant whitespace-nowrap">' + hora + '</td>' +
             '<td class="p-lg font-medium text-primary">' + destino + '</td>' +
             '<td class="p-lg">' + estadoTxt + '</td>' +
-            '<td class="p-lg">' + resultado.elementosProcesados + '</td>' +
+            '<td class="p-lg">' + resultado.cantidad + '</td>' +
             '<td class="p-lg text-on-surface-variant max-w-md">' + resultado.mensaje + '</td>';
         tbody.prepend(tr);
     }

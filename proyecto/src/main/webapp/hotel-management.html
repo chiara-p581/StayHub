@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Gestión de hoteles</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 p-md z-40">
+  <div class="px-md py-lg mb-md"><span class="font-headline-md text-headline-md text-primary">StayHub</span></div>
+  <nav class="flex flex-col gap-xs">
+    <a class="nav" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+    <a class="nav bg-secondary-container text-on-secondary-container font-bold" href="hotel-management.html"><span class="material-symbols-outlined">domain</span>Hoteles</a>
+    <a class="nav" href="inventory.html"><span class="material-symbols-outlined">inventory_2</span>Inventario</a>
+    <a class="nav" href="channels-sync.html"><span class="material-symbols-outlined">hub</span>Canales</a>
+    <a class="nav" href="payments.html"><span class="material-symbols-outlined">payments</span>Pagos</a>
+    <a class="nav" href="alerts.html"><span class="material-symbols-outlined">notifications</span>Operaciones</a>
+  </nav>
+</aside>
+
+<main class="flex-1 md:ml-64 p-lg md:p-xxl pb-24 max-w-container-max mx-auto w-full">
+  <header class="flex flex-col lg:flex-row lg:items-end justify-between gap-md mb-xl">
+    <div><h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Gestión de hoteles</h1><p class="text-on-surface-variant mt-xs">Administrá hoteles, tipos de habitación y habitaciones reales.</p></div>
+    <button id="btn-nuevo-hotel" class="btn-primary"><span class="material-symbols-outlined">add</span>Nuevo hotel</button>
+  </header>
+  <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container"></div>
+  <div id="success-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-secondary-fixed text-on-secondary-fixed"></div>
+  <div id="acceso-denegado" class="hidden card text-center">Esta sección requiere el rol ADMIN. <a class="text-primary underline" href="index.html">Volver</a>.</div>
+
+  <section id="panel" class="grid grid-cols-1 xl:grid-cols-12 gap-gutter">
+    <div class="xl:col-span-4 card self-start">
+      <div class="flex items-center justify-between mb-md"><h2 class="font-title-lg text-title-lg text-primary">Hoteles</h2><label class="text-label-md text-on-surface-variant"><input id="ver-inactivos" type="checkbox" class="rounded text-primary"/> Ver inactivos</label></div>
+      <div id="hoteles-lista" class="flex flex-col gap-sm"></div>
+      <p id="hoteles-vacio" class="hidden text-on-surface-variant py-lg text-center">No hay hoteles cargados.</p>
+    </div>
+
+    <div class="xl:col-span-8 space-y-gutter">
+      <form id="hotel-form" class="card hidden">
+        <div class="flex justify-between items-center mb-lg"><h2 id="hotel-form-title" class="font-title-lg text-title-lg text-primary">Nuevo hotel</h2><button type="button" data-cerrar="hotel-form" class="icon-btn"><span class="material-symbols-outlined">close</span></button></div>
+        <input id="hotel-id" type="hidden"/>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+          <label class="field">Nombre<input id="hotel-nombre" required/></label>
+          <label class="field">Dirección<input id="hotel-direccion" required/></label>
+          <label class="field">Ciudad<input id="hotel-ciudad" required/></label>
+          <label class="field">País<input id="hotel-pais" required/></label>
+          <label class="field md:col-span-2">Descripción<textarea id="hotel-descripcion" rows="3"></textarea></label>
+          <label class="field md:col-span-2">Servicios <span class="hint">separados por coma</span><input id="hotel-servicios" placeholder="wifi, desayuno, piscina"/></label>
+        </div>
+        <div class="flex justify-end gap-sm mt-lg"><button type="button" data-cerrar="hotel-form" class="btn-secondary">Cancelar</button><button class="btn-primary" type="submit">Guardar hotel</button></div>
+      </form>
+
+      <div id="detalle-vacio" class="card text-center text-on-surface-variant py-xxl">Elegí un hotel para administrar sus habitaciones.</div>
+      <section id="detalle" class="hidden space-y-gutter">
+        <div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-md"><div><p class="text-label-md uppercase text-on-surface-variant">Hotel seleccionado</p><h2 id="detalle-nombre" class="font-headline-md text-headline-md text-primary"></h2><p id="detalle-ubicacion" class="text-on-surface-variant"></p></div><div class="flex gap-sm"><button id="btn-editar-hotel" class="btn-secondary">Editar</button><button id="btn-baja-hotel" class="btn-danger">Dar de baja</button></div></div>
+
+        <div class="card">
+          <div class="flex items-center justify-between mb-md"><div><h3 class="font-title-lg text-title-lg text-primary">Tipos de habitación</h3><p class="text-on-surface-variant text-sm">Categorías y capacidad máxima.</p></div><button id="btn-nuevo-tipo" class="btn-secondary"><span class="material-symbols-outlined">add</span>Agregar</button></div>
+          <form id="tipo-form" class="hidden bg-surface-container-low rounded-lg p-md mb-md grid grid-cols-1 md:grid-cols-2 gap-sm">
+            <input id="tipo-id" type="hidden"/><label class="field">Código<input id="tipo-codigo" required/></label><label class="field">Nombre<input id="tipo-nombre" required/></label><label class="field">Capacidad<input id="tipo-capacidad" type="number" min="1" required/></label><label class="field">Características<input id="tipo-caracteristicas" placeholder="balcón, accesible"/></label><label class="field md:col-span-2">Descripción<textarea id="tipo-descripcion" rows="2"></textarea></label><div class="md:col-span-2 flex justify-end gap-sm"><button type="button" data-cerrar="tipo-form" class="btn-secondary">Cancelar</button><button class="btn-primary">Guardar tipo</button></div>
+          </form>
+          <div id="tipos-lista" class="grid grid-cols-1 md:grid-cols-2 gap-sm"></div><p id="tipos-vacio" class="hidden text-on-surface-variant py-md">No hay tipos activos.</p>
+        </div>
+
+        <div class="card">
+          <div class="flex items-center justify-between mb-md"><div><h3 class="font-title-lg text-title-lg text-primary">Habitaciones</h3><p class="text-on-surface-variant text-sm">Unidades físicas disponibles en el hotel.</p></div><button id="btn-nueva-habitacion" class="btn-secondary"><span class="material-symbols-outlined">add</span>Agregar</button></div>
+          <form id="habitacion-form" class="hidden bg-surface-container-low rounded-lg p-md mb-md grid grid-cols-1 md:grid-cols-2 gap-sm">
+            <input id="habitacion-id" type="hidden"/><label class="field">Número<input id="habitacion-numero" required/></label><label class="field">Piso<input id="habitacion-piso" type="number" required/></label><label class="field">Tipo<select id="habitacion-tipo" required></select></label><label class="field">Características<input id="habitacion-caracteristicas" placeholder="vista al mar, minibar"/></label><div class="md:col-span-2 flex justify-end gap-sm"><button type="button" data-cerrar="habitacion-form" class="btn-secondary">Cancelar</button><button class="btn-primary">Guardar habitación</button></div>
+          </form>
+          <div class="overflow-x-auto"><table class="w-full text-left min-w-[560px]"><thead><tr class="border-b border-outline-variant text-label-md uppercase text-on-surface-variant"><th class="py-sm">Número</th><th>Piso</th><th>Tipo</th><th>Capacidad</th><th>Acciones</th></tr></thead><tbody id="habitaciones-body"></tbody></table></div><p id="habitaciones-vacio" class="hidden text-on-surface-variant py-md">No hay habitaciones activas.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around p-sm z-50"><a href="admin-dashboard.html" class="mobile-nav"><span class="material-symbols-outlined">dashboard</span>Inicio</a><a href="hotel-management.html" class="mobile-nav text-primary"><span class="material-symbols-outlined">domain</span>Hoteles</a><a href="inventory.html" class="mobile-nav"><span class="material-symbols-outlined">inventory_2</span>Inventario</a><a href="settings.html" class="mobile-nav"><span class="material-symbols-outlined">person</span>Perfil</a></nav>
+
+<style>
+.nav{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:.5rem;color:#45464f}.nav:hover{background:#e4e2e4}.card{background:#fff;border:1px solid rgba(213,184,147,.3);border-radius:.75rem;padding:1.25rem;box-shadow:0 4px 20px -4px rgba(37,52,79,.08)}.field{display:flex;flex-direction:column;gap:.35rem;color:#45464f;font-size:.875rem}.field input,.field textarea,.field select{border:1px solid #c5c6ce;border-radius:.5rem;background:#fff;padding:.65rem .75rem;color:#1b1b1f}.hint{font-size:.75rem;color:#767680}.btn-primary,.btn-secondary,.btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border-radius:999px;padding:.6rem 1rem;font-weight:600}.btn-primary{background:#9fcaaf;color:#123724}.btn-secondary{border:1px solid #5d645f;color:#415f4c}.btn-danger{border:1px solid #ba1a1a;color:#ba1a1a}.icon-btn{padding:.4rem;border-radius:999px}.mobile-nav{display:flex;flex-direction:column;align-items:center;font-size:.7rem;color:#5d5f68}
+</style>
+<script src="assets/js/api.js"></script>
+<script>
+(function(){
+  var usuario, hoteles=[], hotelActual=null, tipos=[], habitaciones=[];
+  var error=document.getElementById('error-banner'), exito=document.getElementById('success-banner');
+  if(!Api.requireLogin()) return; usuario=Api.currentUser();
+  if(!usuario || usuario.rol!=='ADMIN'){document.getElementById('acceso-denegado').classList.remove('hidden');document.getElementById('panel').classList.add('hidden');return;}
+  function lista(v){return (v||'').split(',').map(function(x){return x.trim();}).filter(Boolean)}
+  function avisar(m){exito.textContent=m;exito.classList.remove('hidden');error.classList.add('hidden');setTimeout(function(){exito.classList.add('hidden')},3000)}
+  function fallo(e){mostrarError(error,e);window.scrollTo({top:0,behavior:'smooth'})}
+  function cerrar(id){document.getElementById(id).classList.add('hidden')}
+  document.querySelectorAll('[data-cerrar]').forEach(function(b){b.onclick=function(){cerrar(b.dataset.cerrar)}});
+  function cargarHoteles(){return Api.listarHoteles(document.getElementById('ver-inactivos').checked).then(function(r){hoteles=r||[];pintarHoteles();if(hotelActual){var h=hoteles.find(function(x){return x.id===hotelActual.id});if(h) seleccionar(h);}})}
+  function pintarHoteles(){var c=document.getElementById('hoteles-lista');c.innerHTML='';document.getElementById('hoteles-vacio').classList.toggle('hidden',hoteles.length>0);hoteles.forEach(function(h){var b=document.createElement('button');b.className='text-left p-md rounded-lg border '+(hotelActual&&hotelActual.id===h.id?'border-primary bg-secondary-container/30':'border-outline-variant/30 hover:bg-surface-container-low');b.innerHTML='<span class="font-semibold text-primary">'+h.nombre+'</span><span class="block text-sm text-on-surface-variant">'+h.ciudad+', '+h.pais+(h.activo?'':' · Inactivo')+'</span>';b.onclick=function(){seleccionar(h)};c.appendChild(b)})}
+  function seleccionar(h){hotelActual=h;document.getElementById('detalle-vacio').classList.add('hidden');document.getElementById('detalle').classList.remove('hidden');document.getElementById('detalle-nombre').textContent=h.nombre;document.getElementById('detalle-ubicacion').textContent=h.direccion+' · '+h.ciudad+', '+h.pais;pintarHoteles();return Promise.all([Api.listarTiposHabitacion(h.id,false),Api.listarHabitaciones(h.id,false)]).then(function(r){tipos=r[0]||[];habitaciones=r[1]||[];pintarTipos();pintarHabitaciones()}).catch(fallo)}
+  function abrirHotel(h){document.getElementById('hotel-form').classList.remove('hidden');document.getElementById('hotel-form-title').textContent=h?'Editar hotel':'Nuevo hotel';document.getElementById('hotel-id').value=h?h.id:'';['nombre','direccion','ciudad','pais','descripcion'].forEach(function(k){document.getElementById('hotel-'+k).value=h?(h[k]||''):''});document.getElementById('hotel-servicios').value=h?[...(h.servicios||[])].join(', '):''}
+  document.getElementById('btn-nuevo-hotel').onclick=function(){abrirHotel(null)};document.getElementById('btn-editar-hotel').onclick=function(){abrirHotel(hotelActual)};document.getElementById('ver-inactivos').onchange=cargarHoteles;
+  document.getElementById('hotel-form').onsubmit=function(e){e.preventDefault();var id=document.getElementById('hotel-id').value;var dto={nombre:document.getElementById('hotel-nombre').value.trim(),direccion:document.getElementById('hotel-direccion').value.trim(),ciudad:document.getElementById('hotel-ciudad').value.trim(),pais:document.getElementById('hotel-pais').value.trim(),descripcion:document.getElementById('hotel-descripcion').value.trim(),servicios:lista(document.getElementById('hotel-servicios').value)};(id?Api.modificarHotel(id,dto):Api.crearHotel(dto)).then(function(h){cerrar('hotel-form');hotelActual=h;avisar(id?'Hotel actualizado.':'Hotel creado.');return cargarHoteles()}).catch(fallo)};
+  document.getElementById('btn-baja-hotel').onclick=function(){if(!confirm('¿Dar de baja '+hotelActual.nombre+'?'))return;Api.eliminarHotel(hotelActual.id).then(function(){avisar('Hotel dado de baja.');hotelActual=null;document.getElementById('detalle').classList.add('hidden');document.getElementById('detalle-vacio').classList.remove('hidden');return cargarHoteles()}).catch(fallo)};
+  function pintarTipos(){var c=document.getElementById('tipos-lista');c.innerHTML='';document.getElementById('tipos-vacio').classList.toggle('hidden',tipos.length>0);tipos.forEach(function(t){var d=document.createElement('div');d.className='border border-outline-variant/30 rounded-lg p-md';d.innerHTML='<div class="flex justify-between"><div><b class="text-primary">'+t.codigo+' · '+t.nombre+'</b><p class="text-sm text-on-surface-variant">Hasta '+t.capacidadMaxima+' huéspedes</p></div><div><button class="editar-tipo icon-btn" title="Editar"><span class="material-symbols-outlined">edit</span></button><button class="baja-tipo icon-btn text-error" title="Dar de baja"><span class="material-symbols-outlined">delete</span></button></div></div>';d.querySelector('.editar-tipo').onclick=function(){abrirTipo(t)};d.querySelector('.baja-tipo').onclick=function(){if(confirm('¿Dar de baja '+t.nombre+'?'))Api.eliminarTipoHabitacion(hotelActual.id,t.id).then(function(){avisar('Tipo dado de baja.');return seleccionar(hotelActual)}).catch(fallo)};c.appendChild(d)});document.getElementById('habitacion-tipo').innerHTML=tipos.map(function(t){return '<option value="'+t.id+'">'+t.codigo+' · '+t.nombre+'</option>'}).join('')}
+  function abrirTipo(t){document.getElementById('tipo-form').classList.remove('hidden');document.getElementById('tipo-id').value=t?t.id:'';['codigo','nombre','descripcion','capacidad'].forEach(function(k){var prop=k==='capacidad'?'capacidadMaxima':k;document.getElementById('tipo-'+k).value=t?(t[prop]||''):''});document.getElementById('tipo-caracteristicas').value=t?[...(t.caracteristicas||[])].join(', '):''}
+  document.getElementById('btn-nuevo-tipo').onclick=function(){abrirTipo(null)};document.getElementById('tipo-form').onsubmit=function(e){e.preventDefault();var id=document.getElementById('tipo-id').value,dto={codigo:document.getElementById('tipo-codigo').value.trim(),nombre:document.getElementById('tipo-nombre').value.trim(),descripcion:document.getElementById('tipo-descripcion').value.trim(),capacidadMaxima:Number(document.getElementById('tipo-capacidad').value),caracteristicas:lista(document.getElementById('tipo-caracteristicas').value)};(id?Api.modificarTipoHabitacion(hotelActual.id,id,dto):Api.crearTipoHabitacion(hotelActual.id,dto)).then(function(){cerrar('tipo-form');avisar(id?'Tipo actualizado.':'Tipo creado.');return seleccionar(hotelActual)}).catch(fallo)};
+  function pintarHabitaciones(){var b=document.getElementById('habitaciones-body');b.innerHTML='';document.getElementById('habitaciones-vacio').classList.toggle('hidden',habitaciones.length>0);habitaciones.forEach(function(h){var tr=document.createElement('tr');tr.className='border-b border-surface-container-high';tr.innerHTML='<td class="py-sm">'+h.numero+'</td><td>'+h.piso+'</td><td>'+h.tipoHabitacionCodigo+'</td><td>'+h.capacidadMaxima+'</td><td><button class="editar-hab text-secondary mr-sm">Editar</button><button class="baja-hab text-error">Baja</button></td>';tr.querySelector('.editar-hab').onclick=function(){abrirHabitacion(h)};tr.querySelector('.baja-hab').onclick=function(){if(confirm('¿Dar de baja la habitación '+h.numero+'?'))Api.eliminarHabitacion(hotelActual.id,h.id).then(function(){avisar('Habitación dada de baja.');return seleccionar(hotelActual)}).catch(fallo)};b.appendChild(tr)})}
+  function abrirHabitacion(h){if(!tipos.length){fallo(new Error('Primero creá un tipo de habitación.'));return}document.getElementById('habitacion-form').classList.remove('hidden');document.getElementById('habitacion-id').value=h?h.id:'';document.getElementById('habitacion-numero').value=h?h.numero:'';document.getElementById('habitacion-piso').value=h?h.piso:'';document.getElementById('habitacion-tipo').value=h?h.tipoHabitacionId:tipos[0].id;document.getElementById('habitacion-caracteristicas').value=h?[...(h.caracteristicas||[])].join(', '):''}
+  document.getElementById('btn-nueva-habitacion').onclick=function(){abrirHabitacion(null)};document.getElementById('habitacion-form').onsubmit=function(e){e.preventDefault();var id=document.getElementById('habitacion-id').value,dto={tipoHabitacionId:Number(document.getElementById('habitacion-tipo').value),numero:document.getElementById('habitacion-numero').value.trim(),piso:Number(document.getElementById('habitacion-piso').value),caracteristicas:lista(document.getElementById('habitacion-caracteristicas').value)};(id?Api.modificarHabitacion(hotelActual.id,id,dto):Api.crearHabitacion(hotelActual.id,dto)).then(function(){cerrar('habitacion-form');avisar(id?'Habitación actualizada.':'Habitación creada.');return seleccionar(hotelActual)}).catch(fallo)};
+  cargarHoteles().catch(fallo);
+})();
+</script>
+</body>
+</html>
