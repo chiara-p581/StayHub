@@ -4,4 +4,36 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+
+  <!-- Seguridad declarativa mínima pedida por el TP: solo un usuario logueado
+       con rol ADMIN o HUESPED puede cancelar una reserva directa
+       (DELETE /api/reservas/{id}). Ambos roles pueden cancelar -no es un chequeo
+       de "dueño de la reserva", es autorización por rol- porque en la vida real
+       cualquier huésped logueado tiene que poder cancelar su reserva, no solo
+       el personal del hotel. El resto de la API queda sin cambios. -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>CancelarReserva</web-resource-name>
+      <url-pattern>/api/reservas/*</url-pattern>
+      <http-method>DELETE</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>ADMIN</role-name>
+      <role-name>HUESPED</role-name>
+    </auth-constraint>
+  </security-constraint>
+
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>ApplicationRealm</realm-name>
+  </login-config>
+
+  <security-role>
+    <role-name>ADMIN</role-name>
+  </security-role>
+
+  <security-role>
+    <role-name>HUESPED</role-name>
+  </security-role>
+
 </web-app>

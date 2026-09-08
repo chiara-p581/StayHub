@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Help &amp;amp; FAQ</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+<style>
+.accordion-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+.accordion-item.active .accordion-content {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+.accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+.glass-card {
+            background: rgba(251, 248, 251, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 198, 206, 0.3);
+        }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar (Suppressed as this is likely a modal or focused task screen, but keeping a simple header for context as requested by prompt "Help and FAQ screen") -->
+<header class="bg-surface border-b border-outline-variant flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto shadow-sm sticky top-0 z-40">
+<div class="flex items-center gap-sm">
+<a href="index.html" class="p-sm hover:bg-surface-container-high rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</a>
+<h1 class="font-headline-md text-headline-md text-primary">Help &amp; FAQ</h1>
+</div>
+<div class="flex items-center gap-sm">
+<a href="alerts.html" class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high p-sm rounded-full transition-colors">notifications</a>
+</div>
+</header>
+<main class="flex-grow w-full max-w-container-max mx-auto px-md md:px-lg py-xl flex flex-col items-center">
+<!-- Hero Search Section -->
+<div class="w-full max-w-3xl text-center mb-xl">
+<h2 class="font-headline-lg text-headline-lg md:text-display-lg text-primary mb-md">How can we help you today?</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-lg">Search our knowledge base or browse categories below.</p>
+<div class="relative w-full max-w-2xl mx-auto group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-xl pr-md py-lg rounded-full border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all shadow-sm font-body-lg text-body-lg text-on-surface placeholder:text-outline-variant" placeholder="Search for 'cancellation policy'..." type="text">
+</div>
+</div>
+<!-- Categories Bento Grid -->
+<div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md mb-xxl">
+<!-- Booking Process -->
+<div class="glass-card rounded-xl p-lg flex flex-col items-center text-center hover:-translate-y-1 transition-transform duration-300 cursor-pointer shadow-sm hover:shadow-md border-t-2 border-t-tertiary-fixed-dim">
+<div class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center mb-md text-on-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 32px;">calendar_month</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary mb-sm">Booking Process</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Learn how to search, book, and modify your reservations easily.</p>
+</div>
+<!-- Cancellations -->
+<div class="glass-card rounded-xl p-lg flex flex-col items-center text-center hover:-translate-y-1 transition-transform duration-300 cursor-pointer shadow-sm hover:shadow-md border-t-2 border-t-tertiary-fixed-dim">
+<div class="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mb-md text-on-error-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 32px;">event_busy</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary mb-sm">Cancellations</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Policies, refunds, and how to cancel an upcoming stay.</p>
+</div>
+<!-- Payments -->
+<div class="glass-card rounded-xl p-lg flex flex-col items-center text-center hover:-translate-y-1 transition-transform duration-300 cursor-pointer shadow-sm hover:shadow-md border-t-2 border-t-tertiary-fixed-dim">
+<div class="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center mb-md text-on-primary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 32px;">payments</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary mb-sm">Payments</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Invoices, accepted payment methods, and billing inquiries.</p>
+</div>
+<!-- Account -->
+<div class="glass-card rounded-xl p-lg flex flex-col items-center text-center hover:-translate-y-1 transition-transform duration-300 cursor-pointer shadow-sm hover:shadow-md border-t-2 border-t-tertiary-fixed-dim">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mb-md text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 32px;">manage_accounts</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-primary mb-sm">Account</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Managing your profile, preferences, and security settings.</p>
+</div>
+</div>
+<!-- FAQ Accordion List -->
+<div class="w-full max-w-3xl mb-xxl">
+<h3 class="font-headline-md text-headline-md text-primary mb-lg pb-sm border-b border-outline-variant">Frequently Asked Questions</h3>
+<div class="flex flex-col gap-sm">
+<!-- FAQ Item 1 -->
+<div class="accordion-item bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm">
+<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+<span class="font-title-lg text-title-lg text-on-surface">What is your standard cancellation policy?</span>
+<span class="material-symbols-outlined accordion-icon text-on-surface-variant transition-transform duration-300">expand_more</span>
+</button>
+<div class="accordion-content px-lg pb-lg">
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                            For most flexible rates, you can cancel your reservation free of charge up to 48 hours before your scheduled check-in time. Cancellations made within 48 hours will incur a fee equal to the first night's room rate. Non-refundable rates cannot be cancelled or modified.
+                        </p>
+</div>
+</div>
+<!-- FAQ Item 2 -->
+<div class="accordion-item bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm">
+<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+<span class="font-title-lg text-title-lg text-on-surface">Can I request an early check-in or late check-out?</span>
+<span class="material-symbols-outlined accordion-icon text-on-surface-variant transition-transform duration-300">expand_more</span>
+</button>
+<div class="accordion-content px-lg pb-lg">
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                            Standard check-in is at 3:00 PM and check-out is at 11:00 AM. We are happy to accommodate early check-in or late check-out requests based on availability. Please contact the front desk on the day of your arrival or departure to check status. Additional fees may apply.
+                        </p>
+</div>
+</div>
+<!-- FAQ Item 3 -->
+<div class="accordion-item bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm">
+<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+<span class="font-title-lg text-title-lg text-on-surface">Are pets allowed at the property?</span>
+<span class="material-symbols-outlined accordion-icon text-on-surface-variant transition-transform duration-300">expand_more</span>
+</button>
+<div class="accordion-content px-lg pb-lg">
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                            Yes, we are a pet-friendly boutique hotel! We welcome well-behaved dogs up to 40 lbs. A non-refundable pet fee of $50 per stay applies. Please let us know in advance if you plan to bring your furry friend so we can prepare some welcome treats.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Contact Support -->
+<div class="w-full max-w-3xl bg-surface-container-low rounded-xl p-xl flex flex-col md:flex-row items-center justify-between shadow-sm border border-outline-variant">
+<div class="mb-lg md:mb-0 text-center md:text-left">
+<h4 class="font-title-lg text-title-lg text-primary mb-xs">Still need help?</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Our guest experience team is available 24/7 to assist you.</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-on-primary font-label-md text-label-md px-lg py-md rounded-full shadow-sm transition-colors flex items-center gap-sm uppercase tracking-wider">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">support_agent</span>
+                Contact Support
+            </button>
+</div>
+</main>
+</body></html>

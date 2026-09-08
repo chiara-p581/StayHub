@@ -1,0 +1,439 @@
+{
+  "info": {
+    "_postman_id": "8f5c2b30-4e21-4b7a-9d3a-1c6e2f9a7b40",
+    "name": "StayHub - ServicioDeInventarioYTarifas",
+    "description": "Prueba ServicioDeInventarioYTarifas y sus conexiones con el resto de StayHub.\n\nRequisitos:\n- WildFly corriendo con el WAR StayHub desplegado (context root `/StayHub`) y el datasource `java:/PostgresDS` dado de alta.\n- Ejecutar las carpetas EN ORDEN: 01 carga datos base que usan las demás.\n- Cada request tiene tests automáticos (pestaña Tests / Test Results) que validan status code y, donde aplica, que el efecto en el inventario haya sido el esperado.\n\nSi las fechas por defecto (variables `desde`/`hasta`/`desdeCarga`/`hastaCarga`) ya quedaron en el pasado, actualizalas antes de correr la colección: son fechas futuras relativas al momento en que se armó esta colección.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/StayHub/api" },
+    { "key": "hotelId", "value": "1" },
+    { "key": "hotelIdAlt", "value": "99" },
+    { "key": "desdeCarga", "value": "2026-09-01" },
+    { "key": "hastaCarga", "value": "2026-09-10" },
+    { "key": "desde", "value": "2026-09-01" },
+    { "key": "hasta", "value": "2026-09-05" },
+    { "key": "reservaId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Inventario y Tarifas (API propia)",
+      "description": "Da de alta capacidad/tarifa para dos tipos de habitación del hotel {{hotelId}} y verifica que las consultas de lectura reflejen esos datos.",
+      "item": [
+        {
+          "name": "Cargar inventario - DOBLE",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"desde\": \"{{desdeCarga}}\",\n  \"hasta\": \"{{hastaCarga}}\",\n  \"unidadesTotales\": 5,\n  \"precio\": 100.00,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/inventario-tarifas/cargas", "host": ["{{baseUrl}}"], "path": ["inventario-tarifas", "cargas"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Se cargaron 9 dias (01 al 09 de septiembre)\", function () {",
+                  "    pm.expect(body.diasCargados).to.eql(9);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cargar inventario - SIMPLE",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"SIMPLE\",\n  \"desde\": \"{{desdeCarga}}\",\n  \"hasta\": \"{{hastaCarga}}\",\n  \"unidadesTotales\": 3,\n  \"precio\": 60.00,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/inventario-tarifas/cargas", "host": ["{{baseUrl}}"], "path": ["inventario-tarifas", "cargas"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar disponibilidad",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario-tarifas", "disponibilidad"],
+              "query": [
+                { "key": "hotelId", "value": "{{hotelId}}" },
+                { "key": "desde", "value": "{{desde}}" },
+                { "key": "hasta", "value": "{{hasta}}" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "const doble = body.find(d => d.tipoHabitacion === 'DOBLE');",
+                  "const simple = body.find(d => d.tipoHabitacion === 'SIMPLE');",
+                  "pm.test(\"DOBLE tiene 5 unidades disponibles\", function () { pm.expect(doble.unidadesDisponibles).to.eql(5); });",
+                  "pm.test(\"SIMPLE tiene 3 unidades disponibles\", function () { pm.expect(simple.unidadesDisponibles).to.eql(3); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar tarifas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/tarifas?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario-tarifas", "tarifas"],
+              "query": [
+                { "key": "hotelId", "value": "{{hotelId}}" },
+                { "key": "desde", "value": "{{desde}}" },
+                { "key": "hasta", "value": "{{hasta}}" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "const doble = body.find(d => d.tipoHabitacion === 'DOBLE');",
+                  "const simple = body.find(d => d.tipoHabitacion === 'SIMPLE');",
+                  "pm.test(\"DOBLE = 400 (4 noches x 100)\", function () { pm.expect(doble.importe).to.eql(400); });",
+                  "pm.test(\"SIMPLE = 240 (4 noches x 60)\", function () { pm.expect(simple.importe).to.eql(240); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Integracion con ServicioDeReservas (GestionDeDisponibilidadPort)",
+      "description": "Prueba el circuito completo del hold: crearReserva pide un hold (baja la disponibilidad), confirmarReserva lo confirma (sin cambiar cupo) y cancelarReserva lo libera (la disponibilidad vuelve a subir). Corre despues de la carpeta 01.",
+      "item": [
+        {
+          "name": "Crear reserva (retiene hold)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 2,\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"huespedNombre\": \"Ana\",\n  \"huespedApellido\": \"Gomez\",\n  \"huespedEmail\": \"ana.gomez@example.com\",\n  \"huespedTelefono\": \"+541100000000\",\n  \"precioTotal\": 400.00,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservas", "host": ["{{baseUrl}}"], "path": ["reservas"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('reservaId', body.id);",
+                  "pm.test(\"Reserva queda PENDIENTE (hold retenido, todavia sin confirmar)\", function () {",
+                  "    pm.expect(body.estado).to.eql('PENDIENTE');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar disponibilidad tras el hold (baja a 3)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario-tarifas", "disponibilidad"],
+              "query": [
+                { "key": "hotelId", "value": "{{hotelId}}" },
+                { "key": "desde", "value": "{{desde}}" },
+                { "key": "hasta", "value": "{{hasta}}" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const doble = pm.response.json().find(d => d.tipoHabitacion === 'DOBLE');",
+                  "pm.test(\"DOBLE bajo a 3 disponibles (5 - 2 del hold)\", function () { pm.expect(doble.unidadesDisponibles).to.eql(3); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar reserva",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/reservas/{{reservaId}}/confirmacion", "host": ["{{baseUrl}}"], "path": ["reservas", "{{reservaId}}", "confirmacion"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Reserva queda CONFIRMADA\", function () { pm.expect(body.estado).to.eql('CONFIRMADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar disponibilidad tras confirmar (sigue en 3)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario-tarifas", "disponibilidad"],
+              "query": [
+                { "key": "hotelId", "value": "{{hotelId}}" },
+                { "key": "desde", "value": "{{desde}}" },
+                { "key": "hasta", "value": "{{hasta}}" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const doble = pm.response.json().find(d => d.tipoHabitacion === 'DOBLE');",
+                  "pm.test(\"Confirmar no cambia el cupo ya ocupado (sigue en 3)\", function () { pm.expect(doble.unidadesDisponibles).to.eql(3); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar reserva (libera hold)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/reservas/{{reservaId}}", "host": ["{{baseUrl}}"], "path": ["reservas", "{{reservaId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Reserva queda CANCELADA\", function () { pm.expect(body.estado).to.eql('CANCELADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar disponibilidad tras cancelar (vuelve a 5)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario-tarifas", "disponibilidad"],
+              "query": [
+                { "key": "hotelId", "value": "{{hotelId}}" },
+                { "key": "desde", "value": "{{desde}}" },
+                { "key": "hasta", "value": "{{hasta}}" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const doble = pm.response.json().find(d => d.tipoHabitacion === 'DOBLE');",
+                  "pm.test(\"Cancelar libero el hold: DOBLE vuelve a 5\", function () { pm.expect(doble.unidadesDisponibles).to.eql(5); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear reserva sin inventario cargado (queda RECHAZADA)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"SUITE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"huespedNombre\": \"Luis\",\n  \"huespedApellido\": \"Diaz\",\n  \"huespedEmail\": \"luis.diaz@example.com\",\n  \"huespedTelefono\": \"+541100000001\",\n  \"precioTotal\": 999.00,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservas", "host": ["{{baseUrl}}"], "path": ["reservas"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"201 Created (la reserva se crea igual, pero rechazada)\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Sin inventario cargado para SUITE -> SinDisponibilidadException -> RECHAZADA\", function () {",
+                  "    pm.expect(body.estado).to.eql('RECHAZADA');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Integracion con ServicioDeOverbooking (ServicioDeInventarioYTarifasPort)",
+      "description": "Prueba que ServicioDeOverbooking use la disponibilidad real de InventarioYTarifas para decidir REUBICACION (hay otro tipo de habitacion con cupo) o COMPENSACION (no lo hay).",
+      "item": [
+        {
+          "name": "Cargar inventario - hotel sin alternativa (solo DOBLE)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelIdAlt}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"desde\": \"{{desdeCarga}}\",\n  \"hasta\": \"{{hastaCarga}}\",\n  \"unidadesTotales\": 2,\n  \"precio\": 100.00,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/inventario-tarifas/cargas", "host": ["{{baseUrl}}"], "path": ["inventario-tarifas", "cargas"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolver conflicto CON alternativa -> REUBICACION",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservaIdConflictiva\": 123,\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"canalOrigen\": \"BOOKING\",\n  \"referenciaExterna\": \"TEST-OVB-1\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/overbooking/resolver", "host": ["{{baseUrl}}"], "path": ["overbooking", "resolver"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Se resuelve con REUBICACION (SIMPLE tiene cupo en el hotel {{hotelId}})\", function () {",
+                  "    pm.expect(body.resuelto).to.eql(true);",
+                  "    pm.expect(body.estrategia).to.eql('REUBICACION');",
+                  "    pm.expect(body.mensaje).to.include('SIMPLE');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolver conflicto SIN alternativa -> COMPENSACION",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservaIdConflictiva\": 456,\n  \"hotelId\": {{hotelIdAlt}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"canalOrigen\": \"BOOKING\",\n  \"referenciaExterna\": \"TEST-OVB-2\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/overbooking/resolver", "host": ["{{baseUrl}}"], "path": ["overbooking", "resolver"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Se resuelve con COMPENSACION (el hotel {{hotelIdAlt}} no tiene otro tipo cargado)\", function () {",
+                  "    pm.expect(body.estrategia).to.eql('COMPENSACION');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Nota: ServicioDeCanalesExternos",
+      "description": "ServicioDeCanalesExternos ya inyecta ServicioDeInventarioYTarifasPort (Instance<...>.isResolvable() ahora da true, y AdaptadorPortCanalesExternos responde consultarDisponibilidad/consultarTarifas) pero ese componente todavia no tiene ningun @Path/JAX-RS Resource: no existe forma de pegarle por HTTP hoy. El request de abajo pega contra la ruta que documenta su propio README para dejar eso registrado (deberia dar 404 mientras siga faltando el Resource). Es una limitacion preexistente de ServicioDeCanalesExternos, no de este componente.",
+      "item": [
+        {
+          "name": "GET /canales-externos/disponibilidad (hoy no existe el Resource -> 404 esperado)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canales-externos/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["canales-externos", "disponibilidad"],
+              "query": [
+                { "key": "hotelId", "value": "{{hotelId}}" },
+                { "key": "desde", "value": "{{desde}}" },
+                { "key": "hasta", "value": "{{hasta}}" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"404 (falta el @Path en ServicioDeCanalesExternos, no es un bug de InventarioYTarifas)\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

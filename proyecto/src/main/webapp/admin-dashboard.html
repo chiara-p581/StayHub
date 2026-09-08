@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+<style>
+.shadow-ambient { box-shadow: 0 4px 24px rgba(37, 52, 79, 0.08); }
+.border-subtle { border-color: rgba(213, 184, 147, 0.3); }
+.card-bg-subtle { background-color: rgba(213, 184, 147, 0.1); }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e4e2e4; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #c5c6ce; }
+</style>
+</head>
+<body class="bg-background text-on-background h-full font-body-md antialiased overflow-hidden flex flex-col md:flex-row">
+<!-- TopAppBar (Mobile Only) -->
+<header class="md:hidden bg-surface text-primary border-b border-outline-variant flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto z-40 fixed top-0 h-16">
+<div class="flex items-center gap-sm">
+<span class="font-headline-md text-headline-md text-primary">StayHub Admin</span>
+</div>
+<a href="alerts.html" class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">notifications</a>
+</header>
+<!-- NavigationDrawer (Desktop) -->
+<aside class="hidden md:flex flex-col h-full p-md gap-sm bg-surface-container-low shadow-sm w-64 flex-shrink-0 z-30">
+<div class="px-md py-lg mb-4 flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-primary">StayHub</span>
+<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider bg-surface-variant px-2 py-1 rounded">Admin</span>
+</div>
+<nav class="flex-1 flex flex-col gap-unit">
+<a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container rounded-lg font-bold scale-[0.98] transition-transform duration-150" href="admin-dashboard.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-body-lg font-body-lg">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="inventory.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+<span class="text-body-lg font-body-lg">Inventory</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="#reservas-table">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
+<span class="text-body-lg font-body-lg">Reservations</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="channels-sync.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">hub</span>
+<span class="text-body-lg font-body-lg">Channels</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="payments.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">payments</span>
+<span class="text-body-lg font-body-lg">Payments</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="alerts.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<span class="text-body-lg font-body-lg">Alerts</span>
+</a>
+</nav>
+<div id="perfil-admin" class="mt-auto pt-md border-t border-outline-variant flex items-center gap-sm px-sm cursor-pointer hover:bg-surface-container-high rounded-lg p-sm transition-colors duration-200"></div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 h-full overflow-y-auto mt-16 md:mt-0 bg-background pb-20 md:pb-0 scroll-smooth">
+<div class="hidden md:flex items-center justify-between px-xxl py-lg sticky top-0 bg-background/80 backdrop-blur-md z-20 border-b border-transparent transition-all duration-300" id="desktop-header">
+<div class="font-headline-lg text-headline-lg text-primary">Overview</div>
+<div class="flex items-center gap-md">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="hotel-select">Hotel</label>
+<select id="hotel-select" class="bg-surface-container-low border-none rounded-DEFAULT py-2 px-md text-body-md shadow-sm text-on-surface"></select>
+</div>
+</div>
+
+<div class="p-lg md:p-xxl md:pt-lg max-w-container-max mx-auto space-y-lg md:space-y-xxl">
+<div class="md:hidden font-headline-lg-mobile text-headline-lg-mobile text-primary mb-lg flex items-center justify-between">
+<span>Overview</span>
+<select id="hotel-select-mobile" class="bg-surface-container-low border-none rounded-DEFAULT py-2 px-md text-body-md shadow-sm text-on-surface"></select>
+</div>
+
+<div id="error-banner" class="hidden p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+<div id="acceso-denegado" class="hidden p-lg rounded-xl bg-surface border border-outline-variant text-center">
+<p class="font-body-lg text-body-lg text-on-surface-variant">Esta sección es solo para personal (rol ADMIN). <a href="index.html" class="text-primary underline">Volver al inicio</a>.</p>
+</div>
+
+<div id="panel">
+<!-- KPI Grid (calculado con datos reales de GET /api/reservas?hotelId=) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<div class="bg-surface rounded-xl p-lg shadow-ambient border-t-[2px] border-[#D5B893]">
+<h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Total reservas</h3>
+<span id="kpi-total" class="font-display-lg text-display-lg text-primary">-</span>
+</div>
+<div class="bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
+<h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Confirmadas</h3>
+<span id="kpi-confirmadas" class="font-display-lg text-display-lg text-primary">-</span>
+</div>
+<div class="bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
+<h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Pendientes</h3>
+<span id="kpi-pendientes" class="font-display-lg text-display-lg text-primary">-</span>
+</div>
+<div class="bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
+<h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Ingresos (no canceladas)</h3>
+<span id="kpi-ingresos" class="font-display-lg text-display-lg text-primary">-</span>
+</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Tabla de reservas -->
+<div id="reservas-table" class="md:col-span-8 bg-surface rounded-xl shadow-ambient p-lg border border-subtle">
+<div class="flex justify-between items-center mb-lg">
+<h2 class="font-title-lg text-title-lg text-on-surface">Reservas</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant">
+<th class="py-sm pr-md">ID</th>
+<th class="py-sm pr-md">Huésped</th>
+<th class="py-sm pr-md">Check-in</th>
+<th class="py-sm pr-md">Checkout</th>
+<th class="py-sm pr-md">Estado</th>
+<th class="py-sm pr-md">Precio</th>
+<th class="py-sm pr-md">Acciones</th>
+</tr>
+</thead>
+<tbody id="reservas-body" class="font-body-md text-body-md text-on-surface"></tbody>
+</table>
+<p id="reservas-vacio" class="hidden font-body-md text-body-md text-on-surface-variant py-lg text-center">Este hotel todavía no tiene reservas.</p>
+</div>
+</div>
+<!-- Próximas llegadas (derivado de las reservas reales) -->
+<div class="md:col-span-4 bg-surface rounded-xl shadow-ambient p-lg border border-subtle flex flex-col">
+<div class="flex justify-between items-center mb-lg">
+<h2 class="font-title-lg text-title-lg text-on-surface">Próximas llegadas</h2>
+</div>
+<div id="llegadas-lista" class="flex flex-col gap-sm flex-1 overflow-y-auto pr-1"></div>
+<p id="llegadas-vacio" class="hidden font-body-md text-body-md text-on-surface-variant">Sin check-ins en los próximos 3 días.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden bg-surface border-t border-outline-variant shadow-lg h-16">
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 scale-95 transition-all duration-200" href="admin-dashboard.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-label-md-mobile font-label-md-mobile">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors rounded-full px-4 py-1" href="inventory.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+<span class="text-label-md-mobile font-label-md-mobile">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors rounded-full px-4 py-1" href="channels-sync.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">hub</span>
+<span class="text-label-md-mobile font-label-md-mobile">Channels</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors rounded-full px-4 py-1" href="settings.html">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="text-label-md-mobile font-label-md-mobile">Perfil</span>
+</a>
+</nav>
+
+<script src="assets/js/api.js"></script>
+<script>
+(function () {
+    var errorBanner = document.getElementById("error-banner");
+    var acceso = document.getElementById("acceso-denegado");
+    var panel = document.getElementById("panel");
+
+    if (!Api.requireLogin()) return;
+    var usuario = Api.currentUser();
+    if (usuario.rol !== "ADMIN") {
+        acceso.classList.remove("hidden");
+        panel.classList.add("hidden");
+        document.getElementById("desktop-header").classList.add("hidden");
+        pintarPerfil();
+        return;
+    }
+
+    function pintarPerfil() {
+        document.getElementById("perfil-admin").innerHTML =
+            '<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold">' +
+            usuario.nombre.charAt(0) + usuario.apellido.charAt(0) + '</div>' +
+            '<div class="flex-1 min-w-0">' +
+            '<p class="text-body-md font-body-md text-on-surface font-semibold truncate">' + usuario.nombre + ' ' + usuario.apellido + '</p>' +
+            '<p class="text-label-md font-label-md text-on-surface-variant truncate">' + usuario.rol + '</p></div>' +
+            '<button id="btn-logout" class="material-symbols-outlined text-on-surface-variant" title="Cerrar sesión">logout</button>';
+        document.getElementById("btn-logout").addEventListener("click", function () {
+            Api.clearSession();
+            location.href = "index.html";
+        });
+    }
+    pintarPerfil();
+
+    function fmtMoney(n) {
+        return "$" + Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2 });
+    }
+
+    function cargarHoteles() {
+        return Api.listarHoteles(false).then(function (hoteles) {
+            var opts = hoteles.map(function (h) {
+                return '<option value="' + h.id + '">' + h.nombre + ' (' + h.ciudad + ')</option>';
+            }).join("");
+            document.getElementById("hotel-select").innerHTML = opts;
+            document.getElementById("hotel-select-mobile").innerHTML = opts;
+            return hoteles;
+        });
+    }
+
+    function cargarReservas(hotelId) {
+        return Api.listarReservasPorHotel(hotelId).then(pintarTodo);
+    }
+
+    function pintarTodo(reservas) {
+        var confirmadas = reservas.filter(function (r) { return r.estado === "CONFIRMADA"; });
+        var pendientes = reservas.filter(function (r) { return r.estado === "PENDIENTE"; });
+        var noCanceladas = reservas.filter(function (r) { return r.estado !== "CANCELADA"; });
+        var ingresos = noCanceladas.reduce(function (acc, r) { return acc + Number(r.precioTotal || 0); }, 0);
+
+        document.getElementById("kpi-total").textContent = reservas.length;
+        document.getElementById("kpi-confirmadas").textContent = confirmadas.length;
+        document.getElementById("kpi-pendientes").textContent = pendientes.length;
+        document.getElementById("kpi-ingresos").textContent = fmtMoney(ingresos);
+
+        var body = document.getElementById("reservas-body");
+        body.innerHTML = "";
+        document.getElementById("reservas-vacio").classList.toggle("hidden", reservas.length > 0);
+
+        reservas.forEach(function (r) {
+            var tr = document.createElement("tr");
+            tr.className = "border-b border-surface-container-high hover:bg-surface-container-low";
+            var estadoColor = r.estado === "CONFIRMADA" ? "text-secondary" : r.estado === "CANCELADA" ? "text-error" : "text-tertiary-fixed-dim";
+            var acciones = "";
+            if (r.estado === "PENDIENTE") {
+                acciones += '<button data-id="' + r.id + '" class="btn-confirmar text-label-md font-label-md text-secondary hover:underline mr-sm">Confirmar</button>';
+            }
+            if (r.estado !== "CANCELADA") {
+                acciones += '<button data-id="' + r.id + '" class="btn-cancelar text-label-md font-label-md text-error hover:underline">Cancelar</button>';
+            }
+            tr.innerHTML =
+                '<td class="py-sm pr-md">' + r.id + '</td>' +
+                '<td class="py-sm pr-md">' + r.huespedNombre + ' ' + r.huespedApellido + '</td>' +
+                '<td class="py-sm pr-md">' + r.checkIn + '</td>' +
+                '<td class="py-sm pr-md">' + r.checkOut + '</td>' +
+                '<td class="py-sm pr-md ' + estadoColor + ' font-semibold">' + r.estado + '</td>' +
+                '<td class="py-sm pr-md">' + fmtMoney(r.precioTotal) + ' ' + r.moneda + '</td>' +
+                '<td class="py-sm pr-md whitespace-nowrap">' + acciones + '</td>';
+            body.appendChild(tr);
+        });
+
+        body.querySelectorAll(".btn-confirmar").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                Api.confirmarReserva(btn.dataset.id).then(function () { return cargarReservas(hotelSeleccionado()); }).catch(function (err) { mostrarError(errorBanner, err); });
+            });
+        });
+        body.querySelectorAll(".btn-cancelar").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                Api.cancelarReserva(btn.dataset.id).then(function () { return cargarReservas(hotelSeleccionado()); }).catch(function (err) { mostrarError(errorBanner, err); });
+            });
+        });
+
+        // Próximas llegadas: check-in dentro de los próximos 3 días, no canceladas
+        var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+        var limite = new Date(hoy); limite.setDate(limite.getDate() + 3);
+        var llegadas = noCanceladas.filter(function (r) {
+            var d = new Date(r.checkIn + "T00:00:00");
+            return d >= hoy && d <= limite;
+        }).sort(function (a, b) { return a.checkIn.localeCompare(b.checkIn); });
+
+        var lista = document.getElementById("llegadas-lista");
+        lista.innerHTML = "";
+        document.getElementById("llegadas-vacio").classList.toggle("hidden", llegadas.length > 0);
+        llegadas.forEach(function (r) {
+            var div = document.createElement("div");
+            div.className = "p-md card-bg-subtle border-l-4 border-tertiary-fixed-dim rounded-r-lg";
+            div.innerHTML =
+                '<h4 class="text-body-md font-body-md font-semibold text-on-surface">' + r.huespedNombre + ' ' + r.huespedApellido + '</h4>' +
+                '<p class="text-label-md font-label-md text-on-surface-variant mt-1">Check-in ' + r.checkIn + ' · ' + r.tipoHabitacion + ' x' + r.cantidadHabitaciones + '</p>';
+            lista.appendChild(div);
+        });
+    }
+
+    function hotelSeleccionado() {
+        return document.getElementById("hotel-select").value;
+    }
+
+    function onHotelChange(valor) {
+        document.getElementById("hotel-select").value = valor;
+        document.getElementById("hotel-select-mobile").value = valor;
+        ocultarError(errorBanner);
+        cargarReservas(valor).catch(function (err) { mostrarError(errorBanner, err); });
+    }
+
+    cargarHoteles()
+        .then(function (hoteles) {
+            if (!hoteles.length) {
+                mostrarError(errorBanner, new Error("Todavía no hay hoteles cargados."));
+                return;
+            }
+            document.getElementById("hotel-select").addEventListener("change", function () { onHotelChange(this.value); });
+            document.getElementById("hotel-select-mobile").addEventListener("change", function () { onHotelChange(this.value); });
+            onHotelChange(hoteles[0].id);
+        })
+        .catch(function (err) { mostrarError(errorBanner, err); });
+
+    // Simple scroll shadow effect for top header
+    var mainContent = document.querySelector("main");
+    var desktopHeader = document.getElementById("desktop-header");
+    if (mainContent && desktopHeader) {
+        mainContent.addEventListener("scroll", function () {
+            if (mainContent.scrollTop > 10) {
+                desktopHeader.classList.add("shadow-ambient", "border-outline-variant");
+                desktopHeader.classList.remove("border-transparent");
+            } else {
+                desktopHeader.classList.remove("shadow-ambient", "border-outline-variant");
+                desktopHeader.classList.add("border-transparent");
+            }
+        });
+    }
+})();
+</script>
+</body></html>

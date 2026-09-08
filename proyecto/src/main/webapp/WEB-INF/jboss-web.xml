@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ata este WAR al dominio de seguridad "other" que WildFly ya trae
+     configurado por defecto (respaldado por ApplicationRealm, el mismo
+     que administra add-user.sh). Sin esto, el login-config de web.xml
+     no tendría contra qué usuario/rol validar. -->
+<jboss-web>
+    <security-domain>other</security-domain>
+</jboss-web>

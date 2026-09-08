@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Payments</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/theme.css" rel="stylesheet"/>
+<style>
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+</style>
+</head>
+<body class="bg-background text-on-background h-full flex flex-col antialiased">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-outline-variant transition-colors duration-200 ease-in-out">
+<div class="flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto h-16">
+<a href="index.html" class="font-headline-lg text-headline-lg text-primary">StayHub</a>
+<div id="session-area" class="flex items-center gap-sm"></div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<main class="flex-1 overflow-y-auto pb-24 md:pb-8 p-md md:p-gutter lg:p-xl max-w-container-max mx-auto w-full">
+<div class="mb-lg">
+<h1 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary mb-xs">Pagos</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Pagá una reserva y consultá pagos ya realizados.</p>
+</div>
+
+<div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Pagar reserva -->
+<div class="lg:col-span-5 flex flex-col gap-gutter">
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] border-t-2 border-tertiary-fixed-dim p-lg flex flex-col gap-md">
+<h2 class="font-title-lg text-title-lg text-primary mb-xs">Pagar una reserva</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-sm">StayHub todavía no guarda tarjetas guardadas: cada pago se procesa directo contra el número de reserva.</p>
+<div id="pago-error" class="hidden p-sm rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+<div id="pago-ok" class="hidden p-sm rounded-DEFAULT bg-secondary-container text-on-secondary-container font-body-md text-body-md"></div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="reserva-id">N° de reserva</label>
+<input id="reserva-id" type="number" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="monto">Monto</label>
+<input id="monto" type="number" step="0.01" min="0" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="moneda">Moneda</label>
+<input id="moneda" type="text" value="ARS" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+</div>
+</div>
+<button id="btn-pagar" class="mt-sm w-full py-md bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary/90 transition-colors">
+                            Pagar
+                        </button>
+</div>
+
+<!-- Consultar pago -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] p-lg flex flex-col gap-md">
+<h3 class="font-title-lg text-title-lg text-primary border-b border-surface-container-highest pb-sm">Consultar un pago</h3>
+<div class="flex gap-sm">
+<input id="consulta-pago-id" type="number" placeholder="N° de pago" class="flex-1 border border-outline-variant rounded-DEFAULT px-md py-sm"/>
+<button id="btn-consultar-pago" class="px-lg py-sm border border-outline text-primary rounded-DEFAULT hover:bg-surface-container-low transition-colors">Buscar</button>
+</div>
+<div id="consulta-resultado" class="hidden font-body-md text-body-md text-on-surface"></div>
+</div>
+</div>
+
+<!-- Transaction History Panel (pagos hechos en esta sesión, con datos reales de cada respuesta del backend) -->
+<div class="lg:col-span-7">
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] h-full flex flex-col">
+<div class="p-lg border-b border-surface-container-highest flex justify-between items-center">
+<h2 class="font-title-lg text-title-lg text-primary">Pagos de esta sesión</h2>
+</div>
+<div class="flex-1 overflow-y-auto">
+<div id="transacciones-lista" class="flex flex-col"></div>
+<p id="transacciones-vacio" class="font-body-md text-body-md text-on-surface-variant p-lg text-center">Todavía no hiciste ningún pago en esta sesión.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar -->
+<nav class="bg-surface border-t border-outline-variant shadow-lg fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden">
+<a href="index.html" class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-2xl mb-1">home</span>
+<span class="font-label-md-mobile text-label-md-mobile">Home</span>
+</a>
+<a href="settings.html" class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 scale-95 transition-all duration-200">
+<span class="material-symbols-outlined text-2xl mb-1 icon-fill">person</span>
+<span class="font-label-md-mobile text-label-md-mobile">Profile</span>
+</a>
+</nav>
+
+<script src="assets/js/api.js"></script>
+<script>
+(function () {
+    var errorBanner = document.getElementById("error-banner");
+
+    function pintarSesion() {
+        var usuario = Api.currentUser();
+        var area = document.getElementById("session-area");
+        if (usuario) {
+            area.innerHTML = '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary">' + usuario.nombre + '</a>';
+        } else {
+            area.innerHTML = '<a href="login.html" class="bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-full">Iniciar sesión</a>';
+        }
+    }
+    pintarSesion();
+
+    if (!Api.requireLogin()) return;
+
+    var params = new URLSearchParams(location.search);
+    if (params.get("reservaId")) document.getElementById("reserva-id").value = params.get("reservaId");
+    if (params.get("monto")) document.getElementById("monto").value = params.get("monto");
+    if (params.get("moneda")) document.getElementById("moneda").value = params.get("moneda");
+
+    function fmtMoney(n, moneda) {
+        return Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2 }) + " " + moneda;
+    }
+
+    function agregarTransaccion(pago) {
+        document.getElementById("transacciones-vacio").classList.add("hidden");
+        var lista = document.getElementById("transacciones-lista");
+        var div = document.createElement("div");
+        div.className = "group p-md border-b border-surface-container-highest flex items-center gap-md";
+        var estadoClass = pago.estado === "APROBADO" || pago.estado === "EXITOSO"
+            ? "bg-surface-container-high text-on-surface"
+            : "bg-tertiary-fixed-dim text-tertiary";
+        div.innerHTML =
+            '<div class="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center flex-shrink-0">' +
+                '<span class="material-symbols-outlined text-on-surface-variant">receipt_long</span></div>' +
+            '<div class="flex-1 min-w-0">' +
+                '<div class="flex justify-between items-baseline mb-xs">' +
+                    '<div class="font-body-lg text-body-lg font-semibold text-on-surface truncate">Reserva #' + pago.reservaId + '</div>' +
+                    '<div class="font-body-lg text-body-lg font-bold text-on-surface ml-sm whitespace-nowrap">' + fmtMoney(pago.monto, pago.moneda) + '</div>' +
+                '</div>' +
+                '<div class="flex justify-between items-center">' +
+                    '<div class="font-body-md text-body-md text-on-surface-variant truncate">Pago #' + pago.id + ' · ' + (pago.referenciaPasarela || "") + '</div>' +
+                    '<div class="font-label-md text-label-md ' + estadoClass + ' px-2 py-0.5 rounded-full whitespace-nowrap ml-sm">' + pago.estado + '</div>' +
+                '</div>' +
+            '</div>';
+        lista.prepend(div);
+    }
+
+    document.getElementById("btn-pagar").addEventListener("click", function () {
+        ocultarError(document.getElementById("pago-error"));
+        document.getElementById("pago-ok").classList.add("hidden");
+
+        var reservaId = Number(document.getElementById("reserva-id").value);
+        var monto = Number(document.getElementById("monto").value);
+        var moneda = document.getElementById("moneda").value.trim() || "ARS";
+        if (!reservaId) { mostrarError(document.getElementById("pago-error"), new Error("Ingresá el número de reserva.")); return; }
+        if (!monto) { mostrarError(document.getElementById("pago-error"), new Error("Ingresá el monto.")); return; }
+
+        var btn = document.getElementById("btn-pagar");
+        btn.disabled = true;
+        Api.procesarPago({ reservaId: reservaId, monto: monto, moneda: moneda })
+            .then(function (pago) {
+                var ok = document.getElementById("pago-ok");
+                ok.textContent = "Pago #" + pago.id + " registrado con estado " + pago.estado + ".";
+                ok.classList.remove("hidden");
+                agregarTransaccion(pago);
+            })
+            .catch(function (err) { mostrarError(document.getElementById("pago-error"), err); })
+            .finally(function () { btn.disabled = false; });
+    });
+
+    document.getElementById("btn-consultar-pago").addEventListener("click", function () {
+        ocultarError(errorBanner);
+        var id = document.getElementById("consulta-pago-id").value;
+        if (!id) { mostrarError(errorBanner, new Error("Ingresá un número de pago.")); return; }
+        Api.consultarPago(id)
+            .then(function (pago) {
+                var resultado = document.getElementById("consulta-resultado");
+                resultado.classList.remove("hidden");
+                resultado.innerHTML =
+                    "Pago #" + pago.id + " — reserva #" + pago.reservaId + " — " + fmtMoney(pago.monto, pago.moneda) +
+                    " — estado " + pago.estado + " — " + (pago.fechaPago || "");
+            })
+            .catch(function (err) { mostrarError(errorBanner, err); });
+    });
+})();
+</script>
+</body></html>
