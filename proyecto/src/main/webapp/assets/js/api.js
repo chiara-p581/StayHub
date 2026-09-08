@@ -148,7 +148,25 @@ const Api = (() => {
         listarHoteles: (incluirInactivos = false) =>
             request("hoteles", { params: { incluirInactivos } }),
         consultarHotel: (id) => request(`hoteles/${id}`),
-        listarTiposHabitacion: (hotelId) => request(`hoteles/${hotelId}/tipos-habitacion`),
+        crearHotel: (dto) => request("hoteles", { method: "POST", body: dto, auth: true }),
+        modificarHotel: (id, dto) => request(`hoteles/${id}`, { method: "PUT", body: dto, auth: true }),
+        eliminarHotel: (id) => request(`hoteles/${id}`, { method: "DELETE", auth: true }),
+        listarTiposHabitacion: (hotelId, incluirInactivos = false) =>
+            request(`hoteles/${hotelId}/tipos-habitacion`, { params: { incluirInactivos } }),
+        crearTipoHabitacion: (hotelId, dto) =>
+            request(`hoteles/${hotelId}/tipos-habitacion`, { method: "POST", body: dto, auth: true }),
+        modificarTipoHabitacion: (hotelId, tipoId, dto) =>
+            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "PUT", body: dto, auth: true }),
+        eliminarTipoHabitacion: (hotelId, tipoId) =>
+            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "DELETE", auth: true }),
+        listarHabitaciones: (hotelId, incluirInactivas = false) =>
+            request(`hoteles/${hotelId}/habitaciones`, { params: { incluirInactivas } }),
+        crearHabitacion: (hotelId, dto) =>
+            request(`hoteles/${hotelId}/habitaciones`, { method: "POST", body: dto, auth: true }),
+        modificarHabitacion: (hotelId, habitacionId, dto) =>
+            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "PUT", body: dto, auth: true }),
+        eliminarHabitacion: (hotelId, habitacionId) =>
+            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "DELETE", auth: true }),
 
         // ---- carrito de reserva (EJB @Stateful, sesión HTTP) ----
         carritoSeleccionarHotel: (dto) =>
@@ -197,6 +215,12 @@ const Api = (() => {
         // ---- pagos ----
         procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true }),
         consultarPago: (id) => request(`pagos/${id}`, { auth: true }),
+
+        // ---- operaciones ----
+        enviarNotificacion: (dto) =>
+            request("notificaciones/enviar", { method: "POST", body: dto, auth: true }),
+        resolverOverbooking: (dto) =>
+            request("overbooking/resolver", { method: "POST", body: dto, auth: true }),
     };
 })();
 
