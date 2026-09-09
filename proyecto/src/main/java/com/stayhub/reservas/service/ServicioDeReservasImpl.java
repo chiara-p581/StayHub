@@ -13,9 +13,11 @@ import com.stayhub.reservas.model.EstadoReserva;
 import com.stayhub.reservas.model.Reserva;
 import com.stayhub.reservas.repository.ReservaRepository;
 
+import jakarta.annotation.Resource;
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -71,6 +73,15 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
 
     @Inject
     private ReservaRepository repositorio;
+
+    /**
+     * Contexto EJB inyectado por el contenedor: expone el principal
+     * autenticado (el username BASIC, que por convención de registro/login
+     * es el mismo email del usuario) y sus roles. Se usa en cancelarReserva
+     * para autorizar por DUEÑO de la reserva, no solo por rol.
+     */
+    @Resource
+    private SessionContext contexto;
 
     /**
      * Dependencia opcional: si ServicioDeInventarioYTarifas todavía no fue
@@ -208,6 +219,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @RolesAllowed({"ADMIN", "HUESPED"})
     public ReservaResponse cancelarReserva(Long id) {
         Reserva reserva = buscarOFallar(id);
+        verificarPuedeCancelar(reserva);
         if (reserva.getEstado() == EstadoReserva.CANCELADA) {
             // Cancelación repetida sobre la misma reserva: no repetimos la
             // liberación del hold (mismo criterio que cancelarDesdeCanal).
@@ -324,6 +336,25 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
                     "ServicioDeInventarioYTarifas todavía no posee una implementación disponible");
         }
         return disponibilidad.get();
+    }
+
+    /**
+     * ADMIN puede cancelar cualquier reserva. Un HUESPED solo puede cancelar
+     * la suya: comparamos el principal autenticado (username BASIC = email,
+     * por convención del login de StayHub) contra el email cargado en la
+     * reserva. Si no coincide, 403 en lugar de dejar cancelar cualquier
+     * reserva ajena.
+     */
+    private void verificarPuedeCancelar(Reserva reserva) {
+        if (contexto.isCallerInRole("ADMIN")) {
+            return;
+        }
+        String autenticado = contexto.getCallerPrincipal() == null ? null : contexto.getCallerPrincipal().getName();
+        String duenio = reserva.getHuesped() == null ? null : reserva.getHuesped().getEmail();
+        if (autenticado == null || duenio == null || !autenticado.equalsIgnoreCase(duenio)) {
+            throw new ReservaException(CodigoErrorReserva.NO_AUTORIZADO,
+                    "No podés cancelar una reserva que no es tuya");
+        }
     }
 
     private Reserva buscarOFallar(Long id) {

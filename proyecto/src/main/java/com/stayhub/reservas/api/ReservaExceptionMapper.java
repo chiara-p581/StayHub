@@ -16,6 +16,7 @@ public class ReservaExceptionMapper implements ExceptionMapper<ReservaException>
             case RESERVA_NO_ENCONTRADA -> 404;
             case RESERVA_DUPLICADA, SIN_DISPONIBILIDAD, TRANSICION_DE_ESTADO_INVALIDA -> 409;
             case DEPENDENCIA_NO_DISPONIBLE -> 503;
+            case NO_AUTORIZADO -> 403;
         };
         return Response.status(estado)
                 .entity(new ErrorDTO(ex.getCodigo().name(), ex.getMessage(), OffsetDateTime.now()))
