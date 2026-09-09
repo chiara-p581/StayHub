@@ -55,6 +55,12 @@ public class ReservaResource {
         return servicio.confirmarReserva(id);
     }
 
+    @PUT
+    @Path("/{id}")
+    public ReservaResponse modificar(@PathParam("id") Long id, ReservaRequest solicitud) {
+        return servicio.modificarReserva(id, solicitud);
+    }
+
     @DELETE
     @Path("/{id}")
     public ReservaResponse cancelar(@PathParam("id") Long id) {

@@ -20,6 +20,8 @@ public interface ServicioDeReservas {
 
     ReservaResponse confirmarReserva(Long id);
 
+    ReservaResponse modificarReserva(Long id, ReservaRequest solicitud);
+
     ReservaResponse cancelarReserva(Long id);
 
     List<ReservaResponse> listarPorHotel(Long hotelId);
