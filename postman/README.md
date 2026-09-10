@@ -12,6 +12,7 @@ http://localhost:8080/StayHub/api
 | --- | --- |
 | `StayHub-ServicioDeHoteles.postman_collection.json` | ServicioDeHoteles |
 | `StayHub-InventarioYTarifas.postman_collection.json` | ServicioDeInventarioYTarifas |
+| `StayHub-ServicioDeReservas.postman_collection.json` | ServicioDeReservas (incluye Carrito de reserva y la seguridad por dueño) |
 | `Stayhub pagos.postman collection.json` | ServicioDePagos |
 | `Stayhub usuarios.postman.collection.json` | ServicioDeUsuarios |
 

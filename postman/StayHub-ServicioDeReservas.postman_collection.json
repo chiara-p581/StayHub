@@ -1,0 +1,995 @@
+{
+  "info": {
+    "_postman_id": "2f6e6d8a-9b3a-4f1a-8f2b-5b1a2c3d4e5f",
+    "name": "StayHub - ServicioDeReservas (Reservas y Carrito)",
+    "description": "Pruebas de punta a punta para ServicioDeReservas: el flujo directo de reservas (ReservaResource), la seguridad de cancelar/modificar (ownership: dueño vs. ajena vs. ADMIN) y el carrito de reserva paso a paso (CarritoDeReserva, el único EJB @Stateful del sistema). Requiere WildFly con StayHub.war desplegado, el datasource java:/PostgresDS conectado, y dos usuarios de ApplicationRealm ya creados: uno con rol HUESPED (variables huespedUser/huespedPass) y uno con rol ADMIN (adminUser/adminPass). Completar esas 4 variables de colección con los valores reales antes de correr. Ejecutar las carpetas en orden: 00 crea los datos base (hotel, tipo, inventario), 01 prueba el flujo directo, 02 prueba la seguridad por dueño, 03 prueba el carrito.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/StayHub/api"
+    },
+    {
+      "key": "hotelId",
+      "value": ""
+    },
+    {
+      "key": "desde",
+      "value": "2026-10-01"
+    },
+    {
+      "key": "hasta",
+      "value": "2026-10-10"
+    },
+    {
+      "key": "reservaFlujoId",
+      "value": ""
+    },
+    {
+      "key": "reservaId",
+      "value": ""
+    },
+    {
+      "key": "reservaIdAjena",
+      "value": ""
+    },
+    {
+      "key": "reservaIdCarrito",
+      "value": ""
+    },
+    {
+      "key": "huespedUser",
+      "value": "huesped1"
+    },
+    {
+      "key": "huespedPass",
+      "value": "CAMBIAR_PASSWORD"
+    },
+    {
+      "key": "adminUser",
+      "value": "admin"
+    },
+    {
+      "key": "adminPass",
+      "value": "CAMBIAR_PASSWORD"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Datos base (hotel, tipo, inventario)",
+      "description": "Crea un hotel de prueba propio de esta colección, le agrega un tipo DOBLE y carga inventario para las fechas que van a usar las reservas de las carpetas siguientes.",
+      "item": [
+        {
+          "name": "Crear hotel de prueba",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/hoteles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hoteles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"StayHub Reservas - Hotel de prueba\",\n  \"direccion\": \"Av. Córdoba 2000\",\n  \"ciudad\": \"Buenos Aires\",\n  \"pais\": \"Argentina\",\n  \"descripcion\": \"Hotel creado por la colección de Reservas y Carrito\",\n  \"servicios\": [\n    \"WiFi\",\n    \"Desayuno\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('hotelId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear tipo DOBLE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hoteles",
+                "{{hotelId}}",
+                "tipos-habitacion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"DOBLE\",\n  \"nombre\": \"Habitación doble\",\n  \"descripcion\": \"Habitación para dos personas\",\n  \"capacidadMaxima\": 2,\n  \"caracteristicas\": [\n    \"Cama queen\",\n    \"Baño privado\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Código DOBLE', function () { pm.expect(pm.response.json().codigo).to.eql('DOBLE'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cargar inventario DOBLE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/cargas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "cargas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"desde\": \"{{desde}}\",\n  \"hasta\": \"{{hasta}}\",\n  \"unidadesTotales\": 5,\n  \"precio\": 20000.0,\n  \"moneda\": \"ARS\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Flujo directo (ReservaResource)",
+      "description": "Crear, consultar, confirmar y listar una reserva directa. crear/consultar/confirmar/listar son @PermitAll: no hace falta autenticación.",
+      "item": [
+        {
+          "name": "Crear reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-05\",\n  \"huespedNombre\": \"Flujo\",\n  \"huespedApellido\": \"Directo\",\n  \"huespedEmail\": \"flujo.directo@mail.com\",\n  \"huespedTelefono\": \"1122334455\",\n  \"precioTotal\": 60000.0,\n  \"moneda\": \"ARS\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('reservaFlujoId', body.id);",
+                  "pm.test('Estado PENDIENTE', function () { pm.expect(body.estado).to.eql('PENDIENTE'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar reserva",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaFlujoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaFlujoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar reserva",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaFlujoId}}/confirmacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaFlujoId}}",
+                "confirmacion"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estado CONFIRMADA', function () { pm.expect(pm.response.json().estado).to.eql('CONFIRMADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar reservas del hotel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas?hotelId={{hotelId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "hotelId",
+                  "value": "{{hotelId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const id = String(pm.collectionVariables.get('reservaFlujoId'));",
+                  "pm.test('Incluye la reserva creada', function () { pm.expect(pm.response.json().some(r => String(r.id) === id)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Seguridad: cancelar y modificar (dueño vs. ajena vs. ADMIN)",
+      "description": "cancelarReserva y modificarReserva exigen @RolesAllowed({ADMIN,HUESPED}) MAS una verificación programática de dueño (SessionContext): un HUESPED solo puede operar sobre una reserva cuyo huespedEmail coincide con su username autenticado. ADMIN puede operar sobre cualquiera. Esta carpeta prueba la matriz completa: dueño, ajena, admin.",
+      "item": [
+        {
+          "name": "Crear reserva PROPIA de huesped1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-04\",\n  \"huespedNombre\": \"Huesped\",\n  \"huespedApellido\": \"Uno\",\n  \"huespedEmail\": \"{{huespedUser}}\",\n  \"huespedTelefono\": \"1100000000\",\n  \"precioTotal\": 40000.0,\n  \"moneda\": \"ARS\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('reservaId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar reserva propia",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaId}}/confirmacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaId}}",
+                "confirmacion"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear reserva AJENA (otro huésped)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-05\",\n  \"checkOut\": \"2026-10-07\",\n  \"huespedNombre\": \"Otro\",\n  \"huespedApellido\": \"Huesped\",\n  \"huespedEmail\": \"otro.huesped@mail.com\",\n  \"huespedTelefono\": \"1199999999\",\n  \"precioTotal\": 40000.0,\n  \"moneda\": \"ARS\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('reservaIdAjena', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar reserva ajena",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdAjena}}/confirmacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdAjena}}",
+                "confirmacion"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "HUESPED intenta cancelar la AJENA -> 403",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdAjena}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdAjena}}"
+              ]
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{huespedUser}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{huespedPass}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('403 Forbidden (NO_AUTORIZADO)', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "HUESPED intenta modificar la AJENA -> 403",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdAjena}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdAjena}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-05\",\n  \"checkOut\": \"2026-10-08\",\n  \"huespedNombre\": \"Otro\",\n  \"huespedApellido\": \"Huesped\",\n  \"huespedEmail\": \"otro.huesped@mail.com\",\n  \"huespedTelefono\": \"1199999999\",\n  \"precioTotal\": 45000.0,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{huespedUser}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{huespedPass}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('403 Forbidden (NO_AUTORIZADO)', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "HUESPED modifica la PROPIA -> 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-06\",\n  \"huespedNombre\": \"Huesped\",\n  \"huespedApellido\": \"Uno\",\n  \"huespedEmail\": \"{{huespedUser}}\",\n  \"huespedTelefono\": \"1100000000\",\n  \"precioTotal\": 55000.0,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{huespedUser}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{huespedPass}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estado MODIFICADA', function () { pm.expect(pm.response.json().estado).to.eql('MODIFICADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "HUESPED cancela la PROPIA -> 200",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaId}}"
+              ]
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{huespedUser}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{huespedPass}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Estado CANCELADA', function () { pm.expect(pm.response.json().estado).to.eql('CANCELADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ADMIN modifica la AJENA -> 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdAjena}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdAjena}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-05\",\n  \"checkOut\": \"2026-10-09\",\n  \"huespedNombre\": \"Otro\",\n  \"huespedApellido\": \"Huesped\",\n  \"huespedEmail\": \"otro.huesped@mail.com\",\n  \"huespedTelefono\": \"1199999999\",\n  \"precioTotal\": 60000.0,\n  \"moneda\": \"ARS\"\n}"
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{adminUser}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{adminPass}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - ADMIN puede operar sobre cualquier reserva', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ADMIN cancela la AJENA -> 200",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdAjena}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdAjena}}"
+              ]
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{adminUser}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{adminPass}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Carrito de reserva (CarritoDeReserva, @Stateful)",
+      "description": "CarritoResource es @SessionScoped: mientras Postman mantenga la cookie JSESSIONID (el cookie jar de Postman lo hace automáticamente dentro de una misma corrida), todas estas llamadas caen sobre la MISMA instancia de CarritoDeReserva y el estado se va acumulando paso a paso. Correr en orden.",
+      "item": [
+        {
+          "name": "Vaciar carrito (por las dudas)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carrito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carrito"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 o 200', function () { pm.expect([200, 204]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Paso 1: seleccionar hotel y habitación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/carrito/hotel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carrito",
+                "hotel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Todavía no está listo para confirmar', function () { pm.expect(pm.response.json().listoParaConfirmar).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Paso 2: seleccionar fechas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/carrito/fechas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carrito",
+                "fechas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkIn\": \"2026-10-03\",\n  \"checkOut\": \"2026-10-06\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Paso 3: seleccionar huésped y precio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/carrito/huesped",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carrito",
+                "huesped"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"huespedNombre\": \"Carrito\",\n  \"huespedApellido\": \"DePrueba\",\n  \"huespedEmail\": \"carrito.prueba@mail.com\",\n  \"huespedTelefono\": \"1155556666\",\n  \"precioTotal\": 45000.0,\n  \"moneda\": \"ARS\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Ya está listo para confirmar', function () { pm.expect(pm.response.json().listoParaConfirmar).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver resumen del carrito",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carrito",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carrito"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Datos acumulados de los 3 pasos', function () { const b = pm.response.json(); pm.expect(b.tipoHabitacion).to.eql('DOBLE'); pm.expect(b.huespedEmail).to.eql('carrito.prueba@mail.com'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar carrito (crea la reserva real)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carrito/confirmar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carrito",
+                "confirmar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('reservaIdCarrito', body.id);",
+                  "pm.test('Reserva creada con estado CONFIRMADA', function () { pm.expect(body.estado).to.eql('CONFIRMADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar la reserva creada por el carrito",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdCarrito}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdCarrito}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Coincide con lo armado en el carrito', function () { pm.expect(pm.response.json().huespedEmail).to.eql('carrito.prueba@mail.com'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Limpieza: ADMIN cancela la reserva del carrito",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdCarrito}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdCarrito}}"
+              ]
+            },
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{adminUser}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{adminPass}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
