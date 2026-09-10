@@ -1,0 +1,270 @@
+{
+  "info": {
+    "_postman_id": "b3af13a6-1bc8-492c-bbbd-b02abb25e231",
+    "name": "StayHub - ServicioDeOverbooking",
+    "description": "StartFragmentPruebas de punta a punta para ServicioDeOverbooking. Valida la resolución de conflictos mediante reubicación o compensación y los principales casos de validación. Requiere WildFly con StayHub.war desplegado y el datasource `java:/PostgresDS` conectado. Ejecutar las solicitudes de la carpeta 01 en orden, ya que primero se carga el inventario alternativo necesario para probar la reubicación.EndFragment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "57831494",
+    "_collection_link": "https://go.postman.co/collection/57831494-b3af13a6-1bc8-492c-bbbd-b02abb25e231?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 - Flujo completo (resolución de conflictos)",
+      "item": [
+        {
+          "name": "Setup - Cargar inventario alternativo (SUITE)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"hotelId\": 1,\r\n  \"tipoHabitacion\": \"SUITE\",\r\n  \"desde\": \"2026-09-10\",\r\n  \"hasta\": \"2026-09-12\",\r\n  \"unidadesTotales\": 3,\r\n  \"precio\": 250.00,\r\n  \"moneda\": \"USD\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/inventario-tarifas/cargas",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "inventario-tarifas",
+                "cargas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resolver - Sin alternativa (compensacion)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reservaIdConflictiva\": 2,\r\n  \"hotelId\": 99,\r\n  \"tipoHabitacion\": \"DOBLE\",\r\n  \"cantidadHabitaciones\": 1,\r\n  \"checkIn\": \"2026-10-10\",\r\n  \"checkOut\": \"2026-10-12\",\r\n  \"canalOrigen\": \"EXPEDIA\",\r\n  \"referenciaExterna\": \"EXP-002\",\r\n  \"huespedEmail\": \"otro@mail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "overbooking",
+                "resolver"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resolver - Reubicacion (Exitosa)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reservaIdConflictiva\": 1,\r\n  \"hotelId\": 1,\r\n  \"tipoHabitacion\": \"DOBLE\",\r\n  \"cantidadHabitaciones\": 1,\r\n  \"checkIn\": \"2026-09-10\",\r\n  \"checkOut\": \"2026-09-12\",\r\n  \"canalOrigen\": \"BOOKING\",\r\n  \"referenciaExterna\": \"BOOK-001\",\r\n  \"huespedEmail\": \"test@mail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "overbooking",
+                "resolver"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Validaciones aisladas",
+      "item": [
+        {
+          "name": "Resolver - Invalido (falta hotelId)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reservaIdConflictiva\": 3,\r\n  \"tipoHabitacion\": \"DOBLE\",\r\n  \"cantidadHabitaciones\": 1,\r\n  \"checkIn\": \"2026-09-10\",\r\n  \"checkOut\": \"2026-09-12\",\r\n  \"canalOrigen\": \"BOOKING\",\r\n  \"referenciaExterna\": \"BOOK-003\",\r\n  \"huespedEmail\": \"test@mail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "overbooking",
+                "resolver"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resolver - Invalido (falta tipoHabitacion)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reservaIdConflictiva\": 4,\r\n  \"hotelId\": 1,\r\n  \"cantidadHabitaciones\": 1,\r\n  \"checkIn\": \"2026-09-10\",\r\n  \"checkOut\": \"2026-09-12\",\r\n  \"canalOrigen\": \"BOOKING\",\r\n  \"referenciaExterna\": \"BOOK-004\",\r\n  \"huespedEmail\": \"test@mail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "overbooking",
+                "resolver"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resolver - Invalido (cantidadHabitaciones = 0)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reservaIdConflictiva\": 5,\r\n  \"hotelId\": 1,\r\n  \"tipoHabitacion\": \"DOBLE\",\r\n  \"cantidadHabitaciones\": 0,\r\n  \"checkIn\": \"2026-09-10\",\r\n  \"checkOut\": \"2026-09-12\",\r\n  \"canalOrigen\": \"BOOKING\",\r\n  \"referenciaExterna\": \"BOOK-005\",\r\n  \"huespedEmail\": \"test@mail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "overbooking",
+                "resolver"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resolver - Invalido (fechas invertidas)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reservaIdConflictiva\": 6,\r\n  \"hotelId\": 1,\r\n  \"tipoHabitacion\": \"DOBLE\",\r\n  \"cantidadHabitaciones\": 1,\r\n  \"checkIn\": \"2026-09-12\",\r\n  \"checkOut\": \"2026-09-10\",\r\n  \"canalOrigen\": \"BOOKING\",\r\n  \"referenciaExterna\": \"BOOK-006\",\r\n  \"huespedEmail\": \"test@mail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "overbooking",
+                "resolver"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resolver - Invalido (falta reservaIdConflictiva)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"hotelId\": 1,\r\n  \"tipoHabitacion\": \"DOBLE\",\r\n  \"cantidadHabitaciones\": 1,\r\n  \"checkIn\": \"2026-09-10\",\r\n  \"checkOut\": \"2026-09-12\",\r\n  \"canalOrigen\": \"BOOKING\",\r\n  \"referenciaExterna\": \"BOOK-001\",\r\n  \"huespedEmail\": \"test@mail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "overbooking",
+                "resolver"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
