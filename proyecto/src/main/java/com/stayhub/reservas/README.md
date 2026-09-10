@@ -29,11 +29,23 @@ no procesa pagos (ServicioDePagos), no resuelve conflictos de overbooking
 
 ## Tipo de componente
 
-`@Stateless`. Cada operación recibe todos los datos que necesita como
-parámetro; no hace falta conservar información entre llamadas. El componente
-stateful del sistema es ServicioDeInventarioYTarifas (mantiene el hold
-abierto internamente); ServicioDeReservas solo le pide y libera holds por
-id, sin guardar ese estado conversacional de su lado.
+`ServicioDeReservasImpl` es `@Stateless`: cada operación recibe todos los
+datos que necesita como parámetro; no hace falta conservar información entre
+llamadas.
+
+El componente realmente `@Stateful` del sistema es **`CarritoDeReserva`**
+(`reservas/carrito/CarritoDeReserva.java`), también dentro de
+ServicioDeReservas: el contenedor mantiene una instancia por sesión de
+usuario, que recuerda hotel/fechas/huésped mientras se arma la reserva paso
+a paso, con `@PostConstruct`/`@PreDestroy` marcando su ciclo de vida y
+`@Remove` liberándola al confirmar.
+
+ServicioDeInventarioYTarifas también maneja un concepto de estado (el hold),
+pero NO es un EJB `@Stateful`: es `@Stateless`, y ese hold vive persistido
+en la entidad `Hold` en base de datos, no en memoria de una instancia
+conversacional (ver su propio README). Son dos formas distintas de manejar
+estado — vale la pena poder explicar la diferencia si preguntan en la
+defensa oral.
 
 ## Dos caminos de entrada, una sola lógica de negocio
 
