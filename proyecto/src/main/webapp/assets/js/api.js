@@ -14,6 +14,10 @@ const Api = (() => {
     const USER_KEY = "stayhub_user";
 
     function setSession(usuario) {
+        if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
+            sessionStorage.removeItem(USER_KEY);
+            throw new Error("El servidor no devolvió una sesión de usuario válida.");
+        }
         sessionStorage.setItem(USER_KEY, JSON.stringify(usuario));
     }
 
@@ -28,11 +32,25 @@ const Api = (() => {
 
     function currentUser() {
         const raw = sessionStorage.getItem(USER_KEY);
-        return raw ? JSON.parse(raw) : null;
+        if (!raw || raw === "undefined" || raw === "null") {
+            sessionStorage.removeItem(USER_KEY);
+            return null;
+        }
+        try {
+            const usuario = JSON.parse(raw);
+            if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
+                sessionStorage.removeItem(USER_KEY);
+                return null;
+            }
+            return usuario;
+        } catch (e) {
+            sessionStorage.removeItem(USER_KEY);
+            return null;
+        }
     }
 
     function isLoggedIn() {
-        return !!sessionStorage.getItem(USER_KEY);
+        return currentUser() !== null;
     }
 
     /**
