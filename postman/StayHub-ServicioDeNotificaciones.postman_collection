@@ -1,0 +1,208 @@
+{
+  "info": {
+    "_postman_id": "56c0d341-efb3-4f38-a701-765fc2b5f618",
+    "name": "StayHub - ServicioDeNotificaciones",
+    "description": "StartFragmentPruebas de punta a punta para ServicioDeNotificaciones. Valida el envío de notificaciones por EMAIL, SMS y PUSH, junto con los principales casos de validación. Requiere WildFly con StayHub.war desplegado. La carpeta 01 prueba los envíos exitosos y la carpeta 02 las validaciones.EndFragment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "57831494",
+    "_collection_link": "https://go.postman.co/collection/57831494-56c0d341-efb3-4f38-a701-765fc2b5f618?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 - Envio por canal",
+      "item": [
+        {
+          "name": "Enviar - Email exitoso",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"destinatario\": \"test@mail.com\",\r\n  \"tipoEvento\": \"CONFIRMACION_RESERVA\",\r\n  \"canalPreferido\": \"EMAIL\",\r\n  \"asunto\": \"Confirmación de tu reserva\",\r\n  \"mensaje\": \"Tu reserva fue confirmada con éxito.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "notificaciones",
+                "enviar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar - SMS exitoso",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"destinatario\": \"+5491122334455\",\r\n  \"tipoEvento\": \"RECORDATORIO\",\r\n  \"canalPreferido\": \"SMS\",\r\n  \"asunto\": \"Recordatorio de estadía\",\r\n  \"mensaje\": \"Te esperamos mañana en el hotel.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "notificaciones",
+                "enviar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar - Push exitoso",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"destinatario\": \"device-token-abc123\",\r\n  \"tipoEvento\": \"RESULTADO_OVERBOOKING\",\r\n  \"canalPreferido\": \"PUSH\",\r\n  \"asunto\": \"Cambio en tu reserva\",\r\n  \"mensaje\": \"Te reubicamos en una habitación superior sin costo adicional.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "notificaciones",
+                "enviar"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Validaciones aisladas",
+      "item": [
+        {
+          "name": "Enviar - Invalido (falta destinatario)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"tipoEvento\": \"AVISO_PAGO\",\r\n  \"canalPreferido\": \"EMAIL\",\r\n  \"asunto\": \"Pago recibido\",\r\n  \"mensaje\": \"Confirmamos la recepción de tu pago.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "notificaciones",
+                "enviar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar - Invalido (falta canalPreferido)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"destinatario\": \"test@mail.com\",\r\n  \"tipoEvento\": \"CANCELACION\",\r\n  \"asunto\": \"Reserva cancelada\",\r\n  \"mensaje\": \"Tu reserva fue cancelada.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "notificaciones",
+                "enviar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar - Invalido (falta tipoEvento)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"destinatario\": \"test@mail.com\",\r\n  \"canalPreferido\": \"EMAIL\",\r\n  \"asunto\": \"Aviso\",\r\n  \"mensaje\": \"Mensaje de prueba.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "StayHub",
+                "api",
+                "notificaciones",
+                "enviar"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

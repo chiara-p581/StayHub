@@ -199,6 +199,53 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         return ReservaMapper.aResponse(reserva);
     }
 
+    /**
+     * Modificación de una reserva DIRECTA (fechas, tipo de habitación,
+     * cantidad, precio). Mismo criterio de autorización que cancelarReserva:
+     * ADMIN cualquiera, HUESPED solo la propia. Reutiliza
+     * GestionDeDisponibilidadPort.reemplazarHold, igual que
+     * reemplazarHoldYConfirmar (canal externo), pero sin forzar CONFIRMADA:
+     * si la reserva estaba PENDIENTE sigue PENDIENTE con el hold nuevo, y si
+     * ya estaba CONFIRMADA se reconfirma con el hold nuevo.
+     */
+    @Override
+    @PermitAll
+    public ReservaResponse modificarReserva(Long id, ReservaRequest solicitud) {
+        Reserva reserva = buscarOFallar(id);
+        if (reserva.getEstado() == EstadoReserva.CANCELADA || reserva.getEstado() == EstadoReserva.RECHAZADA) {
+            throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
+                    "No se puede modificar una reserva en estado " + reserva.getEstado());
+        }
+        validarModificacion(solicitud);
+        boolean estabaConfirmada = reserva.getEstado() == EstadoReserva.CONFIRMADA;
+
+        if (reserva.getHoldId() == null) {
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            iniciarHold(reserva);
+        } else {
+            String nuevoHoldId;
+            try {
+                nuevoHoldId = disponibilidad().reemplazarHold(reserva.getHoldId(), reserva.getHotelId(),
+                        solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(),
+                        solicitud.checkIn(), solicitud.checkOut());
+            } catch (SinDisponibilidadException ex) {
+                throw new ReservaException(CodigoErrorReserva.SIN_DISPONIBILIDAD,
+                        "No hay disponibilidad para la modificación pedida: la reserva se mantiene sin cambios", ex);
+            }
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            if (estabaConfirmada) {
+                disponibilidad().confirmarHold(nuevoHoldId);
+                reserva.confirmar(nuevoHoldId);
+            } else {
+                reserva.iniciarHold(nuevoHoldId);
+            }
+        }
+        repositorio.guardar(reserva);
+        return ReservaMapper.aResponse(reserva);
+    }
+
     @Override
     @PermitAll
     public List<ReservaResponse> listarPorHotel(Long hotelId) {
@@ -306,6 +353,13 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         return disponibilidad.get();
     }
 
+    /**
+     * ADMIN puede operar sobre cualquier reserva. Un HUESPED solo puede
+     * cancelarla o modificarla si es la suya: comparamos el principal autenticado (username BASIC = email,
+     * por convención del login de StayHub) contra el email cargado en la
+     * reserva. Si no coincide, 403 en lugar de dejar cancelar cualquier
+     * reserva ajena.
+     */
     private Reserva buscarOFallar(Long id) {
         return repositorio.buscarPorId(id)
                 .orElseThrow(() -> new ReservaException(CodigoErrorReserva.RESERVA_NO_ENCONTRADA,
@@ -327,6 +381,23 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
                 || s.precioTotal().signum() < 0 || s.moneda() == null || s.moneda().isBlank()) {
             throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
                     "La solicitud de reserva está incompleta o contiene valores inválidos");
+        }
+    }
+
+    /**
+     * Igual que validarDirecta, pero sin exigir hotelId ni datos del
+     * huésped: una modificación no cambia de hotel ni de titular, solo
+     * fechas/tipo/cantidad/precio (ver modificarReserva).
+     */
+    private void validarModificacion(ReservaRequest s) {
+        if (s == null
+                || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
+                || s.cantidadHabitaciones() < 1
+                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.precioTotal() == null || s.precioTotal().signum() < 0
+                || s.moneda() == null || s.moneda().isBlank()) {
+            throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                    "La modificación está incompleta o contiene valores inválidos");
         }
     }
 
