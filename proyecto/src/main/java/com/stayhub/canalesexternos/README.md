@@ -34,15 +34,13 @@ Las fechas usan ISO-8601 (`AAAA-MM-DD`). Los canales iniciales son `BOOKING`, `E
 
 ## Seguridad
 
-Toda la API de Canales Externos exige autenticación HTTP BASIC contra el realm de
-WildFly configurado para la aplicación. Las consultas de disponibilidad y las
-sincronizaciones requieren el rol `ADMIN`. Los webhooks de reservas OTA permiten
-`CANAL_EXTERNO` y `ADMIN`.
+Las consultas y sincronizaciones iniciadas desde la interfaz requieren una sesión
+StayHub con rol `ADMIN`. Los webhooks de reservas OTA aceptan esa sesión administrativa
+o una clave técnica enviada en `X-StayHub-Channel-Key`.
 
-Para dar de alta una cuenta técnica de una OTA se ejecuta `add-user.bat` en WildFly,
-se elige `Application User` y se asigna el grupo `CANAL_EXTERNO`. Las llamadas deben
-enviar esa cuenta mediante el encabezado `Authorization: Basic ...`; nunca se deben
-incluir esas credenciales en el código ni en el repositorio.
+La clave se configura fuera del repositorio mediante la propiedad de sistema
+`stayhub.canales.api-key` o la variable `STAYHUB_CANALES_API_KEY`. No debe incluirse
+en código, archivos versionados ni URLs.
 
 ## Configuración
 
@@ -53,6 +51,7 @@ Puede suministrarse como propiedad de sistema de WildFly o variable de entorno:
 | `stayhub.ota.booking.url` | `STAYHUB_OTA_BOOKING_URL` | URL base de Booking |
 | `stayhub.ota.booking.token` | `STAYHUB_OTA_BOOKING_TOKEN` | Bearer token opcional |
 | `stayhub.pms.wsdl` | `STAYHUB_PMS_WSDL` | URL del WSDL del PMS |
+| `stayhub.canales.api-key` | `STAYHUB_CANALES_API_KEY` | Clave técnica para autenticar webhooks OTA |
 | `stayhub.canales.timeout.conexion.ms` | `STAYHUB_CANALES_TIMEOUT_CONEXION_MS` | Timeout de conexión REST/SOAP (default 5000 ms) |
 | `stayhub.canales.timeout.lectura.ms` | `STAYHUB_CANALES_TIMEOUT_LECTURA_MS` | Timeout de lectura REST/SOAP (default 15000 ms) |
 

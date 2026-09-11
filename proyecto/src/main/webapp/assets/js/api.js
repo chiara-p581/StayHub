@@ -4,38 +4,26 @@
    desde cualquier pantalla del front. Todas las páginas cargan este
    archivo antes que su propio <script> de página.
 
-   Cómo maneja el login: el back tiene DOS sistemas de identidad hoy:
-     1) El "usuario de negocio" (POST /api/usuarios y /api/usuarios/login,
-        vive en la base de StayHub) — sirve para saber el nombre/rol
-        de quien está usando la app.
-     2) El usuario de seguridad de WildFly (ApplicationRealm, creado con
-        add-user.sh) — es el que protege con HTTP Basic las operaciones
-        sensibles (cancelar una reserva), vía @RolesAllowed/web.xml.
-   login.html pide un solo email+contraseña y los usa para las dos cosas:
-   valida contra /api/usuarios/login (para mostrar nombre/rol en la UI)
-   y guarda esas mismas credenciales como header "Authorization: Basic"
-   para las llamadas que WildFly protege. Para que ambas coincidan, el
-   usuario de WildFly tiene que existir con el mismo email/contraseña.
+   El login crea una sesión HTTP en el backend. El navegador conserva la
+   cookie JSESSIONID y sessionStorage guarda solamente los datos públicos
+   del perfil para pintar la interfaz; la contraseña nunca se almacena.
    ============================================================ */
 
 const Api = (() => {
     const BASE = "api/";
-    const AUTH_KEY = "stayhub_auth";
     const USER_KEY = "stayhub_user";
 
-    function authHeaderValue() {
-        const raw = sessionStorage.getItem(AUTH_KEY);
-        return raw ? "Basic " + raw : null;
-    }
-
-    function setSession(email, password, usuario) {
-        sessionStorage.setItem(AUTH_KEY, btoa(email + ":" + password));
+    function setSession(usuario) {
         sessionStorage.setItem(USER_KEY, JSON.stringify(usuario));
     }
 
     function clearSession() {
-        sessionStorage.removeItem(AUTH_KEY);
         sessionStorage.removeItem(USER_KEY);
+        fetch(BASE + "usuarios/sesion", {
+            method: "DELETE",
+            credentials: "same-origin",
+            keepalive: true,
+        }).catch(function () {});
     }
 
     function currentUser() {
@@ -44,7 +32,7 @@ const Api = (() => {
     }
 
     function isLoggedIn() {
-        return !!sessionStorage.getItem(AUTH_KEY);
+        return !!sessionStorage.getItem(USER_KEY);
     }
 
     /**
@@ -79,13 +67,11 @@ const Api = (() => {
         const headers = { Accept: "application/json" };
         if (body !== undefined) headers["Content-Type"] = "application/json";
         if (auth) {
-            const authValue = authHeaderValue();
-            if (!authValue) {
+            if (!isLoggedIn()) {
                 const err = new Error("Tenés que iniciar sesión para hacer esto.");
                 err.status = 401;
                 throw err;
             }
-            headers["Authorization"] = authValue;
         }
 
         let res;
@@ -93,6 +79,7 @@ const Api = (() => {
             res = await fetch(url, {
                 method,
                 headers,
+                credentials: "same-origin",
                 body: body !== undefined ? JSON.stringify(body) : undefined,
             });
         } catch (networkErr) {
@@ -111,6 +98,7 @@ const Api = (() => {
         const data = raw ? (isJson ? safeJson(raw) : raw) : null;
 
         if (!res.ok) {
+            if (res.status === 401) sessionStorage.removeItem(USER_KEY);
             const msg =
                 (data && (data.mensaje || data.message || data.error)) ||
                 (typeof data === "string" && data) ||
