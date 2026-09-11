@@ -63,6 +63,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
 
     boolean requiereAdmin(String ruta, String metodo) {
         return ruta.startsWith("canales-externos/")
+                || ruta.startsWith("demo/")
                 || ruta.startsWith("overbooking/")
                 || ruta.startsWith("notificaciones/")
                 || (!"GET".equals(metodo) && ruta.startsWith("hoteles"))

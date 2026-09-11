@@ -322,7 +322,7 @@ public class ServicioDeInventarioYTarifasImpl
                                         LocalDate checkIn, LocalDate checkOut) {
         if (hotelId == null || tipoHabitacion == null || tipoHabitacion.isBlank()
                 || cantidadHabitaciones < 1 || checkIn == null || checkOut == null
-                || !checkOut.isAfter(checkIn)) {
+                || checkIn.isBefore(LocalDate.now()) || !checkOut.isAfter(checkIn)) {
             throw new InventarioTarifasException(CodigoErrorInventarioTarifas.SOLICITUD_INVALIDA,
                     "El pedido de hold está incompleto o contiene valores inválidos"
                             + " (hotelId / tipoHabitacion / cantidadHabitaciones >= 1 / checkIn < checkOut)");

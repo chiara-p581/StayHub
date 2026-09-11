@@ -17,7 +17,7 @@
 <!-- TopAppBar -->
 <header class="bg-surface text-primary border-b border-outline-variant docked full-width top-0 z-40">
 <div class="flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto">
-<a href="index.html" class="font-headline-lg text-headline-lg text-primary">StayHub</a>
+<a href="index.html" class="font-headline-lg text-headline-lg text-primary flex items-center gap-sm"><span>StayHub</span><span id="brand-admin" class="hidden text-[10px] uppercase tracking-wider bg-secondary-container px-2 py-1 rounded-full">Admin</span></a>
 <a href="alerts.html" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors duration-200 ease-in-out text-on-surface-variant">
 <span class="material-symbols-outlined">notifications</span>
 </a>
@@ -25,7 +25,7 @@
 </header>
 <div class="flex-1 flex max-w-container-max mx-auto w-full">
 <!-- Navigation Drawer (Desktop, solo se muestra completa si sos ADMIN) -->
-<nav id="nav-admin" class="hidden md:flex flex-col h-full p-md gap-sm bg-surface-container-low shadow-sm w-64 flex-shrink-0 min-h-[calc(100vh-64px)] border-r border-outline-variant">
+<nav id="nav-admin" class="hidden flex-col h-full p-md gap-sm bg-surface-container-low shadow-sm w-64 flex-shrink-0 min-h-[calc(100vh-64px)] border-r border-outline-variant">
 <div class="px-sm py-md mb-sm">
 <h2 class="font-headline-md text-headline-md text-primary">Admin Console</h2>
 </div>
@@ -107,13 +107,17 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260911-2"></script>
+<script src="assets/js/api.js?v=20260911-3"></script>
 <script>
 (function () {
     if (!Api.requireLogin()) return;
     var usuario = Api.currentUser();
 
-    document.getElementById("nav-admin").classList.toggle("hidden", usuario.rol !== "ADMIN");
+    if (usuario.rol === "ADMIN") {
+        document.getElementById("nav-admin").classList.remove("hidden");
+        document.getElementById("nav-admin").classList.add("md:flex");
+        document.getElementById("brand-admin").classList.remove("hidden");
+    }
     document.getElementById("perfil-avatar").textContent = usuario.nombre.charAt(0) + usuario.apellido.charAt(0);
     document.getElementById("perfil-nombre").textContent = usuario.nombre + " " + usuario.apellido;
     document.getElementById("perfil-email").textContent = usuario.email;

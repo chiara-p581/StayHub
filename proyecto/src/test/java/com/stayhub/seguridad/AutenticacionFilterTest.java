@@ -28,6 +28,7 @@ class AutenticacionFilterTest {
         assertTrue(filtro.requiereAdmin("hoteles", "POST"));
         assertTrue(filtro.requiereAdmin("canales-externos/disponibilidad", "GET"));
         assertTrue(filtro.requiereAdmin("overbooking/resolver", "POST"));
+        assertTrue(filtro.requiereAdmin("demo/cargar", "POST"));
         assertFalse(filtro.requiereAdmin("carrito/confirmar", "POST"));
     }
 
