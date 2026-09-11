@@ -9,11 +9,11 @@
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex">
 <aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 p-md z-40">
- <div class="px-md py-lg mb-md font-headline-md text-headline-md text-primary">StayHub</div>
+ <a href="index.html" class="px-md py-lg mb-md font-headline-md text-headline-md text-primary flex items-center gap-sm" title="Volver al inicio"><span class="material-symbols-outlined">arrow_back</span><span>StayHub Admin</span></a>
  <nav class="flex flex-col gap-xs"><a class="nav" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span>Dashboard</a><a class="nav" href="hotel-management.html"><span class="material-symbols-outlined">domain</span>Hoteles</a><a class="nav" href="inventory.html"><span class="material-symbols-outlined">inventory_2</span>Inventario</a><a class="nav" href="channels-sync.html"><span class="material-symbols-outlined">hub</span>Canales</a><a class="nav" href="payments.html"><span class="material-symbols-outlined">payments</span>Pagos</a><a class="nav bg-secondary-container text-on-secondary-container font-bold" href="alerts.html"><span class="material-symbols-outlined">crisis_alert</span>Operaciones</a></nav>
 </aside>
 <main class="flex-1 md:ml-64 p-lg md:p-xxl pb-24 max-w-container-max mx-auto w-full">
- <header class="mb-xl"><h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Centro de operaciones</h1><p class="text-on-surface-variant mt-xs">Resolvé conflictos y enviá comunicaciones usando los servicios reales de StayHub.</p></header>
+ <header class="mb-xl flex items-start gap-md"><a href="index.html" class="md:hidden mt-xs text-primary" title="Volver al inicio" aria-label="Volver al inicio"><span class="material-symbols-outlined">arrow_back</span></a><div><p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">StayHub Admin</p><h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Centro de operaciones</h1><p class="text-on-surface-variant mt-xs">Resolvé conflictos y enviá comunicaciones usando los servicios reales de StayHub.</p></div></header>
  <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container"></div><div id="success-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-secondary-fixed text-on-secondary-fixed"></div>
  <div id="acceso-denegado" class="hidden card text-center">Esta sección requiere el rol ADMIN. <a class="text-primary underline" href="index.html">Volver</a>.</div>
  <div id="panel" class="grid grid-cols-1 xl:grid-cols-2 gap-gutter">

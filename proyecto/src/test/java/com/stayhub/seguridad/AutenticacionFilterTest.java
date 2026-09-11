@@ -9,10 +9,18 @@ class AutenticacionFilterTest {
 
     @Test
     void dejaPublicosCatalogoLoginYTarifas() {
+        assertTrue(filtro.esPublica("usuarios", "POST"));
         assertTrue(filtro.esPublica("usuarios/login", "POST"));
         assertTrue(filtro.esPublica("hoteles", "GET"));
         assertTrue(filtro.esPublica("inventario-tarifas/tarifas", "GET"));
         assertFalse(filtro.esPublica("carrito/hotel", "POST"));
+    }
+
+    @Test
+    void normalizaLasVariantesDeRutaQuePuedeEntregarWildFly() {
+        assertEquals("usuarios", filtro.normalizarRuta("/usuarios/"));
+        assertEquals("usuarios", filtro.normalizarRuta("api/usuarios"));
+        assertEquals("usuarios/login", filtro.normalizarRuta("/api/usuarios/login/"));
     }
 
     @Test
