@@ -18,7 +18,7 @@
 <!-- TopAppBar -->
 <header class="bg-surface border-b border-outline-variant transition-colors duration-200 ease-in-out">
 <div class="flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto h-16">
-<a href="index.html" class="font-headline-lg text-headline-lg text-primary">StayHub</a>
+<a href="index.html" class="font-headline-lg text-headline-lg text-primary flex items-center gap-sm"><span>StayHub</span><span id="brand-admin" class="hidden text-[10px] uppercase tracking-wider bg-secondary-container px-2 py-1 rounded-full">Admin</span></a>
 <div id="session-area" class="flex items-center gap-sm"></div>
 </div>
 </header>
@@ -96,13 +96,14 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260911-2"></script>
+<script src="assets/js/api.js?v=20260911-3"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
 
     function pintarSesion() {
         var usuario = Api.currentUser();
+        if (usuario && usuario.rol === "ADMIN") document.getElementById("brand-admin").classList.remove("hidden");
         var area = document.getElementById("session-area");
         if (usuario) {
             area.innerHTML = '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary">' + usuario.nombre + '</a>';

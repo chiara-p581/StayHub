@@ -393,7 +393,8 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         if (s == null
                 || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.cantidadHabitaciones() < 1
-                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.checkIn() == null || s.checkOut() == null
+                || s.checkIn().isBefore(java.time.LocalDate.now()) || !s.checkOut().isAfter(s.checkIn())
                 || s.precioTotal() == null || s.precioTotal().signum() < 0
                 || s.moneda() == null || s.moneda().isBlank()) {
             throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,

@@ -18,9 +18,9 @@
 <header class="bg-surface text-primary border-b border-outline-variant docked full-width top-0 z-50">
 <div class="flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto">
 <!-- Brand -->
-<div class="font-headline-lg text-headline-lg text-primary flex items-center gap-2">
-                StayHub
-            </div>
+<a href="index.html" class="font-headline-lg text-headline-lg text-primary flex items-center gap-2">
+    <span>StayHub</span><span id="brand-admin" class="hidden text-[10px] font-body-md uppercase tracking-wider bg-secondary-container text-on-secondary-container px-2 py-1 rounded-full">Admin</span>
+</a>
 <!-- Desktop Navigation Links -->
 <nav class="hidden md:flex gap-lg items-center">
 <a class="text-primary font-bold font-label-md text-label-md uppercase tracking-wider" href="index.html">Home</a>
@@ -106,7 +106,7 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260911-2"></script>
+<script src="assets/js/api.js?v=20260911-3"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -119,6 +119,7 @@
     function pintarSesion() {
         var usuario = Api.currentUser();
         if (usuario) {
+            document.getElementById("brand-admin").classList.toggle("hidden", usuario.rol !== "ADMIN");
             document.getElementById("nav-admin").classList.toggle("hidden", usuario.rol !== "ADMIN");
             sessionArea.innerHTML =
                 '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">' + usuario.nombre + '</a>' +

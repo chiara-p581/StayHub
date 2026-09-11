@@ -194,6 +194,9 @@ const Api = (() => {
         listarReservasPorHotel: (hotelId) =>
             request("reservas", { params: { hotelId }, auth: true }),
 
+        // ---- datos demostrativos (solo ADMIN; persiste mediante APIs reales) ----
+        cargarDatosDemo: () => request("demo/cargar", { method: "POST", auth: true }),
+
         // ---- inventario y tarifas ----
         consultarDisponibilidad: (hotelId, desde, hasta) =>
             request("inventario-tarifas/disponibilidad", { params: { hotelId, desde, hasta } }),
