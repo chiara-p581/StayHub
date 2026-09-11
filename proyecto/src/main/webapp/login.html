@@ -95,10 +95,7 @@
 
         Api.loginUsuario({ email: email, password: password })
             .then(function (usuario) {
-                // Guardamos las credenciales para el header HTTP Basic
-                // (protege operaciones como cancelar una reserva) y el
-                // perfil del usuario de negocio (nombre/rol) para la UI.
-                Api.setSession(email, password, usuario);
+                Api.setSession(usuario);
 
                 var params = new URLSearchParams(location.search);
                 var next = params.get("next");

@@ -13,9 +13,7 @@ import com.stayhub.reservas.model.EstadoReserva;
 import com.stayhub.reservas.model.Reserva;
 import com.stayhub.reservas.repository.ReservaRepository;
 
-import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.PermitAll;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -43,30 +41,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Ambos caminos convergen en los métodos privados crear/confirmar/cancelar,
  * para no duplicar la lógica de negocio.
  *
- * @DeclareRoles + @RolesAllowed en cancelarReserva: seguridad declarativa
- * mínima pedida por el TP. Cancelar una reserva directa exige estar
- * autenticado y tener el rol ADMIN o HUESPED; el contenedor EJB valida
- * esto solo, sin que el código de negocio tenga que preguntar "¿este
- * usuario tiene permiso?". Se apoya en el login BASIC configurado en
- * web.xml/jboss-web.xml, que autentica al llamador antes de que el pedido
- * llegue hasta acá.
- *
- * Nota: esto es autorización POR ROL, no por "dueño" de la reserva — un
- * HUESPED cualquiera puede cancelar cualquier reserva, no solo la propia.
- * Verificar que la reserva le pertenece al huésped autenticado sería una
- * capa distinta (comparar identidad contra el huésped de la reserva), más
- * allá de lo que pide la seguridad declarativa por rol de esta entrega.
- *
- * @PermitAll en el resto de los métodos: WildFly, apenas detecta CUALQUIER
- * @RolesAllowed en un bean, pasa a denegar por defecto cualquier otro
- * método del mismo bean que no tenga una anotación de seguridad explícita
- * (default-missing-method-permissions-deny-access). Sin @PermitAll acá,
- * crearReserva y el resto quedarían bloqueados para cualquiera —incluido
- * CarritoDeReserva, que los invoca sin pasar por un login HTTP— por ese
- * comportamiento del contenedor, no por el estándar Jakarta EE.
+ * La autorización HTTP se aplica en AutenticacionFilter a partir de la sesión
+ * creada por ServicioDeUsuarios. El servicio conserva @PermitAll porque también
+ * recibe invocaciones internas desde el carrito y desde Canales Externos; no debe
+ * depender de un segundo usuario duplicado en el realm de WildFly.
  */
 @Stateless
-@DeclareRoles({"ADMIN", "HUESPED"})
 public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioDeReservas {
 
     @Inject
@@ -205,7 +185,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
-    @RolesAllowed({"ADMIN", "HUESPED"})
+    @PermitAll
     public ReservaResponse cancelarReserva(Long id) {
         Reserva reserva = buscarOFallar(id);
         if (reserva.getEstado() == EstadoReserva.CANCELADA) {
@@ -340,7 +320,8 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     private void validar(SolicitudReserva s) {
         if (s == null || s.referenciaExterna() == null || s.referenciaExterna().isBlank()
                 || s.canal() == null || s.canal().isBlank() || s.hotelId() == null
-                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.checkIn() == null || s.checkOut() == null || s.checkIn().isBefore(java.time.LocalDate.now())
+                || !s.checkOut().isAfter(s.checkIn())
                 || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.cantidadHabitaciones() < 1 || s.huesped() == null || s.precioTotal() == null
                 || s.precioTotal().signum() < 0 || s.moneda() == null || s.moneda().isBlank()) {
@@ -361,7 +342,8 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         if (s == null || s.hotelId() == null
                 || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.cantidadHabitaciones() < 1
-                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.checkIn() == null || s.checkOut() == null || s.checkIn().isBefore(java.time.LocalDate.now())
+                || !s.checkOut().isAfter(s.checkIn())
                 || s.huespedNombre() == null || s.huespedNombre().isBlank()
                 || s.huespedApellido() == null || s.huespedApellido().isBlank()
                 || s.huespedEmail() == null || s.huespedEmail().isBlank()

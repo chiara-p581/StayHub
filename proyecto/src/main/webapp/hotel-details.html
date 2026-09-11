@@ -99,16 +99,16 @@
 <div class="grid grid-cols-2 gap-sm mb-md">
 <div class="flex flex-col gap-xs">
 <label class="font-label-md text-label-md text-on-surface-variant uppercase" for="precio-total">Precio total</label>
-<input id="precio-total" type="number" step="0.01" min="0" class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md"/>
+<input id="precio-total" type="number" step="0.01" min="0" readonly class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md bg-surface-container-low cursor-not-allowed"/>
 </div>
 <div class="flex flex-col gap-xs">
 <label class="font-label-md text-label-md text-on-surface-variant uppercase" for="moneda">Moneda</label>
-<input id="moneda" type="text" value="ARS" class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md"/>
+<input id="moneda" type="text" value="ARS" readonly class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md bg-surface-container-low cursor-not-allowed"/>
 </div>
 </div>
 <p id="tarifa-hint" class="font-body-md text-body-md text-on-surface-variant mb-md"></p>
 
-<button id="btn-reservar" class="w-full bg-primary text-on-primary font-title-lg text-title-lg py-md rounded-lg hover:bg-primary/90 transition-colors mb-sm">
+<button id="btn-reservar" disabled class="w-full bg-primary text-on-primary font-title-lg text-title-lg py-md rounded-lg hover:bg-primary/90 transition-colors mb-sm disabled:opacity-50 disabled:cursor-not-allowed">
                         Reservar
                     </button>
 <p class="text-center font-body-md text-body-md text-on-surface-variant">No se te va a cobrar en este paso.</p>
@@ -130,6 +130,12 @@
     var reservaError = document.getElementById("reserva-error");
     var reservaOk = document.getElementById("reserva-ok");
     var hotel = null;
+    var tarifaValida = false;
+
+    var hoy = new Date();
+    var hoyIso = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    document.getElementById("check-in").min = hoyIso;
+    document.getElementById("check-out").min = hoyIso;
 
     function escapeHtml(s) {
         var d = document.createElement("div");
@@ -182,9 +188,7 @@
             }).join("")
             : '<option value="">Sin tipos de habitación cargados</option>';
 
-        if (!tipos.length) {
-            document.getElementById("btn-reservar").disabled = true;
-        }
+        document.getElementById("btn-reservar").disabled = true;
     }
 
     function calcularTarifaEstimada() {
@@ -192,13 +196,28 @@
         var checkOut = document.getElementById("check-out").value;
         var tipo = document.getElementById("tipo-habitacion").value;
         var hint = document.getElementById("tarifa-hint");
-        if (!checkIn || !checkOut || !tipo) return;
+        var btn = document.getElementById("btn-reservar");
+        tarifaValida = false;
+        btn.disabled = true;
+        document.getElementById("precio-total").value = "";
+        if (!checkIn || !checkOut || !tipo) {
+            hint.textContent = "Elegí las fechas para calcular el precio.";
+            return;
+        }
+        if (checkIn < hoyIso) {
+            hint.textContent = "El check-in no puede estar en el pasado.";
+            return;
+        }
+        if (checkOut <= checkIn) {
+            hint.textContent = "El checkout debe ser posterior al check-in.";
+            return;
+        }
 
         Api.consultarTarifas(hotelId, checkIn, checkOut)
             .then(function (tarifas) {
                 var delTipo = tarifas.filter(function (t) { return t.tipoHabitacion === tipo; });
                 if (!delTipo.length) {
-                    hint.textContent = "No hay tarifa cargada para esas fechas: completá el precio manualmente.";
+                    hint.textContent = "No hay tarifa cargada para esas fechas. Elegí otro período o consultá al hotel.";
                     return;
                 }
                 var total = delTipo.reduce(function (acc, t) { return acc + Number(t.importe); }, 0);
@@ -206,12 +225,20 @@
                 total = total * cantidad;
                 document.getElementById("precio-total").value = total.toFixed(2);
                 document.getElementById("moneda").value = delTipo[0].moneda || "ARS";
-                hint.textContent = "Tarifa sugerida según lo cargado en Inventario y Tarifas.";
+                tarifaValida = true;
+                btn.disabled = false;
+                hint.textContent = "Precio calculado con las tarifas del hotel para toda la estadía.";
             })
             .catch(function () {
-                hint.textContent = "No pudimos calcular la tarifa automáticamente: completá el precio manualmente.";
+                hint.textContent = "No pudimos obtener la tarifa. Intentá nuevamente.";
             });
     }
+
+    document.getElementById("check-in").addEventListener("change", function () {
+        var salida = document.getElementById("check-out");
+        salida.min = this.value || hoyIso;
+        if (salida.value && salida.value <= this.value) salida.value = "";
+    });
 
     ["check-in", "check-out", "tipo-habitacion", "cantidad-habitaciones"].forEach(function (id) {
         document.getElementById(id).addEventListener("change", calcularTarifaEstimada);
@@ -235,7 +262,9 @@
         if (!tipoHabitacion) { mostrarError(reservaError, new Error("Elegí un tipo de habitación.")); return; }
         if (!checkIn || !checkOut) { mostrarError(reservaError, new Error("Elegí check-in y checkout.")); return; }
         if (!telefono) { mostrarError(reservaError, new Error("Ingresá un teléfono de contacto.")); return; }
-        if (!precioTotal) { mostrarError(reservaError, new Error("Ingresá el precio total.")); return; }
+        if (checkIn < hoyIso) { mostrarError(reservaError, new Error("El check-in no puede estar en el pasado.")); return; }
+        if (checkOut <= checkIn) { mostrarError(reservaError, new Error("El checkout debe ser posterior al check-in.")); return; }
+        if (!tarifaValida || !precioTotal) { mostrarError(reservaError, new Error("No hay una tarifa válida para la selección.")); return; }
 
         var btn = document.getElementById("btn-reservar");
         btn.disabled = true;

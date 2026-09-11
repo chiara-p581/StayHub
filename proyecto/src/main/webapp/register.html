@@ -80,7 +80,6 @@
 <label class="font-label-md text-label-md text-on-tertiary-fixed" for="rol">Tipo de cuenta</label>
 <select class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="rol" name="rol">
 <option value="HUESPED">Huésped</option>
-<option value="ADMIN">Personal / Admin</option>
 </select>
 </div>
 <!-- Action Button -->
@@ -100,15 +99,6 @@
 </div>
 </div>
 
-<!-- Aviso: el usuario de WildFly (para poder cancelar reservas) se crea
-     aparte, con add-user.sh. Se muestra recién después de registrarse. -->
-<div id="wildfly-note" class="hidden mt-lg bg-surface-container-lowest border border-outline-variant rounded-lg p-lg text-left">
-<h3 class="font-label-md text-label-md text-primary uppercase mb-xs">Un paso más (solo para vos, no para el usuario final)</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mb-sm">
-Para que este usuario también pueda cancelar reservas (seguridad de WildFly), creá el mismo usuario en la terminal:
-</p>
-<pre id="wildfly-command" class="bg-surface-container text-on-surface font-body-md text-body-md p-md rounded-DEFAULT overflow-x-auto"></pre>
-</div>
 </main>
 
 <script src="assets/js/api.js"></script>
@@ -117,8 +107,6 @@ Para que este usuario también pueda cancelar reservas (seguridad de WildFly), c
     var form = document.getElementById("register-form");
     var errorBanner = document.getElementById("error-banner");
     var submitBtn = document.getElementById("submit-btn");
-    var wildflyNote = document.getElementById("wildfly-note");
-    var wildflyCommand = document.getElementById("wildfly-command");
 
     form.addEventListener("submit", function (ev) {
         ev.preventDefault();
@@ -145,14 +133,11 @@ Para que este usuario también pueda cancelar reservas (seguridad de WildFly), c
                 return Api.loginUsuario({ email: email, password: password });
             })
             .then(function (usuario) {
-                Api.setSession(email, password, usuario);
-                wildflyCommand.textContent =
-                    "~/wildfly/bin/add-user.sh -a -u '" + email + "' -p '" + password + "' -g '" + rol + "' -s";
-                wildflyNote.classList.remove("hidden");
+                Api.setSession(usuario);
                 submitBtn.textContent = "¡Cuenta creada!";
                 setTimeout(function () {
                     location.href = rol === "ADMIN" ? "admin-dashboard.html" : "index.html";
-                }, 4000);
+                }, 800);
             })
             .catch(function (err) {
                 mostrarError(errorBanner, err);
