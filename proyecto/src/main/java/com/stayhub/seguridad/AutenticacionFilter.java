@@ -25,7 +25,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext contexto) {
-        String ruta = contexto.getUriInfo().getPath();
+        String ruta = normalizarRuta(contexto.getUriInfo().getPath());
         String metodo = contexto.getMethod();
 
         if ("OPTIONS".equals(metodo) || esPublica(ruta, metodo)) return;
@@ -41,6 +41,18 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         if (requiereAdmin(ruta, metodo) && !"ADMIN".equals(rol)) {
             abortar(contexto, Response.Status.FORBIDDEN, "ACCESO_DENEGADO", "Esta operación requiere rol ADMIN");
         }
+    }
+
+    String normalizarRuta(String ruta) {
+        if (ruta == null) return "";
+        String normalizada = ruta.trim().replace('\\', '/');
+        while (normalizada.startsWith("/")) normalizada = normalizada.substring(1);
+        if (normalizada.equals("api")) return "";
+        if (normalizada.startsWith("api/")) normalizada = normalizada.substring(4);
+        while (normalizada.endsWith("/") && !normalizada.isEmpty()) {
+            normalizada = normalizada.substring(0, normalizada.length() - 1);
+        }
+        return normalizada;
     }
 
     boolean esPublica(String ruta, String metodo) {
