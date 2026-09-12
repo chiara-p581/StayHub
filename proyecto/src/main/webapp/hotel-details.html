@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260911-5" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260912-6" rel="stylesheet"/>
 </head>
 <body class="antialiased min-h-screen font-body-md text-body-md">
 <!-- TopAppBar -->
@@ -43,6 +43,7 @@
 <div class="flex items-center gap-sm text-on-surface-variant">
 <span class="material-symbols-outlined text-[18px]">location_on</span>
 <span id="hotel-direccion" class="font-body-md text-body-md"></span>
+<span id="hotel-canal" class="px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-semibold"></span>
 </div>
 </div>
 </div>
@@ -128,11 +129,12 @@
 </div>
 </main>
 
-<script src="assets/js/api.js?v=20260911-5"></script>
+<script src="assets/js/api.js?v=20260912-6"></script>
 <script>
 (function () {
     var params = new URLSearchParams(location.search);
     var hotelId = params.get("hotelId");
+    var canalSeleccionado = params.get("canal") || "STAYHUB";
     var loading = document.getElementById("loading");
     var contenido = document.getElementById("contenido");
     var errorBanner = document.getElementById("error-banner");
@@ -148,6 +150,8 @@
     var hoyIso = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     document.getElementById("check-in").min = hoyIso;
     document.getElementById("check-out").min = hoyIso;
+    if (params.get("checkIn") >= hoyIso) document.getElementById("check-in").value = params.get("checkIn");
+    if (params.get("checkOut") > (params.get("checkIn") || hoyIso)) document.getElementById("check-out").value = params.get("checkOut");
 
     function escapeHtml(s) {
         var d = document.createElement("div");
@@ -178,6 +182,8 @@
         document.getElementById("hotel-imagen").alt = "Vista de " + h.nombre;
         document.getElementById("hotel-direccion").textContent =
             h.direccion + ", " + h.ciudad + ", " + h.pais;
+        document.getElementById("hotel-canal").textContent = canalSeleccionado === "STAYHUB"
+            ? "Reserva directa" : "Publicado en " + canalSeleccionado;
 
         var descripcionEl = document.getElementById("hotel-descripcion");
         descripcionEl.innerHTML = h.descripcion
@@ -211,6 +217,11 @@
             : '<option value="">Sin tipos de habitación cargados</option>';
 
         document.getElementById("btn-reservar").disabled = true;
+        if (usuarioActual && usuarioActual.rol === "ADMIN") {
+            document.getElementById("reserva-form").innerHTML = '<div class="p-lg rounded-xl bg-surface-container-low text-on-surface-variant"><span class="material-symbols-outlined text-primary mb-sm">admin_panel_settings</span><h3 class="font-title-lg text-title-lg text-primary mb-sm">Cuenta administrativa</h3><p>Los administradores pueden consultar hoteles, disponibilidad y tarifas, pero no realizar compras ni reservas.</p></div>';
+        } else if (document.getElementById("check-in").value && document.getElementById("check-out").value) {
+            calcularTarifaEstimada();
+        }
     }
 
     function calcularTarifaEstimada() {
@@ -298,6 +309,10 @@
         if (!Api.requireLogin()) return;
 
         var usuario = Api.currentUser();
+        if (usuario && usuario.rol === "ADMIN") {
+            mostrarError(reservaError, new Error("Las cuentas ADMIN no pueden realizar compras ni reservas."));
+            return;
+        }
         var tipoHabitacion = document.getElementById("tipo-habitacion").value;
         var checkIn = document.getElementById("check-in").value;
         var checkOut = document.getElementById("check-out").value;
@@ -317,28 +332,14 @@
         btn.disabled = true;
         btn.textContent = "Agregando...";
 
-        Api.carritoSeleccionarHotel({ hotelId: Number(hotelId), tipoHabitacion: tipoHabitacion, cantidadHabitaciones: cantidadHabitaciones })
-            .then(function () {
-                return Api.carritoSeleccionarFechas({ checkIn: checkIn, checkOut: checkOut });
-            })
-            .then(function () {
-                return Api.carritoSeleccionarHuesped({
-                    huespedNombre: usuario.nombre,
-                    huespedApellido: usuario.apellido,
-                    huespedEmail: usuario.email,
-                    huespedTelefono: telefono,
-                    precioTotal: precioTotal,
-                    moneda: moneda,
-                });
-            })
-            .then(function () {
-                location.href = "cart.html";
-            })
-            .catch(function (err) {
-                mostrarError(reservaError, err);
-                btn.disabled = false;
-                btn.textContent = "Agregar al carrito";
-            });
+        Api.addLocalCartItem({
+            hotelId: Number(hotelId), hotelNombre: hotel.nombre, tipoHabitacion: tipoHabitacion,
+            canal: canalSeleccionado,
+            cantidadHabitaciones: cantidadHabitaciones, checkIn: checkIn, checkOut: checkOut,
+            huespedNombre: usuario.nombre, huespedApellido: usuario.apellido, huespedEmail: usuario.email,
+            huespedTelefono: telefono, precioTotal: precioTotal, moneda: moneda
+        });
+        location.href = "cart.html";
     });
 })();
 </script>

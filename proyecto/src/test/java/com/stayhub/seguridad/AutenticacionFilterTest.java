@@ -12,8 +12,18 @@ class AutenticacionFilterTest {
         assertTrue(filtro.esPublica("usuarios", "POST"));
         assertTrue(filtro.esPublica("usuarios/login", "POST"));
         assertTrue(filtro.esPublica("hoteles", "GET"));
+        assertTrue(filtro.esPublica("catalogo-canales/ofertas", "GET"));
         assertTrue(filtro.esPublica("inventario-tarifas/tarifas", "GET"));
         assertFalse(filtro.esPublica("carrito/hotel", "POST"));
+    }
+
+    @Test
+    void identificaComprasQueUnAdminNoPuedeRealizar() {
+        assertTrue(filtro.esCompra("carrito/confirmar", "POST"));
+        assertTrue(filtro.esCompra("reservas", "POST"));
+        assertTrue(filtro.esCompra("pagos", "POST"));
+        assertFalse(filtro.esCompra("pagos/2", "GET"));
+        assertFalse(filtro.esCompra("reservas", "GET"));
     }
 
     @Test

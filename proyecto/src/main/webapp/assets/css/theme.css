@@ -57,6 +57,9 @@ body.stayhub-unified { padding-top: 76px !important; display:block !important; o
 .stayhub-brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:#182944; color:#fff; font-size:1.15rem; box-shadow:0 5px 14px rgba(24,41,68,.2); }
 .stayhub-admin-badge { font-family:'Manrope',Arial,sans-serif; font-size:.66rem; letter-spacing:.09em; text-transform:uppercase; background:#d5eadc; color:#123724; border-radius:999px; padding:5px 8px; }
 .stayhub-header-nav { display:flex; align-items:center; gap:7px; font-family:'Manrope',Arial,sans-serif; }
+.stayhub-channel-shortcuts { display:flex; align-items:center; gap:5px; margin-right:auto; font-family:'Manrope',Arial,sans-serif; }
+.stayhub-channel-shortcuts a { padding:8px 11px; border-radius:999px; color:#626b79; font-size:.78rem; font-weight:600; text-decoration:none; }
+.stayhub-channel-shortcuts a:hover { color:#182944; background:#eceff4; }
 .stayhub-header-icon { position:relative; width:42px; height:42px; display:grid; place-items:center; border-radius:13px; color:#566174; text-decoration:none; transition:.18s ease; }
 .stayhub-header-icon:hover { background:#eceff4; color:#182944; transform:translateY(-1px); }
 .stayhub-cart-count { position:absolute; top:1px; right:0; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; display:grid; place-items:center; border:2px solid #faf9fa; border-radius:999px; background:#b34d4d; color:#fff; font-size:9px; font-weight:700; }
@@ -87,7 +90,12 @@ body.stayhub-unified { padding-top: 76px !important; display:block !important; o
     .stayhub-header-inner { width:calc(100% - 20px); }
     .stayhub-brand-name { font-size:1.18rem; }
     .stayhub-admin-badge,.stayhub-profile-pill > span:last-child { display:none; }
+    .stayhub-channel-shortcuts { display:none; }
     .stayhub-profile-pill { padding:3px 0 3px 7px; }
     .stayhub-admin-sidebar { display:none; }
     .stayhub-admin-layout > main,.stayhub-admin-layout > .flex > main { width:100% !important; margin-left:0 !important; }
 }
+
+/* Los formularios de acceso deben poder desplazarse en pantallas bajas. */
+body.stayhub-auth-page { overflow-y:auto !important; align-items:flex-start !important; padding-bottom:32px !important; }
+body.stayhub-auth-page main { margin-top:24px; margin-bottom:24px; }

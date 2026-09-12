@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260911-5" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260912-6" rel="stylesheet"/>
 <style>
 .hero-shadow { box-shadow: 0 4px 60px rgba(37, 52, 79, 0.08); }
 </style>
@@ -58,16 +58,16 @@
 <div class="flex-1 flex items-center gap-sm px-lg py-sm border-b md:border-b-0 md:border-r border-outline-variant/30 w-full">
 <span class="material-symbols-outlined text-outline">calendar_today</span>
 <div class="flex flex-col text-left">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase">Dates</label>
-<input id="search-fecha" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="Se eligen en el detalle del hotel" type="text" disabled/>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Fechas</label>
+<div class="flex gap-xs"><input id="search-checkin" aria-label="Entrada" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/><input id="search-checkout" aria-label="Salida" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/></div>
 </div>
 </div>
 <div class="flex-1 flex items-center justify-between px-lg py-sm w-full">
 <div class="flex items-center gap-sm">
 <span class="material-symbols-outlined text-outline">group</span>
 <div class="flex flex-col text-left">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase">Guests</label>
-<input id="search-guests" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="Se elige en el detalle del hotel" type="text" disabled/>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Huéspedes</label>
+<input id="search-guests" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface w-full" min="1" max="8" value="2" type="number"/>
 </div>
 </div>
 <button id="btn-buscar" class="bg-primary hover:bg-primary-container text-on-primary rounded-full p-md transition-colors flex items-center justify-center">
@@ -86,6 +86,15 @@
 </div>
 </div>
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
+<div class="mb-lg flex flex-wrap items-center gap-sm" id="canales-filtro" aria-label="Filtrar por canal">
+<button data-canal="TODOS" class="canal-chip px-md py-sm rounded-full border border-outline-variant bg-primary text-on-primary">Todos</button>
+<button data-canal="STAYHUB" class="canal-chip px-md py-sm rounded-full border border-outline-variant">StayHub</button>
+<button data-canal="BOOKING" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Booking</button>
+<button data-canal="AIRBNB" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Airbnb</button>
+<button data-canal="EXPEDIA" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Expedia</button>
+<button data-canal="DESPEGAR" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Despegar</button>
+<span class="text-sm text-on-surface-variant ml-sm">Fuentes externas simuladas para pruebas.</span>
+</div>
 <div id="hoteles-loading" class="font-body-lg text-body-lg text-on-surface-variant">Cargando hoteles...</div>
 <div id="hoteles-grid" class="grid grid-cols-1 md:grid-cols-3 gap-gutter"></div>
 </section>
@@ -106,7 +115,7 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260911-5"></script>
+<script src="assets/js/api.js?v=20260912-6"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -115,6 +124,8 @@
     var grid = document.getElementById("hoteles-grid");
     var subtitulo = document.getElementById("hoteles-subtitulo");
     var todosLosHoteles = [];
+    var ofertas = [];
+    var canalActivo = new URLSearchParams(location.search).get("canal") || "TODOS";
 
     function pintarSesion() {
         var usuario = Api.currentUser();
@@ -137,8 +148,11 @@
     function tarjetaHotel(hotel) {
         var fotos = ["stayhub-resort-hero.png", "stayhub-patagonia.png", "stayhub-costa.png"];
         var foto = fotos[Math.abs(Number(hotel.id) || 0) % fotos.length];
+        var fechas = '&checkIn=' + encodeURIComponent(document.getElementById('search-checkin').value || '') + '&checkOut=' + encodeURIComponent(document.getElementById('search-checkout').value || '') + '&huespedes=' + encodeURIComponent(document.getElementById('search-guests').value || '2');
         var div = document.createElement("div");
         div.className = "group cursor-pointer rounded-xl overflow-hidden relative h-72 hero-shadow bg-surface-container-lowest border border-outline-variant/20 flex flex-col";
+        var fuentes = ofertas.filter(function (o) { return o.hotelId === hotel.id; });
+        var badges = fuentes.map(function (o) { return '<span class="px-2 py-1 rounded-full bg-surface-container-high text-[11px] font-semibold">' + escapeHtml(o.canal === 'STAYHUB' ? 'Directo' : o.canal) + ' · ' + Number(o.puntuacion).toFixed(1) + '</span>'; }).join('');
         div.innerHTML =
             '<div class="h-40 bg-primary-container overflow-hidden"><img src="assets/images/' + foto + '" alt="' + escapeHtml(hotel.nombre) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/></div>' +
             '<div class="p-lg flex-1 flex flex-col justify-between">' +
@@ -148,8 +162,9 @@
                         '<span class="material-symbols-outlined" style="font-size:16px;">location_on</span>' +
                         escapeHtml(hotel.ciudad) + ', ' + escapeHtml(hotel.pais) +
                     '</p>' +
+                    '<div class="flex flex-wrap gap-xs mt-sm">' + badges + '</div>' +
                 '</div>' +
-                '<a href="hotel-details.html?hotelId=' + hotel.id + '" class="mt-md inline-flex items-center gap-xs font-label-md text-label-md text-primary uppercase tracking-wider hover:text-primary-container transition-colors">' +
+                '<a href="hotel-details.html?hotelId=' + hotel.id + '&canal=' + (canalActivo === 'TODOS' ? 'STAYHUB' : canalActivo) + fechas + '" class="mt-md inline-flex items-center gap-xs font-label-md text-label-md text-primary uppercase tracking-wider hover:text-primary-container transition-colors">' +
                     'Ver hotel <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>' +
                 '</a>' +
             '</div>';
@@ -173,12 +188,26 @@
 
     function buscar() {
         var texto = (document.getElementById("search-destino").value || "").trim().toLowerCase();
-        if (!texto) { pintarGrid(todosLosHoteles); return; }
         var filtrados = todosLosHoteles.filter(function (h) {
-            return (h.nombre + " " + h.ciudad + " " + h.pais).toLowerCase().indexOf(texto) !== -1;
+            var coincideTexto = !texto || (h.nombre + " " + h.ciudad + " " + h.pais).toLowerCase().indexOf(texto) !== -1;
+            var coincideCanal = canalActivo === "TODOS" || ofertas.some(function (o) { return o.hotelId === h.id && o.canal === canalActivo; });
+            return coincideTexto && coincideCanal;
         });
         pintarGrid(filtrados);
     }
+
+    document.querySelectorAll(".canal-chip").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            canalActivo = btn.dataset.canal;
+            document.querySelectorAll(".canal-chip").forEach(function (b) { b.classList.remove("bg-primary", "text-on-primary"); });
+            btn.classList.add("bg-primary", "text-on-primary");
+            buscar();
+        });
+        if (btn.dataset.canal === canalActivo) {
+            document.querySelectorAll(".canal-chip").forEach(function (b) { b.classList.remove("bg-primary", "text-on-primary"); });
+            btn.classList.add("bg-primary", "text-on-primary");
+        }
+    });
 
     document.getElementById("btn-buscar").addEventListener("click", function (ev) {
         ev.preventDefault();
@@ -190,12 +219,18 @@
     });
 
     pintarSesion();
+    var hoyBusqueda = new Date();
+    var hoyBusquedaIso = new Date(hoyBusqueda.getTime() - hoyBusqueda.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    document.getElementById("search-checkin").min = hoyBusquedaIso;
+    document.getElementById("search-checkout").min = hoyBusquedaIso;
     ocultarError(errorBanner);
-    Api.listarHoteles(false)
-        .then(function (hoteles) {
+    Promise.all([Api.listarHoteles(false), Api.listarOfertasCanales().catch(function () { return []; })])
+        .then(function (resultado) {
+            var hoteles = resultado[0] || [];
+            ofertas = resultado[1] || [];
             todosLosHoteles = hoteles;
             subtitulo.textContent = hoteles.length + " propiedad" + (hoteles.length === 1 ? "" : "es") + " disponible" + (hoteles.length === 1 ? "" : "s") + ".";
-            pintarGrid(hoteles);
+            buscar();
         })
         .catch(function (err) { mostrarError(errorBanner, err); })
         .finally(function () { loading.classList.add("hidden"); });

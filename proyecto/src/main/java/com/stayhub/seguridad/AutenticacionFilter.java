@@ -38,6 +38,11 @@ public class AutenticacionFilter implements ContainerRequestFilter {
             abortar(contexto, Response.Status.UNAUTHORIZED, "NO_AUTENTICADO", "Iniciá sesión para continuar");
             return;
         }
+        if ("ADMIN".equals(rol) && esCompra(ruta, metodo)) {
+            abortar(contexto, Response.Status.FORBIDDEN, "ADMIN_NO_COMPRA",
+                    "Las cuentas ADMIN administran StayHub y no pueden realizar reservas ni compras");
+            return;
+        }
         if (requiereAdmin(ruta, metodo) && !"ADMIN".equals(rol)) {
             abortar(contexto, Response.Status.FORBIDDEN, "ACCESO_DENEGADO", "Esta operación requiere rol ADMIN");
         }
@@ -58,7 +63,13 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     boolean esPublica(String ruta, String metodo) {
         if ("POST".equals(metodo) && ("usuarios".equals(ruta) || "usuarios/login".equals(ruta))) return true;
         if ("GET".equals(metodo) && (ruta.equals("hoteles") || ruta.startsWith("hoteles/"))) return true;
+        if ("GET".equals(metodo) && ruta.startsWith("catalogo-canales/")) return true;
         return "GET".equals(metodo) && ruta.startsWith("inventario-tarifas/");
+    }
+
+    boolean esCompra(String ruta, String metodo) {
+        return !"GET".equals(metodo) && (ruta.startsWith("carrito")
+                || ruta.equals("reservas") || ruta.startsWith("pagos"));
     }
 
     boolean requiereAdmin(String ruta, String metodo) {
