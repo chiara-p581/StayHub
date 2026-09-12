@@ -96,7 +96,7 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260911-3"></script>
+<script src="assets/js/api.js?v=20260911-4"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -116,9 +116,18 @@
     if (!Api.requireLogin()) return;
 
     var params = new URLSearchParams(location.search);
-    if (params.get("reservaId")) document.getElementById("reserva-id").value = params.get("reservaId");
-    if (params.get("monto")) document.getElementById("monto").value = params.get("monto");
-    if (params.get("moneda")) document.getElementById("moneda").value = params.get("moneda");
+    if (params.get("reservaId")) {
+        document.getElementById("reserva-id").value = params.get("reservaId");
+        document.getElementById("reserva-id").readOnly = true;
+    }
+    if (params.get("monto")) {
+        document.getElementById("monto").value = params.get("monto");
+        document.getElementById("monto").readOnly = true;
+    }
+    if (params.get("moneda")) {
+        document.getElementById("moneda").value = params.get("moneda");
+        document.getElementById("moneda").readOnly = true;
+    }
 
     function fmtMoney(n, moneda) {
         return Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2 }) + " " + moneda;

@@ -12,6 +12,7 @@
 const Api = (() => {
     const BASE = "api/";
     const USER_KEY = "stayhub_user";
+    const CACHE_PREFIX = "stayhub_cache_v1:";
 
     function setSession(usuario) {
         if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
@@ -129,12 +130,63 @@ const Api = (() => {
         return data;
     }
 
+    function cacheKey(path, params) {
+        return CACHE_PREFIX + buildUrl(path, params);
+    }
+
+    function invalidateCache(prefix = "") {
+        Object.keys(localStorage).forEach(function (key) {
+            if (key.startsWith(CACHE_PREFIX + prefix)) localStorage.removeItem(key);
+        });
+    }
+
+    function cachedRequest(path, params, ttlMs) {
+        const key = cacheKey(path, params);
+        let cached = null;
+        try { cached = JSON.parse(localStorage.getItem(key)); } catch (e) { localStorage.removeItem(key); }
+        if (cached && Date.now() - cached.savedAt < ttlMs) {
+            request(path, { params }).then(function (fresh) {
+                try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: fresh })); } catch (e) {}
+            }).catch(function () {});
+            return Promise.resolve(cached.data);
+        }
+        return request(path, { params }).then(function (fresh) {
+            try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: fresh })); } catch (e) {}
+            return fresh;
+        });
+    }
+
     function safeJson(text) {
         try {
             return JSON.parse(text);
         } catch (e) {
             return text;
         }
+    }
+
+    function initShell() {
+        if (!document.body || document.querySelector(".stayhub-global-header")) return;
+        var page = location.pathname.split("/").pop() || "index.html";
+        var usuario = currentUser();
+        document.body.classList.add("stayhub-unified");
+        if (page === "settings.html") document.body.classList.add("stayhub-profile-page");
+        var header = document.createElement("header");
+        header.className = "stayhub-global-header";
+        header.innerHTML = '<div class="stayhub-header-inner">' +
+            '<a class="stayhub-brand" href="index.html"><span>StayHub</span>' +
+            (usuario && usuario.rol === "ADMIN" ? '<span class="stayhub-admin-badge">Admin</span>' : '') + '</a>' +
+            '<nav class="stayhub-header-nav" aria-label="Navegación principal">' +
+            '<a class="stayhub-header-link" href="index.html"><span class="material-symbols-outlined">home</span><span class="link-label">Inicio</span></a>' +
+            '<a class="stayhub-header-link" href="index.html#hoteles"><span class="material-symbols-outlined">search</span><span class="link-label">Buscar</span></a>' +
+            (usuario && usuario.rol === "ADMIN" ? '<a class="stayhub-header-link" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span><span class="link-label">Administración</span></a>' : '') +
+            '<a class="stayhub-header-link" href="cart.html"><span class="material-symbols-outlined">shopping_bag</span><span class="link-label">Carrito</span><span id="global-cart-count" class="stayhub-cart-count">0</span></a>' +
+            '<a class="stayhub-header-link" href="' + (usuario ? 'settings.html' : 'login.html') + '"><span class="material-symbols-outlined">person</span><span class="link-label">' + (usuario ? usuario.nombre : 'Ingresar') + '</span></a>' +
+            '</nav></div>';
+        document.body.insertBefore(header, document.body.firstChild);
+        if (usuario) request("carrito", { auth: true }).then(function (c) {
+            var badge = document.getElementById("global-cart-count");
+            if (badge) badge.textContent = c && c.hotelId ? "1" : "0";
+        }).catch(function () {});
     }
 
     return {
@@ -144,6 +196,7 @@ const Api = (() => {
         currentUser,
         isLoggedIn,
         requireLogin,
+        initShell,
 
         // ---- usuarios ----
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
@@ -151,28 +204,33 @@ const Api = (() => {
         consultarUsuario: (id) => request(`usuarios/${id}`, { auth: true }),
 
         // ---- hoteles ----
-        listarHoteles: (incluirInactivos = false) =>
-            request("hoteles", { params: { incluirInactivos } }),
-        consultarHotel: (id) => request(`hoteles/${id}`),
-        crearHotel: (dto) => request("hoteles", { method: "POST", body: dto, auth: true }),
-        modificarHotel: (id, dto) => request(`hoteles/${id}`, { method: "PUT", body: dto, auth: true }),
-        eliminarHotel: (id) => request(`hoteles/${id}`, { method: "DELETE", auth: true }),
+        listarHoteles: (incluirInactivos = false) => cachedRequest("hoteles", { incluirInactivos }, 300000),
+        consultarHotel: (id) => cachedRequest(`hoteles/${id}`, null, 300000),
+        crearHotel: (dto) => request("hoteles", { method: "POST", body: dto, auth: true }).then(r => (invalidateCache("hoteles"), r)),
+        modificarHotel: (id, dto) => request(`hoteles/${id}`, { method: "PUT", body: dto, auth: true }).then(r => (invalidateCache("hoteles"), r)),
+        eliminarHotel: (id) => request(`hoteles/${id}`, { method: "DELETE", auth: true }).then(r => (invalidateCache("hoteles"), r)),
         listarTiposHabitacion: (hotelId, incluirInactivos = false) =>
-            request(`hoteles/${hotelId}/tipos-habitacion`, { params: { incluirInactivos } }),
+            cachedRequest(`hoteles/${hotelId}/tipos-habitacion`, { incluirInactivos }, 300000),
         crearTipoHabitacion: (hotelId, dto) =>
-            request(`hoteles/${hotelId}/tipos-habitacion`, { method: "POST", body: dto, auth: true }),
+            request(`hoteles/${hotelId}/tipos-habitacion`, { method: "POST", body: dto, auth: true })
+                .then(r => (invalidateCache(`hoteles/${hotelId}/tipos-habitacion`), r)),
         modificarTipoHabitacion: (hotelId, tipoId, dto) =>
-            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "PUT", body: dto, auth: true }),
+            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "PUT", body: dto, auth: true })
+                .then(r => (invalidateCache(`hoteles/${hotelId}/tipos-habitacion`), r)),
         eliminarTipoHabitacion: (hotelId, tipoId) =>
-            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "DELETE", auth: true }),
+            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "DELETE", auth: true })
+                .then(r => (invalidateCache(`hoteles/${hotelId}/tipos-habitacion`), r)),
         listarHabitaciones: (hotelId, incluirInactivas = false) =>
-            request(`hoteles/${hotelId}/habitaciones`, { params: { incluirInactivas } }),
+            cachedRequest(`hoteles/${hotelId}/habitaciones`, { incluirInactivas }, 300000),
         crearHabitacion: (hotelId, dto) =>
-            request(`hoteles/${hotelId}/habitaciones`, { method: "POST", body: dto, auth: true }),
+            request(`hoteles/${hotelId}/habitaciones`, { method: "POST", body: dto, auth: true })
+                .then(r => (invalidateCache(`hoteles/${hotelId}/habitaciones`), r)),
         modificarHabitacion: (hotelId, habitacionId, dto) =>
-            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "PUT", body: dto, auth: true }),
+            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "PUT", body: dto, auth: true })
+                .then(r => (invalidateCache(`hoteles/${hotelId}/habitaciones`), r)),
         eliminarHabitacion: (hotelId, habitacionId) =>
-            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "DELETE", auth: true }),
+            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "DELETE", auth: true })
+                .then(r => (invalidateCache(`hoteles/${hotelId}/habitaciones`), r)),
 
         // ---- carrito de reserva (EJB @Stateful, sesión HTTP) ----
         carritoSeleccionarHotel: (dto) =>
@@ -195,15 +253,16 @@ const Api = (() => {
             request("reservas", { params: { hotelId }, auth: true }),
 
         // ---- datos demostrativos (solo ADMIN; persiste mediante APIs reales) ----
-        cargarDatosDemo: () => request("demo/cargar", { method: "POST", auth: true }),
+        cargarDatosDemo: () => request("demo/cargar", { method: "POST", auth: true }).then(r => (invalidateCache(), r)),
 
         // ---- inventario y tarifas ----
         consultarDisponibilidad: (hotelId, desde, hasta) =>
-            request("inventario-tarifas/disponibilidad", { params: { hotelId, desde, hasta } }),
+            cachedRequest("inventario-tarifas/disponibilidad", { hotelId, desde, hasta }, 20000),
         consultarTarifas: (hotelId, desde, hasta) =>
-            request("inventario-tarifas/tarifas", { params: { hotelId, desde, hasta } }),
+            cachedRequest("inventario-tarifas/tarifas", { hotelId, desde, hasta }, 60000),
         cargarInventario: (dto) =>
-            request("inventario-tarifas/cargas", { method: "POST", body: dto, auth: true }),
+            request("inventario-tarifas/cargas", { method: "POST", body: dto, auth: true })
+                .then(r => (invalidateCache("inventario-tarifas/"), r)),
 
         // ---- canales externos ----
         disponibilidadCanales: (hotelId, desde, hasta) =>
@@ -232,6 +291,9 @@ const Api = (() => {
             request("overbooking/resolver", { method: "POST", body: dto, auth: true }),
     };
 })();
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", Api.initShell);
+else Api.initShell();
 
 /**
  * Helper genérico para mostrar errores de la API en un elemento de la

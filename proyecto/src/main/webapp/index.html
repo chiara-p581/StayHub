@@ -40,7 +40,7 @@
 <!-- Hero Section -->
 <section class="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
 <div class="absolute inset-0 z-0">
-<div class="bg-cover bg-center w-full h-full" data-alt="A breathtaking wide shot of a luxury boutique hotel exterior at dusk. The architecture is modern yet warm, featuring large glass windows reflecting a stunning sunset. The foreground shows a pristine infinity pool glowing invitingly, surrounded by elegant loungers and lush tropical landscaping. The mood is serene, aspirational, and deeply relaxing." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBI_LttHwfNYmCRMZpJu85ujqqil5GEH8Y1ATrLB4sq3DXNFhN4DcHd_M-hwN5zMfL1xSTW-x31Y9N--u8nOFpnPpcmY5Cw3SWbiUsDndeQmT_d1nLEwEniu4N2fAkHqeOPEDfU95piZZbk1K-zJBSXhAV1HbaBqNCNdjQTYx3HyfElZoFKjfg-_sBAIDvryiVzUwJc57RxffdAC-SYVnz5rEW6gtN6xR9uwzxnYIEaPbZFEkhEnflo2g')"></div>
+<div class="bg-cover bg-center w-full h-full" role="img" aria-label="Resort boutique entre viñedos y montañas" style="background-image: url('assets/images/stayhub-resort-hero.png')"></div>
 <div class="absolute inset-0 bg-primary/40 backdrop-blur-[2px]"></div>
 </div>
 <div class="relative z-10 w-full max-w-container-max mx-auto px-md flex flex-col items-center text-center gap-lg">
@@ -106,7 +106,7 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260911-3"></script>
+<script src="assets/js/api.js?v=20260911-4"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -135,12 +135,12 @@
     }
 
     function tarjetaHotel(hotel) {
+        var fotos = ["stayhub-resort-hero.png", "stayhub-patagonia.png", "stayhub-costa.png"];
+        var foto = fotos[Math.abs(Number(hotel.id) || 0) % fotos.length];
         var div = document.createElement("div");
         div.className = "group cursor-pointer rounded-xl overflow-hidden relative h-72 hero-shadow bg-surface-container-lowest border border-outline-variant/20 flex flex-col";
         div.innerHTML =
-            '<div class="h-40 bg-primary-container flex items-center justify-center">' +
-                '<span class="material-symbols-outlined text-on-primary-container" style="font-size:48px;">hotel</span>' +
-            '</div>' +
+            '<div class="h-40 bg-primary-container overflow-hidden"><img src="assets/images/' + foto + '" alt="' + escapeHtml(hotel.nombre) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/></div>' +
             '<div class="p-lg flex-1 flex flex-col justify-between">' +
                 '<div>' +
                     '<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">' + escapeHtml(hotel.nombre) + '</h3>' +
