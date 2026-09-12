@@ -14,6 +14,7 @@ public class PagoExceptionMapper implements ExceptionMapper<PagoException> {
             case SOLICITUD_INVALIDA -> 400;
             case PAGO_NO_ENCONTRADO -> 404;
             case PAGO_RECHAZADO -> 402;
+            case RESERVA_YA_PAGADA -> 409;
             case ERROR_COMUNICACION_PASARELA -> 502;
         };
         return Response.status(estado)
