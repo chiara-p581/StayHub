@@ -57,7 +57,11 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
 
     @Override
     public List<HotelResponse> listarHoteles(boolean incluirInactivos) {
-        return repositorio.listarHoteles(incluirInactivos).stream().map(this::respuesta).toList();
+        // El catálogo no necesita traer tipos y habitaciones de cada hotel.
+        // Evita el N+1 (dos consultas extra por hotel), especialmente costoso con Aiven remoto.
+        return repositorio.listarHoteles(incluirInactivos).stream()
+                .map(h -> HotelMapper.hotel(h, List.of(), List.of()))
+                .toList();
     }
 
     @Override

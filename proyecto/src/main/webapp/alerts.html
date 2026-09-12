@@ -5,7 +5,7 @@
 <title>StayHub - Operaciones</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/><link href="assets/css/theme.css?v=20260911-5" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/><link href="assets/css/theme.css?v=20260912-6" rel="stylesheet"/>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex">
 <aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 p-md z-40">
@@ -43,7 +43,7 @@
 </main>
 <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around p-sm z-50"><a href="admin-dashboard.html" class="mobile-nav"><span class="material-symbols-outlined">dashboard</span>Inicio</a><a href="hotel-management.html" class="mobile-nav"><span class="material-symbols-outlined">domain</span>Hoteles</a><a href="channels-sync.html" class="mobile-nav"><span class="material-symbols-outlined">hub</span>Canales</a><a href="alerts.html" class="mobile-nav text-primary"><span class="material-symbols-outlined">crisis_alert</span>Operaciones</a></nav>
 <style>.nav{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:.5rem;color:#45464f}.nav:hover{background:#e4e2e4}.card{background:#fff;border:1px solid rgba(213,184,147,.3);border-radius:.75rem;padding:1.25rem;box-shadow:0 4px 20px -4px rgba(37,52,79,.08)}.field{display:flex;flex-direction:column;gap:.35rem;color:#45464f;font-size:.875rem}.field input,.field textarea,.field select{border:1px solid #c5c6ce;border-radius:.5rem;background:#fff;padding:.65rem .75rem;color:#1b1b1f}.btn-primary{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.65rem 1.1rem;background:#9fcaaf;color:#123724;font-weight:600}.btn-primary:disabled{opacity:.55}.icon{width:3rem;height:3rem;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}.mobile-nav{display:flex;flex-direction:column;align-items:center;font-size:.7rem;color:#5d5f68}</style>
-<script src="assets/js/api.js?v=20260911-5"></script>
+<script src="assets/js/api.js?v=20260912-6"></script>
 <script>
 (function(){
  var usuario,error=document.getElementById('error-banner'),ok=document.getElementById('success-banner');if(!Api.requireLogin())return;usuario=Api.currentUser();if(!usuario||usuario.rol!=='ADMIN'){document.getElementById('acceso-denegado').classList.remove('hidden');document.getElementById('panel').classList.add('hidden');return}

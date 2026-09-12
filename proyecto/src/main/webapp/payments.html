@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260911-5" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260912-6" rel="stylesheet"/>
 <style>
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 .icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -28,6 +28,10 @@
 <h1 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary mb-xs">Pagos</h1>
 <p class="font-body-lg text-body-lg text-on-surface-variant">Pagá una reserva y consultá pagos ya realizados.</p>
 </div>
+<section id="hotel-pago" class="hidden mb-lg bg-surface rounded-xl overflow-hidden border border-outline-variant/20 grid md:grid-cols-[220px_1fr]">
+<img id="hotel-pago-imagen" class="w-full h-44 md:h-full object-cover" alt="Hotel de la reserva"/>
+<div class="p-lg"><p class="text-xs uppercase tracking-wider text-on-surface-variant">Estás pagando</p><h2 id="hotel-pago-nombre" class="font-headline-md text-headline-md text-primary mt-xs"></h2><p id="hotel-pago-ubicacion" class="text-on-surface-variant mt-xs"></p><p class="mt-md text-sm text-on-surface-variant">Verificá el hotel y el número de reserva antes de continuar.</p></div>
+</section>
 
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
 
@@ -96,7 +100,7 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260911-5"></script>
+<script src="assets/js/api.js?v=20260912-6"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -116,6 +120,13 @@
     if (!Api.requireLogin()) return;
 
     var params = new URLSearchParams(location.search);
+    if (params.get("hotelId")) Api.consultarHotel(params.get("hotelId")).then(function (hotel) {
+        var fotos = ["stayhub-resort-hero.png", "stayhub-patagonia.png", "stayhub-costa.png"];
+        document.getElementById("hotel-pago").classList.remove("hidden");
+        document.getElementById("hotel-pago-nombre").textContent = hotel.nombre;
+        document.getElementById("hotel-pago-ubicacion").textContent = hotel.ciudad + ", " + hotel.pais;
+        document.getElementById("hotel-pago-imagen").src = "assets/images/" + fotos[Math.abs(Number(hotel.id) || 0) % fotos.length];
+    }).catch(function () {});
     if (params.get("reservaId")) {
         document.getElementById("reserva-id").value = params.get("reservaId");
         document.getElementById("reserva-id").readOnly = true;
@@ -127,6 +138,11 @@
     if (params.get("moneda")) {
         document.getElementById("moneda").value = params.get("moneda");
         document.getElementById("moneda").readOnly = true;
+    }
+    if (Api.currentUser().rol === "ADMIN") {
+        document.getElementById("btn-pagar").disabled = true;
+        document.getElementById("btn-pagar").textContent = "Las cuentas ADMIN no pueden realizar pagos";
+        ["reserva-id", "monto", "moneda"].forEach(function (id) { document.getElementById(id).disabled = true; });
     }
 
     function fmtMoney(n, moneda) {
