@@ -4,6 +4,7 @@ import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
+import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.model.RolUsuario;
 
 import jakarta.inject.Inject;
@@ -55,7 +56,27 @@ public class UsuarioResource {
 
     @GET
     @Path("/{id}")
-    public UsuarioResponse consultar(@PathParam("id") Long id) {
+    public UsuarioResponse consultar(@PathParam("id") Long id, @Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
+        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
+        if (usuarioId == null || (!usuarioId.equals(id) && !"ADMIN".equals(rol))) {
+            throw new WebApplicationException("No podés consultar el perfil de otro usuario",
+                    Response.Status.FORBIDDEN);
+        }
         return servicio.buscarPorId(id);
+    }
+
+    @PUT
+    @Path("/me")
+    public UsuarioResponse actualizarMiPerfil(ActualizacionUsuarioRequest solicitud,
+                                                @Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        if (sesion == null || sesion.getAttribute("usuarioId") == null) {
+            throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
+        }
+        UsuarioResponse actualizado = servicio.actualizarPerfil((Long) sesion.getAttribute("usuarioId"), solicitud);
+        sesion.setAttribute("usuarioRol", actualizado.rol());
+        return actualizado;
     }
 }

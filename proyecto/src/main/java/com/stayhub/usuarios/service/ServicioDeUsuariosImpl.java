@@ -4,6 +4,7 @@ import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
+import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.exception.CodigoErrorUsuario;
 import com.stayhub.usuarios.exception.UsuarioException;
 import com.stayhub.usuarios.messaging.EventoUsuarioRegistrado;
@@ -66,6 +67,30 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
                 .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.USUARIO_NO_ENCONTRADO,
                         "No existe un usuario con id " + id));
         return UsuarioMapper.aResponse(usuario);
+    }
+
+    @Override
+    public UsuarioResponse actualizarPerfil(Long id, ActualizacionUsuarioRequest solicitud) {
+        if (solicitud == null || solicitud.email() == null || solicitud.email().isBlank()
+                || solicitud.nombre() == null || solicitud.nombre().isBlank()
+                || solicitud.apellido() == null || solicitud.apellido().isBlank()
+                || (solicitud.password() != null && !solicitud.password().isBlank()
+                    && solicitud.password().length() < 6)) {
+            throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
+                    "Los datos del perfil son incompletos o inválidos");
+        }
+        Usuario usuario = repositorio.buscarPorId(id)
+                .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.USUARIO_NO_ENCONTRADO,
+                        "No existe el usuario autenticado"));
+        repositorio.buscarPorEmail(solicitud.email().trim()).filter(u -> !u.getId().equals(id)).ifPresent(u -> {
+            throw new UsuarioException(CodigoErrorUsuario.EMAIL_YA_REGISTRADO,
+                    "Ya existe un usuario con ese email");
+        });
+        String nuevoHash = solicitud.password() == null || solicitud.password().isBlank()
+                ? null : passwordHasher.hash(solicitud.password());
+        usuario.actualizarPerfil(solicitud.email().trim(), solicitud.nombre().trim(),
+                solicitud.apellido().trim(), nuevoHash);
+        return UsuarioMapper.aResponse(repositorio.guardar(usuario));
     }
 
     private void validar(RegistroUsuarioRequest s) {

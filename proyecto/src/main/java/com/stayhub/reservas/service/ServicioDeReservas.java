@@ -32,4 +32,6 @@ public interface ServicioDeReservas {
     ReservaResponse cancelarReserva(Long id, String actorEmail, boolean actorEsAdmin);
 
     List<ReservaResponse> listarPorHotel(Long hotelId);
+
+    List<ReservaResponse> listarPorHuespedEmail(String email);
 }

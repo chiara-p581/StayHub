@@ -270,6 +270,7 @@ const Api = (() => {
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
         loginUsuario: (dto) => request("usuarios/login", { method: "POST", body: dto }),
         consultarUsuario: (id) => request(`usuarios/${id}`, { auth: true }),
+        actualizarMiPerfil: (dto) => request("usuarios/me", { method: "PUT", body: dto, auth: true }),
 
         // ---- hoteles ----
         listarHoteles: (incluirInactivos = false) => cachedRequest("hoteles", { incluirInactivos }, 300000),
@@ -321,6 +322,7 @@ const Api = (() => {
             precioTotal: dto.precioTotal, moneda: dto.moneda
         } }),
         consultarReserva: (id) => request(`reservas/${id}`, { auth: true }),
+        listarMisReservas: () => request("reservas/mias", { auth: true }),
         confirmarReserva: (id) =>
             request(`reservas/${id}/confirmacion`, { method: "POST", auth: true }),
         cancelarReserva: (id) => request(`reservas/${id}`, { method: "DELETE", auth: true }),

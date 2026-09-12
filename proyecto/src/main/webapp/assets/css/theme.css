@@ -45,12 +45,16 @@ body {
 
 /* Navegación común. Tiene medidas propias y no depende de que Tailwind haya cargado. */
 body.stayhub-unified { padding-top: 76px !important; display:block !important; overflow:auto !important; min-height:100vh; }
+.card-scene { width:min(100%, 390px) !important; margin-inline:auto; }
+.card-scene .payment-card { width:100% !important; height:auto !important; aspect-ratio:1.586 / 1; }
 .stayhub-unified > header:not(.stayhub-global-header),
 .stayhub-unified > aside:not(.stayhub-admin-sidebar),
 .stayhub-unified > nav,
 .stayhub-unified > .flex > header,
 .stayhub-unified > .flex > aside,
 .stayhub-unified > .flex > nav { display:none !important; }
+.stayhub-unified nav.fixed.bottom-0,
+.stayhub-unified nav[class~="fixed"][class~="bottom-0"] { display:none !important; }
 .stayhub-global-header { position:fixed; inset:0 0 auto; z-index:1000; height:76px; box-sizing:border-box; background:rgba(250,249,250,.97); border-bottom:1px solid rgba(37,52,79,.12); box-shadow:0 8px 28px rgba(37,52,79,.06); backdrop-filter:blur(18px); }
 .stayhub-header-inner { width:min(100% - 32px,1280px); height:100%; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:24px; }
 .stayhub-brand { display:flex; align-items:center; gap:10px; color:#182944; font-family:'Libre Caslon Text',Georgia,serif; font-size:1.45rem; font-weight:700; text-decoration:none; white-space:nowrap; }

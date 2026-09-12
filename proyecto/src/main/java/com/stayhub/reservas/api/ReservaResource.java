@@ -60,6 +60,16 @@ public class ReservaResource {
         return "ADMIN".equals(rol);
     }
 
+    @GET
+    @Path("/mias")
+    public List<ReservaResponse> listarMias() {
+        String email = emailDelActor();
+        if (email == null) {
+            throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
+        }
+        return servicio.listarPorHuespedEmail(email);
+    }
+
     @POST
     public Response crear(ReservaRequest solicitud) {
         ReservaResponse creada = servicio.crearReserva(solicitud);
@@ -74,7 +84,13 @@ public class ReservaResource {
     @GET
     @Path("/{id}")
     public ReservaResponse consultar(@PathParam("id") Long id) {
-        return servicio.consultarReserva(id);
+        ReservaResponse reserva = servicio.consultarReserva(id);
+        String email = emailDelActor();
+        if (!actorEsAdmin() && (email == null || !email.equalsIgnoreCase(reserva.huespedEmail()))) {
+            throw new WebApplicationException("No podés consultar una reserva ajena",
+                    Response.Status.FORBIDDEN);
+        }
+        return reserva;
     }
 
     @POST
