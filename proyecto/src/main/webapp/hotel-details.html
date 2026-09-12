@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-8" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
 </head>
 <body class="antialiased min-h-screen font-body-md text-body-md">
 <!-- TopAppBar -->
@@ -118,7 +118,7 @@
 </div>
 <p id="tarifa-hint" class="font-body-md text-body-md text-on-surface-variant mb-md"></p>
 
-<button id="btn-reservar" disabled class="w-full bg-primary text-on-primary font-title-lg text-title-lg py-md rounded-lg hover:bg-primary/90 transition-colors mb-sm disabled:opacity-50 disabled:cursor-not-allowed">
+<button id="btn-reservar" disabled class="stayhub-primary-action w-full font-title-lg text-title-lg py-md rounded-lg transition-all mb-sm disabled:opacity-50 disabled:cursor-not-allowed">
                         Agregar al carrito
                     </button>
 <p class="text-center font-body-md text-body-md text-on-surface-variant">No se te va a cobrar en este paso.</p>
@@ -129,7 +129,7 @@
 </div>
 </main>
 
-<script src="assets/js/api.js?v=20260912-8"></script>
+<script src="assets/js/api.js?v=20260912-11"></script>
 <script>
 (function () {
     var params = new URLSearchParams(location.search);
@@ -201,7 +201,7 @@
         var servicios = h.servicios && h.servicios.length ? h.servicios : [];
         serviciosEl.innerHTML = servicios.length
             ? servicios.map(function (s) {
-                return '<div class="flex items-center gap-sm text-on-surface-variant p-sm rounded hover:bg-surface-container-low transition-colors">' +
+                return '<div class="stayhub-service-item flex items-center gap-sm text-on-surface-variant p-md rounded-lg transition-colors">' +
                     '<span class="material-symbols-outlined text-primary">check_circle</span>' +
                     '<span class="font-body-md text-body-md">' + escapeHtml(s) + '</span></div>';
             }).join("")

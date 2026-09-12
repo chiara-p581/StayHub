@@ -66,7 +66,61 @@ body.stayhub-unified { padding-top: 76px !important; display:block !important; o
 .stayhub-channel-shortcuts a:hover { color:#182944; background:#eceff4; }
 .stayhub-header-icon { position:relative; width:42px; height:42px; display:grid; place-items:center; border-radius:13px; color:#566174; text-decoration:none; transition:.18s ease; }
 .stayhub-header-icon:hover { background:#eceff4; color:#182944; transform:translateY(-1px); }
-.stayhub-cart-count { position:absolute; top:1px; right:0; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; display:grid; place-items:center; border:2px solid #faf9fa; border-radius:999px; background:#b34d4d; color:#fff; font-size:9px; font-weight:700; }
+.stayhub-cart-count { position:absolute; top:0; right:-1px; min-width:18px; height:18px; padding:0 4px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; line-height:1; text-align:center; border:2px solid #faf9fa; border-radius:999px; background:#b34d4d; color:#fff; font-size:9px; font-weight:700; }
+
+html[data-theme="dark"] { color-scheme:dark; background:#111827; }
+html[data-theme="dark"] body { background:#111827 !important; color:#e5e7eb !important; }
+html[data-theme="dark"] .stayhub-global-header,
+html[data-theme="dark"] .stayhub-admin-sidebar,
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .bg-surface,
+html[data-theme="dark"] .bg-surface-container-lowest { background:#182235 !important; color:#e5e7eb !important; border-color:#334155 !important; }
+html[data-theme="dark"] .text-primary,
+html[data-theme="dark"] .text-on-surface { color:#f3f4f6 !important; }
+html[data-theme="dark"] .text-on-surface-variant { color:#aeb9c9 !important; }
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea { background:#111827 !important; color:#f3f4f6 !important; border-color:#475569 !important; }
+html[data-theme="dark"] .stayhub-brand { color:#f8fafc !important; }
+html[data-theme="dark"] .stayhub-header-icon { color:#cbd5e1 !important; }
+html[data-theme="dark"] .stayhub-header-icon:hover { color:#fff !important; background:#263349 !important; }
+html[data-theme="dark"] .stayhub-profile-pill { color:#f1f5f9 !important; border-color:#3c4a61 !important; }
+html[data-theme="dark"] .stayhub-channel-shortcuts a { color:#cbd5e1 !important; }
+html[data-theme="dark"] .stayhub-channel-shortcuts a:hover { color:#fff !important; background:#263349 !important; }
+html[data-theme="dark"] .stayhub-cart-count { border-color:#182235 !important; }
+
+/* Superficies y etiquetas que necesitan contraste propio en modo oscuro. */
+html[data-theme="dark"] .bg-surface-container-low,
+html[data-theme="dark"] .bg-surface-container-high,
+html[data-theme="dark"] .bg-surface-container-highest { background:#243149 !important; color:#e8eef7 !important; }
+html[data-theme="dark"] .bg-secondary-container { background:#31516a !important; color:#f5fbff !important; }
+html[data-theme="dark"] .bg-primary-container { background:#344866 !important; color:#fff !important; }
+html[data-theme="dark"] .border-outline-variant { border-color:#52627a !important; }
+html[data-theme="dark"] input::selection,
+html[data-theme="dark"] select::selection { background:#5d769b; color:#fff; }
+html[data-theme="dark"] input[type="date"]::-webkit-datetime-edit,
+html[data-theme="dark"] input[type="number"] { color:#f3f4f6 !important; background:transparent !important; }
+html[data-theme="dark"] #search-location,
+html[data-theme="dark"] #search-checkin,
+html[data-theme="dark"] #search-checkout,
+html[data-theme="dark"] #search-guests { background:transparent !important; box-shadow:none !important; border-color:transparent !important; }
+html[data-theme="dark"] #search-location::placeholder { color:#94a3b8 !important; }
+
+/* Acciones principales: deben distinguirse del fondo en ambos temas. */
+.stayhub-primary-action { background:#182944 !important; color:#fff !important; border:1px solid #182944 !important; box-shadow:0 8px 20px rgba(24,41,68,.22); }
+.stayhub-primary-action:hover { background:#294467 !important; border-color:#294467 !important; transform:translateY(-1px); }
+.stayhub-secondary-action { background:#fff !important; color:#182944 !important; border:1px solid #182944 !important; }
+html[data-theme="dark"] .stayhub-primary-action { background:#2b405f !important; color:#f8fafc !important; border-color:#435b7d !important; box-shadow:0 7px 18px rgba(0,0,0,.22); }
+html[data-theme="dark"] .stayhub-primary-action:hover { background:#344b6d !important; border-color:#536d91 !important; transform:translateY(-1px); }
+html[data-theme="dark"] .stayhub-primary-action:disabled { background:#253650 !important; color:#aebbd0 !important; border-color:#344862 !important; opacity:1 !important; box-shadow:none; transform:none; }
+html[data-theme="dark"] .stayhub-secondary-action { background:#243149 !important; color:#f8fafc !important; border-color:#8aa6cb !important; }
+
+.stayhub-service-item { min-height:54px; border:1px solid rgba(37,52,79,.14); background:rgba(241,243,246,.72); }
+html[data-theme="dark"] .stayhub-service-item { background:#1b2940 !important; border-color:#3d506d !important; color:#e5edf8 !important; }
+html[data-theme="dark"] .stayhub-service-item:hover,
+html[data-theme="dark"] #hotel-servicios > div:hover { background:#22334c !important; color:#f1f5f9 !important; }
+
+/* Formularios de acceso: el botón se separa del panel sin volverse estridente. */
+html[data-theme="dark"] body.stayhub-auth-page #submit-btn { background:#2b405f !important; color:#f8fafc !important; border-color:#435b7d !important; box-shadow:0 6px 16px rgba(0,0,0,.2); }
+html[data-theme="dark"] body.stayhub-auth-page #submit-btn:hover { background:#344b6d !important; color:#fff !important; box-shadow:0 7px 18px rgba(0,0,0,.24); }
 .stayhub-profile-pill { min-height:44px; display:flex; align-items:center; gap:9px; padding:4px 12px 4px 5px; border-left:1px solid #dedfe4; margin-left:5px; color:#26364f; font-size:.84rem; font-weight:600; text-decoration:none; }
 .stayhub-avatar { width:34px; height:34px; flex:0 0 34px; display:grid; place-items:center; border-radius:50%; background:#dbe8f6; color:#183252; font-weight:700; }
 

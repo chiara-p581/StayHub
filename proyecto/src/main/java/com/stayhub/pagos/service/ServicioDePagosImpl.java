@@ -54,6 +54,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         if (resultado.aprobado()) {
             pago.aprobar(resultado.referenciaExterna());
             repositorio.guardar(pago);
+            reservas.confirmarReserva(solicitud.reservaId());
             publicadorEventos.publicarPagoAprobado(new EventoPagoAprobado(
                     pago.getId(), pago.getReservaId(), pago.getMonto(), pago.getMoneda(),
                     pago.getReferenciaPasarela(), pago.getFechaPago()));
@@ -102,6 +103,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
         pago.aprobar(resultado.referenciaExterna());
         repositorio.guardar(pago);
+        solicitud.reservaIds().forEach(reservas::confirmarReserva);
         solicitud.reservaIds().forEach(reservaId -> publicadorEventos.publicarPagoAprobado(
                 new EventoPagoAprobado(pago.getId(), reservaId, pago.getMonto(), pago.getMoneda(),
                         pago.getReferenciaPasarela(), pago.getFechaPago())));
