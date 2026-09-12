@@ -42,3 +42,19 @@ body {
 .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 16px);
 }
+
+/* Shell común: evita que cada export de pantalla invente su propia navegación. */
+.stayhub-unified { padding-top: 68px !important; }
+.stayhub-unified > header:not(.stayhub-global-header) { display: none !important; }
+.stayhub-unified:not(.stayhub-profile-page) > aside { display: none !important; }
+.stayhub-unified:not(.stayhub-profile-page) main { margin-left: 0 !important; margin-top: 0 !important; }
+.stayhub-unified > nav.fixed.bottom-0 { display: none !important; }
+.stayhub-global-header { position: fixed; inset: 0 0 auto 0; z-index: 100; height: 68px; background: rgba(255,255,255,.96); border-bottom: 1px solid rgba(93,95,104,.16); backdrop-filter: blur(14px); }
+.stayhub-header-inner { max-width: 1280px; height: 100%; margin: auto; padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.stayhub-brand { display:flex; align-items:center; gap:.55rem; color:#25344f; font-family:'Libre Caslon Text',serif; font-size:1.35rem; font-weight:700; text-decoration:none; white-space:nowrap; }
+.stayhub-admin-badge { font-family:'Manrope',sans-serif; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; background:#d5eadc; color:#123724; border-radius:999px; padding:.25rem .5rem; }
+.stayhub-header-nav { display:flex; align-items:center; gap:.3rem; }
+.stayhub-header-link { min-height:42px; display:inline-flex; align-items:center; gap:.4rem; padding:.55rem .75rem; border-radius:999px; color:#45464f; text-decoration:none; font-size:.875rem; }
+.stayhub-header-link:hover { background:#f0eef0; color:#25344f; }
+.stayhub-cart-count { min-width:1.25rem; height:1.25rem; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#25344f; color:white; font-size:.68rem; }
+@media (max-width: 700px) { .stayhub-header-link span.link-label { display:none; } .stayhub-header-inner { padding:0 .75rem; } }

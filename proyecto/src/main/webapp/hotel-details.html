@@ -47,10 +47,7 @@
 </div>
 </div>
 </div>
-<!-- Hero (imagen ilustrativa: el modelo de Hotel no guarda fotos) -->
-<div class="w-full h-[280px] md:h-[360px] mb-xxl rounded-xl overflow-hidden bg-primary-container flex items-center justify-center">
-<span class="material-symbols-outlined text-on-primary-container" style="font-size:72px;">hotel</span>
-</div>
+<div class="w-full h-[320px] md:h-[460px] mb-xxl rounded-xl overflow-hidden bg-primary-container"><img id="hotel-imagen" src="assets/images/stayhub-resort-hero.png" alt="Vista del hotel" class="w-full h-full object-cover"/></div>
 <div class="grid grid-cols-1 md:grid-cols-12 gap-xl">
 <!-- Main Content Area -->
 <div class="col-span-1 md:col-span-8 flex flex-col gap-xl">
@@ -109,7 +106,7 @@
 <p id="tarifa-hint" class="font-body-md text-body-md text-on-surface-variant mb-md"></p>
 
 <button id="btn-reservar" disabled class="w-full bg-primary text-on-primary font-title-lg text-title-lg py-md rounded-lg hover:bg-primary/90 transition-colors mb-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                        Reservar
+                        Agregar al carrito
                     </button>
 <p class="text-center font-body-md text-body-md text-on-surface-variant">No se te va a cobrar en este paso.</p>
 </div>
@@ -119,7 +116,7 @@
 </div>
 </main>
 
-<script src="assets/js/api.js?v=20260911-3"></script>
+<script src="assets/js/api.js?v=20260911-4"></script>
 <script>
 (function () {
     var params = new URLSearchParams(location.search);
@@ -162,8 +159,11 @@
     }
 
     function pintarHotel(h) {
+        var fotos = ["stayhub-resort-hero.png", "stayhub-patagonia.png", "stayhub-costa.png"];
         document.title = "StayHub - " + h.nombre;
         document.getElementById("hotel-nombre").textContent = h.nombre;
+        document.getElementById("hotel-imagen").src = "assets/images/" + fotos[Math.abs(Number(h.id) || 0) % fotos.length];
+        document.getElementById("hotel-imagen").alt = "Vista de " + h.nombre;
         document.getElementById("hotel-direccion").textContent =
             h.direccion + ", " + h.ciudad + ", " + h.pais;
 
@@ -296,7 +296,7 @@
 
         var btn = document.getElementById("btn-reservar");
         btn.disabled = true;
-        btn.textContent = "Reservando...";
+        btn.textContent = "Agregando...";
 
         Api.carritoSeleccionarHotel({ hotelId: Number(hotelId), tipoHabitacion: tipoHabitacion, cantidadHabitaciones: cantidadHabitaciones })
             .then(function () {
@@ -313,21 +313,12 @@
                 });
             })
             .then(function () {
-                return Api.carritoConfirmar();
-            })
-            .then(function (reserva) {
-                reservaOk.textContent = "¡Reserva creada! N° " + reserva.id + " (" + reserva.estado + ").";
-                reservaOk.classList.remove("hidden");
-                btn.textContent = "Ir a pagar";
-                btn.disabled = false;
-                btn.onclick = function () {
-                    location.href = "payments.html?reservaId=" + reserva.id + "&monto=" + reserva.precioTotal + "&moneda=" + reserva.moneda;
-                };
+                location.href = "cart.html";
             })
             .catch(function (err) {
                 mostrarError(reservaError, err);
                 btn.disabled = false;
-                btn.textContent = "Reservar";
+                btn.textContent = "Agregar al carrito";
             });
     });
 })();
