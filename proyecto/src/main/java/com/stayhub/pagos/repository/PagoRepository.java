@@ -8,4 +8,6 @@ public interface PagoRepository {
     Pago guardar(Pago pago);
 
     Optional<Pago> buscarPorId(Long id);
+
+    boolean existeAprobadoParaReserva(Long reservaId);
 }

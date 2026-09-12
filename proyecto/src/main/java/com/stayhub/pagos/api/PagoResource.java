@@ -3,6 +3,7 @@ package com.stayhub.pagos.api;
 import com.stayhub.pagos.contrato.ServicioDePagos;
 import com.stayhub.pagos.dto.PagoRequest;
 import com.stayhub.pagos.dto.PagoResponse;
+import com.stayhub.pagos.dto.PagoLoteRequest;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -25,6 +26,15 @@ public class PagoResource {
                 .location(URI.create("api/pagos/" + pago.id()))
                 .entity(pago)
                 .build();
+    }
+
+    @POST
+    @Path("/lote")
+    public Response procesarLote(PagoLoteRequest solicitud) {
+        PagoResponse pago = servicio.procesarLote(solicitud);
+        return Response.status(Response.Status.CREATED)
+                .location(URI.create("api/pagos/" + pago.id()))
+                .entity(pago).build();
     }
 
     @GET

@@ -357,6 +357,7 @@ const Api = (() => {
 
         // ---- pagos ----
         procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true }),
+        procesarPagoLote: (dto) => request("pagos/lote", { method: "POST", body: dto, auth: true }),
         consultarPago: (id) => request(`pagos/${id}`, { auth: true }),
 
         // ---- operaciones ----
