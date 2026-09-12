@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260911-5" rel="stylesheet"/>
 </head>
 <body class="antialiased min-h-screen font-body-md text-body-md">
 <!-- TopAppBar -->
@@ -54,7 +54,19 @@
 <!-- About Section -->
 <section>
 <h3 class="font-headline-md text-headline-md text-primary mb-md border-b-2 border-tertiary-fixed-dim/30 pb-sm inline-block">Sobre el hotel</h3>
-<div id="hotel-descripcion" class="font-body-lg text-body-lg text-on-surface-variant space-y-4"></div>
+<div id="hotel-descripcion" class="font-body-lg text-body-lg text-on-surface-variant space-y-4 leading-relaxed"></div>
+<div class="grid sm:grid-cols-2 gap-md mt-lg">
+<article class="p-lg rounded-xl bg-surface-container-low border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary mb-sm">hotel_class</span>
+<h4 class="font-title-lg text-title-lg text-primary mb-sm">La experiencia</h4>
+<p id="hotel-experiencia" class="font-body-md text-body-md text-on-surface-variant leading-relaxed"></p>
+</article>
+<article class="p-lg rounded-xl bg-surface-container-low border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary mb-sm">explore</span>
+<h4 class="font-title-lg text-title-lg text-primary mb-sm">El entorno</h4>
+<p id="hotel-entorno" class="font-body-md text-body-md text-on-surface-variant leading-relaxed"></p>
+</article>
+</div>
 </section>
 <!-- Amenities Section -->
 <section>
@@ -116,7 +128,7 @@
 </div>
 </main>
 
-<script src="assets/js/api.js?v=20260911-4"></script>
+<script src="assets/js/api.js?v=20260911-5"></script>
 <script>
 (function () {
     var params = new URLSearchParams(location.search);
@@ -171,6 +183,13 @@
         descripcionEl.innerHTML = h.descripcion
             ? "<p>" + escapeHtml(h.descripcion) + "</p>"
             : '<p class="italic">Este hotel todavía no cargó una descripción.</p>';
+        var serviciosTexto = h.servicios && h.servicios.length
+            ? h.servicios.slice(0, 3).join(", ").toLowerCase()
+            : "atención personalizada y espacios pensados para el descanso";
+        document.getElementById("hotel-experiencia").textContent =
+            "La propuesta combina " + serviciosTexto + ". Las áreas comunes y habitaciones están pensadas para que cada etapa de la estadía resulte cómoda, desde la llegada hasta el último desayuno.";
+        document.getElementById("hotel-entorno").textContent =
+            "Ubicado en " + h.ciudad + ", permite tomar el hotel como punto de partida para recorrer la zona y volver a un ambiente tranquilo. El equipo puede orientar sobre traslados, actividades y opciones cercanas durante la estadía.";
 
         var serviciosEl = document.getElementById("hotel-servicios");
         var servicios = h.servicios && h.servicios.length ? h.servicios : [];
