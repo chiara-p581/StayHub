@@ -25,4 +25,6 @@ public interface ServicioDeReservas {
     ReservaResponse cancelarReserva(Long id);
 
     List<ReservaResponse> listarPorHotel(Long hotelId);
+
+    List<ReservaResponse> listarPorHuespedEmail(String email);
 }

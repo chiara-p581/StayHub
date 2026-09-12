@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>StayHub - Detalle de reserva</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script><script src="assets/js/tailwind-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260912-8" rel="stylesheet"/>
+</head><body class="bg-background text-on-background font-body-md min-h-screen">
+<main class="max-w-5xl mx-auto px-md py-xxl">
+  <a href="settings.html#mis-reservas" class="inline-flex items-center gap-xs text-primary mb-lg"><span class="material-symbols-outlined">arrow_back</span>Volver a mis reservas</a>
+  <div id="error-banner" class="hidden p-md rounded-lg bg-error-container text-on-error-container"></div>
+  <section id="detalle" class="hidden overflow-hidden bg-white rounded-2xl border border-outline-variant/30 shadow-sm">
+    <div class="grid md:grid-cols-[320px_1fr]">
+      <img id="hotel-imagen" class="w-full h-full min-h-64 object-cover" alt="Hotel de la reserva"/>
+      <div class="p-xl">
+        <div class="flex flex-wrap justify-between gap-md"><div><p class="uppercase tracking-wider text-xs text-on-surface-variant">Reserva <span id="reserva-id"></span></p><h1 id="hotel-nombre" class="font-headline-lg text-headline-lg text-primary mt-xs"></h1><p id="hotel-ubicacion" class="text-on-surface-variant"></p></div><span id="estado" class="h-fit rounded-full px-md py-xs text-sm font-semibold"></span></div>
+        <dl class="grid sm:grid-cols-2 gap-lg mt-xl border-t border-outline-variant/30 pt-xl">
+          <div><dt class="text-xs uppercase text-on-surface-variant">Fechas</dt><dd id="fechas" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Habitación</dt><dd id="habitacion" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Huésped</dt><dd id="huesped" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Canal</dt><dd id="canal" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Importe</dt><dd id="importe" class="font-semibold text-lg text-primary mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Referencia externa</dt><dd id="referencia" class="font-semibold mt-xs"></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</main><script src="assets/js/api.js?v=20260912-8"></script><script>
+(function(){if(!Api.requireLogin())return;var id=new URLSearchParams(location.search).get('reservaId'),error=document.getElementById('error-banner');if(!id){mostrarError(error,new Error('No se indicó una reserva.'));return}Promise.all([Api.consultarReserva(id),Api.listarHoteles(true)]).then(function(r){var reserva=r[0],hotel=(r[1]||[]).find(function(h){return String(h.id)===String(reserva.hotelId)});document.getElementById('reserva-id').textContent='#'+reserva.id;document.getElementById('hotel-nombre').textContent=hotel?hotel.nombre:'Hotel #'+reserva.hotelId;document.getElementById('hotel-ubicacion').textContent=hotel?hotel.ciudad+', '+hotel.pais:'';document.getElementById('hotel-imagen').src=['assets/images/stayhub-resort-hero.png','assets/images/stayhub-costa.png','assets/images/stayhub-patagonia.png'][Number(reserva.hotelId)%3];document.getElementById('fechas').textContent=reserva.checkIn+' — '+reserva.checkOut;document.getElementById('habitacion').textContent=reserva.cantidadHabitaciones+' × '+reserva.tipoHabitacion;document.getElementById('huesped').textContent=reserva.huespedNombre+' '+reserva.huespedApellido;document.getElementById('canal').textContent=reserva.canal==='DIRECTA'?'StayHub':reserva.canal;document.getElementById('referencia').textContent=reserva.referenciaExterna||'Reserva directa';document.getElementById('importe').textContent=new Intl.NumberFormat('es-AR',{style:'currency',currency:reserva.moneda||'ARS'}).format(reserva.precioTotal);var estado=document.getElementById('estado');estado.textContent=reserva.estado;estado.className+=' bg-secondary-container text-on-secondary-container';document.getElementById('detalle').classList.remove('hidden')}).catch(function(e){mostrarError(error,e)})})();
+</script></body></html>

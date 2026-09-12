@@ -3,6 +3,7 @@ package com.stayhub.reservas.api;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.dto.ReservaResponse;
 import com.stayhub.reservas.service.ServicioDeReservas;
+import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -10,6 +11,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.List;
 
@@ -29,8 +31,22 @@ public class ReservaResource {
     @Inject
     private ServicioDeReservas servicio;
 
+    @Inject
+    private ServicioDeUsuarios servicioUsuarios;
+
     @Context
     private UriInfo uriInfo;
+
+    @GET
+    @Path("/mias")
+    public List<ReservaResponse> listarMias(@Context HttpServletRequest request) {
+        var sesion = request.getSession(false);
+        if (sesion == null || sesion.getAttribute("usuarioId") == null) {
+            throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
+        }
+        var usuario = servicioUsuarios.buscarPorId((Long) sesion.getAttribute("usuarioId"));
+        return servicio.listarPorHuespedEmail(usuario.email());
+    }
 
     @POST
     public Response crear(ReservaRequest solicitud) {
@@ -45,8 +61,19 @@ public class ReservaResource {
 
     @GET
     @Path("/{id}")
-    public ReservaResponse consultar(@PathParam("id") Long id) {
-        return servicio.consultarReserva(id);
+    public ReservaResponse consultar(@PathParam("id") Long id, @Context HttpServletRequest request) {
+        ReservaResponse reserva = servicio.consultarReserva(id);
+        var sesion = request.getSession(false);
+        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
+        if (!"ADMIN".equals(rol)) {
+            Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
+            if (usuarioId == null || !servicioUsuarios.buscarPorId(usuarioId).email()
+                    .equalsIgnoreCase(reserva.huespedEmail())) {
+                throw new WebApplicationException("No podés consultar una reserva ajena",
+                        Response.Status.FORBIDDEN);
+            }
+        }
+        return reserva;
     }
 
     @POST

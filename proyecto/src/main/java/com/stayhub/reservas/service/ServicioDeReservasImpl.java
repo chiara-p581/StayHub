@@ -252,6 +252,11 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         return repositorio.listarPorHotel(hotelId).stream().map(ReservaMapper::aResponse).toList();
     }
 
+    @Override
+    public List<ReservaResponse> listarPorHuespedEmail(String email) {
+        return repositorio.listarPorHuespedEmail(email).stream().map(ReservaMapper::aResponse).toList();
+    }
+
     // ------------------------------------------------------------------
     // helpers privados compartidos
     // ------------------------------------------------------------------
