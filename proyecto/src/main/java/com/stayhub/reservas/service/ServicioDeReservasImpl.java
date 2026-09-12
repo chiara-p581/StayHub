@@ -257,6 +257,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
+    @PermitAll
     public List<ReservaResponse> listarPorHuespedEmail(String email) {
         return repositorio.listarPorHuespedEmail(email).stream().map(ReservaMapper::aResponse).toList();
     }

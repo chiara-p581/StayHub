@@ -14,6 +14,7 @@ import com.stayhub.pagos.model.Pago;
 import com.stayhub.pagos.repository.PagoRepository;
 import com.stayhub.reservas.service.ServicioDeReservas;
 import java.math.BigDecimal;
+import java.util.List;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -121,6 +122,11 @@ public class ServicioDePagosImpl implements ServicioDePagos {
             throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
                     "La solicitud de pago está incompleta o contiene valores inválidos");
         }
+    }
+
+    @Override
+    public List<PagoResponse> listarPorReservas(List<Long> reservaIds) {
+        return repositorio.listarPorReservas(reservaIds).stream().map(PagoMapper::aResponse).toList();
     }
 
     private void verificarNoPagada(Long reservaId) {

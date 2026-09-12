@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.Optional;
+import java.util.List;
 
 @ApplicationScoped
 public class PagoRepositoryJpa implements PagoRepository {
@@ -34,5 +35,14 @@ public class PagoRepositoryJpa implements PagoRepository {
                 .setParameter("estado", EstadoPago.APROBADO)
                 .setParameter("reservaId", reservaId).getSingleResult();
         return cantidad > 0;
+    }
+
+    @Override
+    public List<Pago> listarPorReservas(List<Long> reservaIds) {
+        if (reservaIds == null || reservaIds.isEmpty()) return List.of();
+        return em.createQuery("SELECT DISTINCT p FROM Pago p LEFT JOIN p.reservaIds r "
+                        + "WHERE p.reservaId IN :ids OR r IN :ids ORDER BY p.fechaPago DESC", Pago.class)
+                .setParameter("ids", reservaIds)
+                .getResultList();
     }
 }
