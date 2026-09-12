@@ -83,6 +83,27 @@ lo único que cambia es el mapeo de entrada/salida (ver `ReservaMapper`).
   > info en las OTAs, no para pedir/soltar un hold — por eso hace falta
   > este contrato adicional.
 
+## Seguridad: dueño de la reserva
+
+`cancelarReserva` y `modificarReserva` no dejan que cualquier usuario logueado
+opere sobre cualquier reserva: un ADMIN puede cancelar o modificar cualquiera,
+pero un HUESPED solo puede hacerlo sobre la SUYA (se compara el email cargado en
+la reserva contra el usuario autenticado). Es una verificación programática,
+porque el rol solo (`ADMIN`/`HUESPED`) no alcanza para expresar "esta reserva es
+tuya" — hace falta lógica propia, no solo una anotación.
+
+Quién está autenticado se resuelve en `ReservaResource`, no en el servicio: el
+login de StayHub cambió de ser manejado por el contenedor de EJBs (HTTP Basic +
+`SessionContext`) a un login por sesión propio (`POST /usuarios/login` guarda el
+usuario en la `HttpSession`, y `AutenticacionFilter` la revisa en cada request).
+Como el servicio ya no tiene forma de preguntarle al contenedor quién llama,
+`ReservaResource` lee la sesión HTTP y pasa `actorEmail`/`actorEsAdmin` como
+parámetros explícitos a `cancelarReserva`/`modificarReserva`, que los usan en un
+helper interno (`verificarPropietario`) antes de tocar la reserva.
+
+Cubierto por `ServicioDeReservasImplTest` (dueño, ajena, ADMIN, sin sesión) y por
+la carpeta "03 - Seguridad" de la colección de Postman.
+
 ## Estructura
 
 ```

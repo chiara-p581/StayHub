@@ -3,8 +3,11 @@ package com.stayhub.reservas.api;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.dto.ReservaResponse;
 import com.stayhub.reservas.service.ServicioDeReservas;
+import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -29,8 +32,33 @@ public class ReservaResource {
     @Inject
     private ServicioDeReservas servicio;
 
+    @Inject
+    private ServicioDeUsuarios servicioDeUsuarios;
+
     @Context
     private UriInfo uriInfo;
+
+    @Context
+    private HttpServletRequest request;
+
+    /**
+     * Resuelve quién está haciendo el pedido a partir de la sesión HTTP que
+     * arma el login nuevo (POST /api/usuarios/login + AutenticacionFilter).
+     * Ya no existe un login manejado por el contenedor de EJBs, así que
+     * este es el único lugar donde se puede obtener esa identidad — por
+     * eso se resuelve acá y se pasa como parámetro al servicio.
+     */
+    private String emailDelActor() {
+        HttpSession sesion = request.getSession(false);
+        Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
+        return usuarioId == null ? null : servicioDeUsuarios.buscarPorId(usuarioId).email();
+    }
+
+    private boolean actorEsAdmin() {
+        HttpSession sesion = request.getSession(false);
+        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
+        return "ADMIN".equals(rol);
+    }
 
     @POST
     public Response crear(ReservaRequest solicitud) {
@@ -58,13 +86,13 @@ public class ReservaResource {
     @PUT
     @Path("/{id}")
     public ReservaResponse modificar(@PathParam("id") Long id, ReservaRequest solicitud) {
-        return servicio.modificarReserva(id, solicitud);
+        return servicio.modificarReserva(id, solicitud, emailDelActor(), actorEsAdmin());
     }
 
     @DELETE
     @Path("/{id}")
     public ReservaResponse cancelar(@PathParam("id") Long id) {
-        return servicio.cancelarReserva(id);
+        return servicio.cancelarReserva(id, emailDelActor(), actorEsAdmin());
     }
 
     @GET

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "2f6e6d8a-9b3a-4f1a-8f2b-5b1a2c3d4e5f",
     "name": "StayHub - ServicioDeReservas (Reservas y Carrito)",
-    "description": "Pruebas de punta a punta para ServicioDeReservas: el flujo directo de reservas (ReservaResource), la seguridad de cancelar/modificar (ownership: dueño vs. ajena vs. ADMIN) y el carrito de reserva paso a paso (CarritoDeReserva, el único EJB @Stateful del sistema). Requiere WildFly con StayHub.war desplegado, el datasource java:/PostgresDS conectado, y dos usuarios de ApplicationRealm ya creados: uno con rol HUESPED (variables huespedUser/huespedPass) y uno con rol ADMIN (adminUser/adminPass). Completar esas 4 variables de colección con los valores reales antes de correr. Ejecutar las carpetas en orden: 00 crea los datos base (hotel, tipo, inventario), 01 prueba el flujo directo, 02 prueba la seguridad por dueño, 03 prueba el carrito.",
+    "description": "Pruebas de punta a punta para ServicioDeReservas: el flujo directo de reservas (ReservaResource), la seguridad de cancelar/modificar (ownership: dueño vs. ajena vs. ADMIN) y el carrito de reserva paso a paso (CarritoDeReserva, el único EJB @Stateful del sistema).\n\nRequiere WildFly con StayHub.war desplegado y el datasource java:/PostgresDS conectado. La autenticacion YA NO es HTTP Basic contra ApplicationRealm: el proyecto paso a un login por sesion propio (POST /usuarios/login guarda usuarioId/usuarioRol en la HttpSession, y AutenticacionFilter la revisa en cada request). Postman maneja la cookie de sesion (JSESSIONID) automaticamente en su cookie jar por dominio: alcanza con correr la request 'Login ...' correcta antes de cada paso para que el resto de la carpeta actue con esa identidad.\n\nIMPORTANTE sobre el usuario ADMIN: el registro publico (POST /usuarios) SIEMPRE crea el usuario con rol HUESPED, sin importar que rol se mande. Para tener un ADMIN de verdad: 1) correr 'Registrar ADMIN' en la carpeta 00 (queda como HUESPED), 2) promoverlo a mano en la base con UPDATE usuarios SET rol = 'ADMIN' WHERE email = 'admin1@test.com'; 3) recien ahi correr 'Login ADMIN'.\n\nCompletar huespedEmail/huespedPassword/adminEmail/adminPassword con valores reales antes de correr. Orden de carpetas: 00 (cuentas + login) -> 01 (datos base, requiere ADMIN) -> 02 (flujo directo) -> 03 (seguridad por dueno) -> 04 (carrito).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -39,27 +39,177 @@
       "value": ""
     },
     {
-      "key": "huespedUser",
-      "value": "huesped1"
+      "key": "huespedEmail",
+      "value": "huesped1@test.com"
     },
     {
-      "key": "huespedPass",
+      "key": "huespedPassword",
       "value": "CAMBIAR_PASSWORD"
     },
     {
-      "key": "adminUser",
-      "value": "admin"
+      "key": "adminEmail",
+      "value": "admin1@test.com"
     },
     {
-      "key": "adminPass",
+      "key": "adminPassword",
       "value": "CAMBIAR_PASSWORD"
     }
   ],
   "item": [
     {
-      "name": "00 - Datos base (hotel, tipo, inventario)",
-      "description": "Crea un hotel de prueba propio de esta colección, le agrega un tipo DOBLE y carga inventario para las fechas que van a usar las reservas de las carpetas siguientes.",
+      "name": "00 - Cuentas y login",
+      "description": "Registra (si hace falta) los dos usuarios que usa toda la coleccion y deja una sesion ADMIN activa al final, lista para la carpeta 01. El registro publico siempre crea HUESPED - para el ADMIN hay que promoverlo a mano en la base la primera vez (ver descripcion de la coleccion).",
       "item": [
+        {
+          "name": "Registrar ADMIN (queda HUESPED hasta promocionar por SQL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"nombre\": \"Admin\",\n  \"apellido\": \"Prueba\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created (o 409 si ya existe de una corrida anterior)', function () { pm.expect([201, 409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar HUESPED",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{huespedEmail}}\",\n  \"password\": \"{{huespedPassword}}\",\n  \"nombre\": \"Huesped\",\n  \"apellido\": \"Uno\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created (o 409 si ya existe de una corrida anterior)', function () { pm.expect([201, 409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login ADMIN', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol ADMIN', function () { pm.expect(pm.response.json().rol).to.eql('ADMIN'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Datos base (hotel, tipo, inventario)",
+      "description": "Crea un hotel de prueba propio de esta colección, le agrega un tipo DOBLE y carga inventario para las fechas que van a usar las reservas de las carpetas siguientes. Requiere sesion ADMIN activa (POST /hoteles y las cargas de tipo/inventario ahora exigen rol ADMIN).",
+      "item": [
+        {
+          "name": "Login ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login ADMIN', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol ADMIN', function () { pm.expect(pm.response.json().rol).to.eql('ADMIN'); });"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "Crear hotel de prueba",
           "request": {
@@ -174,9 +324,46 @@
       ]
     },
     {
-      "name": "01 - Flujo directo (ReservaResource)",
+      "name": "02 - Flujo directo (ReservaResource)",
       "description": "Crear, consultar, confirmar y listar una reserva directa. crear/consultar/confirmar/listar son @PermitAll: no hace falta autenticación.",
       "item": [
+        {
+          "name": "Login HUESPED",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{huespedEmail}}\",\n  \"password\": \"{{huespedPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login HUESPED', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol HUESPED', function () { pm.expect(pm.response.json().rol).to.eql('HUESPED'); });"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "Crear reserva",
           "request": {
@@ -272,6 +459,43 @@
           ]
         },
         {
+          "name": "Login ADMIN (requerido para listar)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login ADMIN (requerido para listar)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol ADMIN', function () { pm.expect(pm.response.json().rol).to.eql('ADMIN'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Listar reservas del hotel",
           "request": {
             "method": "GET",
@@ -308,9 +532,46 @@
       ]
     },
     {
-      "name": "02 - Seguridad: cancelar y modificar (dueño vs. ajena vs. ADMIN)",
+      "name": "03 - Seguridad: cancelar y modificar (dueño vs. ajena vs. ADMIN)",
       "description": "cancelarReserva y modificarReserva exigen @RolesAllowed({ADMIN,HUESPED}) MAS una verificación programática de dueño (SessionContext): un HUESPED solo puede operar sobre una reserva cuyo huespedEmail coincide con su username autenticado. ADMIN puede operar sobre cualquiera. Esta carpeta prueba la matriz completa: dueño, ajena, admin.",
       "item": [
+        {
+          "name": "Login HUESPED",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{huespedEmail}}\",\n  \"password\": \"{{huespedPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login HUESPED', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol HUESPED', function () { pm.expect(pm.response.json().rol).to.eql('HUESPED'); });"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "Crear reserva PROPIA de huesped1",
           "request": {
@@ -332,7 +593,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-04\",\n  \"huespedNombre\": \"Huesped\",\n  \"huespedApellido\": \"Uno\",\n  \"huespedEmail\": \"{{huespedUser}}\",\n  \"huespedTelefono\": \"1100000000\",\n  \"precioTotal\": 40000.0,\n  \"moneda\": \"ARS\"\n}"
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-04\",\n  \"huespedNombre\": \"Huesped\",\n  \"huespedApellido\": \"Uno\",\n  \"huespedEmail\": \"{{huespedEmail}}\",\n  \"huespedTelefono\": \"1100000000\",\n  \"precioTotal\": 40000.0,\n  \"moneda\": \"ARS\"\n}"
             }
           },
           "event": [
@@ -453,21 +714,6 @@
                 "reservas",
                 "{{reservaIdAjena}}"
               ]
-            },
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "{{huespedUser}}",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "{{huespedPass}}",
-                  "type": "string"
-                }
-              ]
             }
           },
           "event": [
@@ -504,21 +750,6 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-05\",\n  \"checkOut\": \"2026-10-08\",\n  \"huespedNombre\": \"Otro\",\n  \"huespedApellido\": \"Huesped\",\n  \"huespedEmail\": \"otro.huesped@mail.com\",\n  \"huespedTelefono\": \"1199999999\",\n  \"precioTotal\": 45000.0,\n  \"moneda\": \"ARS\"\n}"
-            },
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "{{huespedUser}}",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "{{huespedPass}}",
-                  "type": "string"
-                }
-              ]
             }
           },
           "event": [
@@ -554,22 +785,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-06\",\n  \"huespedNombre\": \"Huesped\",\n  \"huespedApellido\": \"Uno\",\n  \"huespedEmail\": \"{{huespedUser}}\",\n  \"huespedTelefono\": \"1100000000\",\n  \"precioTotal\": 55000.0,\n  \"moneda\": \"ARS\"\n}"
-            },
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "{{huespedUser}}",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "{{huespedPass}}",
-                  "type": "string"
-                }
-              ]
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-06\",\n  \"huespedNombre\": \"Huesped\",\n  \"huespedApellido\": \"Uno\",\n  \"huespedEmail\": \"{{huespedEmail}}\",\n  \"huespedTelefono\": \"1100000000\",\n  \"precioTotal\": 55000.0,\n  \"moneda\": \"ARS\"\n}"
             }
           },
           "event": [
@@ -598,21 +814,6 @@
                 "reservas",
                 "{{reservaId}}"
               ]
-            },
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "{{huespedUser}}",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "{{huespedPass}}",
-                  "type": "string"
-                }
-              ]
             }
           },
           "event": [
@@ -622,6 +823,43 @@
                 "exec": [
                   "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
                   "pm.test('Estado CANCELADA', function () { pm.expect(pm.response.json().estado).to.eql('CANCELADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login ADMIN', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol ADMIN', function () { pm.expect(pm.response.json().rol).to.eql('ADMIN'); });"
                 ]
               }
             }
@@ -650,21 +888,6 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-05\",\n  \"checkOut\": \"2026-10-09\",\n  \"huespedNombre\": \"Otro\",\n  \"huespedApellido\": \"Huesped\",\n  \"huespedEmail\": \"otro.huesped@mail.com\",\n  \"huespedTelefono\": \"1199999999\",\n  \"precioTotal\": 60000.0,\n  \"moneda\": \"ARS\"\n}"
-            },
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "{{adminUser}}",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "{{adminPass}}",
-                  "type": "string"
-                }
-              ]
             }
           },
           "event": [
@@ -692,21 +915,6 @@
                 "reservas",
                 "{{reservaIdAjena}}"
               ]
-            },
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "{{adminUser}}",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "{{adminPass}}",
-                  "type": "string"
-                }
-              ]
             }
           },
           "event": [
@@ -723,9 +931,46 @@
       ]
     },
     {
-      "name": "03 - Carrito de reserva (CarritoDeReserva, @Stateful)",
+      "name": "04 - Carrito de reserva (CarritoDeReserva, @Stateful)",
       "description": "CarritoResource es @SessionScoped: mientras Postman mantenga la cookie JSESSIONID (el cookie jar de Postman lo hace automáticamente dentro de una misma corrida), todas estas llamadas caen sobre la MISMA instancia de CarritoDeReserva y el estado se va acumulando paso a paso. Correr en orden.",
       "item": [
+        {
+          "name": "Login HUESPED",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{huespedEmail}}\",\n  \"password\": \"{{huespedPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login HUESPED', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol HUESPED', function () { pm.expect(pm.response.json().rol).to.eql('HUESPED'); });"
+                ]
+              }
+            }
+          ]
+        },
         {
           "name": "Vaciar carrito (por las dudas)",
           "request": {
@@ -948,6 +1193,43 @@
           ]
         },
         {
+          "name": "Login ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK - Login ADMIN', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rol ADMIN', function () { pm.expect(pm.response.json().rol).to.eql('ADMIN'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Limpieza: ADMIN cancela la reserva del carrito",
           "request": {
             "method": "DELETE",
@@ -960,21 +1242,6 @@
               "path": [
                 "reservas",
                 "{{reservaIdCarrito}}"
-              ]
-            },
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "{{adminUser}}",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "{{adminPass}}",
-                  "type": "string"
-                }
               ]
             }
           },

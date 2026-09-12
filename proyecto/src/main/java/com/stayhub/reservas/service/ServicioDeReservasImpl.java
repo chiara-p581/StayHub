@@ -186,8 +186,9 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
 
     @Override
     @PermitAll
-    public ReservaResponse cancelarReserva(Long id) {
+    public ReservaResponse cancelarReserva(Long id, String actorEmail, boolean actorEsAdmin) {
         Reserva reserva = buscarOFallar(id);
+        verificarPropietario(reserva, actorEmail, actorEsAdmin);
         if (reserva.getEstado() == EstadoReserva.CANCELADA) {
             // Cancelación repetida sobre la misma reserva: no repetimos la
             // liberación del hold (mismo criterio que cancelarDesdeCanal).
@@ -202,7 +203,9 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     /**
      * Modificación de una reserva DIRECTA (fechas, tipo de habitación,
      * cantidad, precio). Mismo criterio de autorización que cancelarReserva:
-     * ADMIN cualquiera, HUESPED solo la propia. Reutiliza
+     * ADMIN cualquiera, HUESPED solo la propia — verificado con
+     * verificarPropietario() contra el actorEmail que resuelve
+     * ReservaResource desde la sesión HTTP del login nuevo. Reutiliza
      * GestionDeDisponibilidadPort.reemplazarHold, igual que
      * reemplazarHoldYConfirmar (canal externo), pero sin forzar CONFIRMADA:
      * si la reserva estaba PENDIENTE sigue PENDIENTE con el hold nuevo, y si
@@ -210,8 +213,9 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
      */
     @Override
     @PermitAll
-    public ReservaResponse modificarReserva(Long id, ReservaRequest solicitud) {
+    public ReservaResponse modificarReserva(Long id, ReservaRequest solicitud, String actorEmail, boolean actorEsAdmin) {
         Reserva reserva = buscarOFallar(id);
+        verificarPropietario(reserva, actorEmail, actorEsAdmin);
         if (reserva.getEstado() == EstadoReserva.CANCELADA || reserva.getEstado() == EstadoReserva.RECHAZADA) {
             throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
                     "No se puede modificar una reserva en estado " + reserva.getEstado());
@@ -355,11 +359,23 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
 
     /**
      * ADMIN puede operar sobre cualquier reserva. Un HUESPED solo puede
-     * cancelarla o modificarla si es la suya: comparamos el principal autenticado (username BASIC = email,
-     * por convención del login de StayHub) contra el email cargado en la
-     * reserva. Si no coincide, 403 en lugar de dejar cancelar cualquier
-     * reserva ajena.
+     * cancelarla o modificarla si es la suya: comparamos el email que
+     * ReservaResource resolvió de la sesión HTTP (login nuevo, vía
+     * AutenticacionFilter) contra el email cargado en la reserva. Ya no
+     * usamos SessionContext acá: ese mecanismo dependía del login viejo
+     * manejado por el contenedor de EJBs, que este proyecto dejó de usar.
      */
+    private void verificarPropietario(Reserva reserva, String actorEmail, boolean actorEsAdmin) {
+        if (actorEsAdmin) {
+            return;
+        }
+        String duenio = reserva.getHuesped() == null ? null : reserva.getHuesped().getEmail();
+        if (actorEmail == null || duenio == null || !actorEmail.equalsIgnoreCase(duenio)) {
+            throw new ReservaException(CodigoErrorReserva.NO_AUTORIZADO,
+                    "No podés operar sobre una reserva que no es tuya");
+        }
+    }
+
     private Reserva buscarOFallar(Long id) {
         return repositorio.buscarPorId(id)
                 .orElseThrow(() -> new ReservaException(CodigoErrorReserva.RESERVA_NO_ENCONTRADA,
