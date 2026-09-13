@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>StayHub - Iniciar sesión</title>
+<title>StayHub - Sign in</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 </head>
 <body class="stayhub-auth-page h-full bg-background flex flex-col">
 <!-- Transactional Screen - No Navigation Shell -->
@@ -17,15 +17,15 @@
 <!-- Header -->
 <div class="text-center mb-xl">
 <h1 class="font-display-lg text-display-lg text-primary mb-sm">StayHub</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant">Iniciá sesión para reservar o administrar</p>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Sign in to book or manage properties</p>
 </div>
 <!-- Card Container -->
 <div class="bg-surface-container-lowest rounded-xl shadow-lg border-t-2 border-tertiary-fixed-dim/30 p-xl relative overflow-hidden">
 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-tertiary-fixed-dim/50 to-transparent"></div>
 <div class="mb-lg">
-<h2 class="font-headline-lg text-headline-lg text-primary mb-sm">Iniciar sesión</h2>
+<h2 class="font-headline-lg text-headline-lg text-primary mb-sm">Sign in</h2>
 <p class="font-body-md text-body-md text-on-surface-variant">
-                        Usá el mismo email y contraseña con los que te registraste.
+                        Use the same email and password you registered with.
                     </p>
 </div>
 
@@ -42,7 +42,7 @@
 </div>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface mb-xs" for="password">Contraseña</label>
+<label class="block font-label-md text-label-md text-on-surface mb-xs" for="password">Password</label>
 <div class="relative">
 <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
 <span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">lock</span>
@@ -52,7 +52,7 @@
 </div>
 <div class="pt-sm">
 <button id="submit-btn" class="w-full flex justify-center items-center gap-xs py-[16px] px-md border border-transparent rounded-DEFAULT shadow-sm font-label-md text-label-md text-on-primary bg-primary hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200" type="submit">
-                            Iniciar sesión
+                            Sign in
                         </button>
 </div>
 </form>
@@ -60,20 +60,20 @@
 <!-- Links -->
 <div class="mt-lg text-center flex flex-col gap-sm">
 <a class="inline-flex items-center justify-center font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="recover-password.html">
-                    ¿Olvidaste tu contraseña?
+                    Forgot your password?
                 </a>
 <a class="inline-flex items-center justify-center font-label-md text-label-md text-primary font-bold hover:text-primary-container transition-colors duration-200" href="register.html">
-                    ¿No tenés cuenta? Registrate
+                    Don’t have an account? Register
                 </a>
 <a class="inline-flex items-center justify-center font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="index.html">
 <span class="material-symbols-outlined text-[16px] mr-xs" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
-                    Volver al inicio
+                    Back to home
                 </a>
 </div>
 </div>
 </main>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     var form = document.getElementById("login-form");
@@ -111,11 +111,11 @@
                 mostrarError(
                     errorBanner,
                     err.status === 401 || err.status === 404
-                        ? new Error("Email o contraseña incorrectos.")
+                        ? new Error("Incorrect email or password.")
                         : err
                 );
                 submitBtn.disabled = false;
-                submitBtn.textContent = "Iniciar sesión";
+                submitBtn.textContent = "Sign in";
             });
     });
 })();

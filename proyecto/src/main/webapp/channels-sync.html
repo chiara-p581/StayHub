@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 <style>
 .ambient-shadow { box-shadow: 0 4px 20px -4px rgba(37,52,79,0.08); }
 </style>
@@ -17,13 +17,13 @@
 <!-- NavigationDrawer (Desktop) -->
 <nav class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 py-xl z-40">
 <div class="px-lg mb-xl">
-<a href="index.html" class="font-headline-md text-headline-md text-primary" title="Volver al inicio">StayHub Admin</a>
+<a href="index.html" class="font-headline-md text-headline-md text-primary" title="Back to home">StayHub Admin</a>
 </div>
 <ul class="flex flex-col w-full flex-grow space-y-sm">
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html"><span class="material-symbols-outlined mr-md">dashboard</span><span class="font-title-lg text-title-lg text-[16px]">Dashboard</span></a></li>
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="inventory.html"><span class="material-symbols-outlined mr-md">inventory_2</span><span class="font-title-lg text-title-lg text-[16px]">Inventory</span></a></li>
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="hotel-management.html"><span class="material-symbols-outlined mr-md">domain</span><span class="font-title-lg text-title-lg text-[16px]">Hotels</span></a></li>
-<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined mr-md">event_available</span><span class="font-title-lg text-title-lg text-[16px]">Reservations</span></a></li>
+<li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined mr-md">event_available</span><span class="font-title-lg text-title-lg text-[16px]">Bookings</span></a></li>
 <li><a class="flex items-center px-lg py-md text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out" href="channels-sync.html"><span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 1;">hub</span><span class="font-title-lg text-title-lg text-[16px]">Channels</span></a></li>
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="payments.html"><span class="material-symbols-outlined mr-md">payments</span><span class="font-title-lg text-title-lg text-[16px]">Payments</span></a></li>
 <li><a class="flex items-center px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="alerts.html"><span class="material-symbols-outlined mr-md">crisis_alert</span><span class="font-title-lg text-title-lg text-[16px]">Operations</span></a></li>
@@ -32,7 +32,7 @@
 <!-- TopAppBar (Mobile) -->
 <header class="md:hidden flex justify-between items-center px-lg py-md w-full top-0 sticky bg-background shadow-sm z-50">
 <a href="admin-dashboard.html" class="text-primary p-sm rounded-full flex items-center justify-center"><span class="material-symbols-outlined">arrow_back</span></a>
-<a href="index.html" class="font-display-lg text-headline-md-mobile text-primary flex items-center gap-xs" title="Volver al inicio"><span class="material-symbols-outlined">arrow_back</span><span>StayHub Admin</span></a>
+<a href="index.html" class="font-display-lg text-headline-md-mobile text-primary flex items-center gap-xs" title="Back to home"><span class="material-symbols-outlined">arrow_back</span><span>StayHub Admin</span></a>
 <span class="w-8"></span>
 </header>
 <!-- Main Content Canvas -->
@@ -42,7 +42,7 @@
 <div class="flex flex-col md:flex-row md:items-end justify-between mb-xl gap-md">
 <div>
 <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-sm">Channels &amp; Sync</h2>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Sincronizá disponibilidad con las OTAs y con el PMS del hotel.</p>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Synchronize availability with OTAs and the hotel PMS.</p>
 </div>
 <div class="flex items-end gap-sm flex-wrap">
 <div>
@@ -50,11 +50,11 @@
 <select id="hotel-select" class="border border-outline-variant rounded-DEFAULT px-md py-sm"></select>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="desde">Desde</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="desde">From</label>
 <input id="desde" type="date" class="border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="hasta">Hasta</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="hasta">To</label>
 <input id="hasta" type="date" class="border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <button id="btn-sync-pms" class="bg-primary-container text-on-primary-container font-label-md text-label-md uppercase px-lg py-md rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-sm">
@@ -71,7 +71,7 @@
 <!-- Sync Log Section (se llena con resultados REALES de cada sincronización que hagas en esta pantalla) -->
 <div class="bg-surface-container-lowest rounded-xl ambient-shadow overflow-hidden mb-xxl">
 <div class="p-lg border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="font-headline-md text-title-lg text-primary">Registro de sincronizaciones (esta sesión)</h3>
+<h3 class="font-headline-md text-title-lg text-primary">Synchronization log (this session)</h3>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse">
@@ -79,21 +79,21 @@
 <tr class="border-b border-outline-variant/30 bg-background text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
 <th class="p-lg font-semibold">Hora</th>
 <th class="p-lg font-semibold">Destino</th>
-<th class="p-lg font-semibold">Resultado</th>
+<th class="p-lg font-semibold">Result</th>
 <th class="p-lg font-semibold">Elementos</th>
-<th class="p-lg font-semibold">Mensaje</th>
+<th class="p-lg font-semibold">Message</th>
 </tr>
 </thead>
 <tbody id="log-body" class="font-body-md text-body-md"></tbody>
 </table>
-<p id="log-vacio" class="text-on-surface-variant font-body-md text-body-md p-lg text-center">Todavía no sincronizaste nada en esta sesión.</p>
+<p id="log-vacio" class="text-on-surface-variant font-body-md text-body-md p-lg text-center">Nothing has been synchronized in this session yet.</p>
 </div>
 </div>
 
 <!-- Disponibilidad consolidada -->
 <div class="bg-surface-container-lowest rounded-xl ambient-shadow overflow-hidden">
 <div class="p-lg border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="font-headline-md text-title-lg text-primary">Disponibilidad consolidada (vista de canales)</h3>
+<h3 class="font-headline-md text-title-lg text-primary">Consolidated availability (channel view)</h3>
 <button id="btn-ver-disponibilidad" class="text-secondary hover:text-primary transition-colors flex items-center gap-xs font-label-md text-label-md uppercase">
 <span class="material-symbols-outlined text-[18px]">refresh</span> Actualizar
 </button>
@@ -102,15 +102,15 @@
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="border-b border-outline-variant/30 bg-background text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
-<th class="p-lg font-semibold">Tipo</th>
-<th class="p-lg font-semibold">Desde</th>
-<th class="p-lg font-semibold">Hasta</th>
-<th class="p-lg font-semibold">Disponibles</th>
+<th class="p-lg font-semibold">Type</th>
+<th class="p-lg font-semibold">From</th>
+<th class="p-lg font-semibold">To</th>
+<th class="p-lg font-semibold">Available</th>
 </tr>
 </thead>
 <tbody id="disponibilidad-body" class="font-body-md text-body-md"></tbody>
 </table>
-<p id="disponibilidad-vacio" class="hidden text-on-surface-variant font-body-md text-body-md p-lg text-center">Sin datos para ese rango.</p>
+<p id="disponibilidad-vacio" class="hidden text-on-surface-variant font-body-md text-body-md p-lg text-center">No data is available for that range.</p>
 </div>
 </div>
 </div>
@@ -131,11 +131,11 @@
 </a>
 <a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 p-2 rounded-lg" href="settings.html">
 <span class="material-symbols-outlined mb-1">person</span>
-<span class="font-label-md text-label-md text-[10px]">Perfil</span>
+<span class="font-label-md text-label-md text-[10px]">Profile</span>
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -147,7 +147,7 @@
     var usuario = Api.currentUser();
     if (usuario.rol !== "ADMIN") {
         document.querySelector("main .max-w-container-max").innerHTML =
-            '<p class="font-body-lg text-body-lg text-on-surface-variant text-center py-xxl">Esta sección es solo para personal (rol ADMIN). <a href="index.html" class="text-primary underline">Volver al inicio</a>.</p>';
+            '<p class="font-body-lg text-body-lg text-on-surface-variant text-center py-xxl">This section is for staff members with the ADMIN role only. <a href="index.html" class="text-primary underline">Back to home</a>.</p>';
         return;
     }
 
@@ -157,7 +157,7 @@
             return '<div class="bg-surface-container-lowest border-t-2 border-tertiary-fixed rounded-xl ambient-shadow p-lg flex flex-col justify-between h-full">' +
                 '<div>' +
                     '<h3 class="font-title-lg text-title-lg text-primary mb-xs">' + CANAL_LABEL[canal] + '</h3>' +
-                    '<p id="estado-' + canal + '" class="font-body-md text-body-md text-on-surface-variant mb-lg">Sin sincronizar todavía en esta sesión.</p>' +
+                    '<p id="estado-' + canal + '" class="font-body-md text-body-md text-on-surface-variant mb-lg">Not synchronized in this session yet.</p>' +
                 '</div>' +
                 '<button data-canal="' + canal + '" class="btn-sync-canal w-full py-sm border border-secondary text-secondary font-label-md text-label-md rounded-lg uppercase hover:bg-secondary/5 transition-colors flex justify-center items-center gap-sm">' +
                     '<span class="material-symbols-outlined text-[16px]">refresh</span> Sincronizar' +
@@ -175,7 +175,7 @@
         var tbody = document.getElementById("log-body");
         var tr = document.createElement("tr");
         tr.className = "border-b border-outline-variant/10";
-        var hora = new Date(resultado.fecha).toLocaleTimeString("es-AR");
+        var hora = new Date(resultado.fecha).toLocaleTimeString("en-US");
         var estadoTxt = resultado.exitoso
             ? '<span class="inline-flex items-center gap-xs text-secondary font-medium"><span class="material-symbols-outlined text-[16px]">check_circle</span>OK</span>'
             : '<span class="inline-flex items-center gap-xs text-error font-medium"><span class="material-symbols-outlined text-[16px]">cancel</span>Error</span>';
@@ -193,7 +193,7 @@
         var desde = document.getElementById("desde").value;
         var hasta = document.getElementById("hasta").value;
         if (!hotelId || !desde || !hasta) {
-            mostrarError(errorBanner, new Error("Elegí hotel y el rango de fechas primero."));
+            mostrarError(errorBanner, new Error("Choose a hotel and date range first."));
             return null;
         }
         ocultarError(errorBanner);
@@ -240,7 +240,7 @@
     pintarCanales();
     Api.listarHoteles(false)
         .then(function (hoteles) {
-            if (!hoteles.length) { mostrarError(errorBanner, new Error("Todavía no hay hoteles cargados.")); return; }
+            if (!hoteles.length) { mostrarError(errorBanner, new Error("No hotels have been loaded yet.")); return; }
             hotelSelect.innerHTML = hoteles.map(function (h) { return '<option value="' + h.id + '">' + h.nombre + '</option>'; }).join("");
         })
         .catch(function (err) { mostrarError(errorBanner, err); });

@@ -123,6 +123,12 @@ html[data-theme="dark"] body.stayhub-auth-page #submit-btn { background:#2b405f 
 html[data-theme="dark"] body.stayhub-auth-page #submit-btn:hover { background:#344b6d !important; color:#fff !important; box-shadow:0 7px 18px rgba(0,0,0,.24); }
 .stayhub-profile-pill { min-height:44px; display:flex; align-items:center; gap:9px; padding:4px 12px 4px 5px; border-left:1px solid #dedfe4; margin-left:5px; color:#26364f; font-size:.84rem; font-weight:600; text-decoration:none; }
 .stayhub-avatar { width:34px; height:34px; flex:0 0 34px; display:grid; place-items:center; border-radius:50%; background:#dbe8f6; color:#183252; font-weight:700; }
+.stayhub-global-footer { margin-top:auto; background:#14243c; color:#f6f8fb; border-top:1px solid rgba(255,255,255,.1); font-family:'Manrope',Arial,sans-serif; }
+.stayhub-footer-inner { width:min(100% - 32px,1280px); min-height:150px; margin:auto; display:grid; grid-template-columns:1.3fr auto 1fr; align-items:center; gap:36px; padding:32px 0; }
+.stayhub-footer-brand { display:flex; align-items:center; gap:13px; }.stayhub-footer-brand strong { display:block; font-family:'Libre Caslon Text',Georgia,serif; font-size:1.2rem; }
+.stayhub-footer-brand p,.stayhub-footer-note { margin-top:4px; color:#b9c4d3; font-size:.78rem; }.stayhub-global-footer nav { display:flex; flex-wrap:wrap; justify-content:center; gap:10px 24px; }
+.stayhub-global-footer nav a { color:#eef3f9; font-size:.84rem; font-weight:600; text-decoration:none; border-bottom:1px solid transparent; }.stayhub-global-footer nav a:hover { color:#fff; border-bottom-color:#91afd2; }.stayhub-footer-note { justify-self:end; text-align:right; }
+html[data-theme="dark"] .stayhub-global-footer { background:#0b1422; border-color:#2a3a50; }
 
 .stayhub-admin-sidebar { position:fixed; z-index:900; left:0; top:76px; bottom:0; width:248px; box-sizing:border-box; display:flex; flex-direction:column; padding:22px 14px 16px; background:#f1f3f6; border-right:1px solid rgba(37,52,79,.1); font-family:'Manrope',Arial,sans-serif; }
 .stayhub-sidebar-title { padding:0 12px 18px; color:#182944; }
@@ -152,6 +158,7 @@ html[data-theme="dark"] body.stayhub-auth-page #submit-btn:hover { background:#3
     .stayhub-profile-pill { padding:3px 0 3px 7px; }
     .stayhub-admin-sidebar { display:none; }
     .stayhub-admin-layout > main,.stayhub-admin-layout > .flex > main { width:100% !important; margin-left:0 !important; }
+    .stayhub-footer-inner { grid-template-columns:1fr; gap:22px; padding:28px 0; text-align:center; }.stayhub-footer-brand { justify-content:center; }.stayhub-footer-note { justify-self:center; text-align:center; }
 }
 
 /* Los formularios de acceso deben poder desplazarse en pantallas bajas. */

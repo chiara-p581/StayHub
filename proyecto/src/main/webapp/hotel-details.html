@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 </head>
 <body class="antialiased min-h-screen font-body-md text-body-md">
 <!-- TopAppBar -->
@@ -32,7 +32,7 @@
 <main class="max-w-container-max mx-auto px-md md:px-lg py-xl">
 
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
-<div id="loading" class="font-body-lg text-body-lg text-on-surface-variant">Cargando hotel...</div>
+<div id="loading" class="font-body-lg text-body-lg text-on-surface-variant">Loading hotel...</div>
 
 <div id="contenido" class="hidden">
 <!-- Header Section -->
@@ -54,38 +54,38 @@
 <div class="col-span-1 md:col-span-8 flex flex-col gap-xl">
 <!-- About Section -->
 <section>
-<h3 class="font-headline-md text-headline-md text-primary mb-md border-b-2 border-tertiary-fixed-dim/30 pb-sm inline-block">Sobre el hotel</h3>
+<h3 class="font-headline-md text-headline-md text-primary mb-md border-b-2 border-tertiary-fixed-dim/30 pb-sm inline-block">About the hotel</h3>
 <div id="hotel-descripcion" class="font-body-lg text-body-lg text-on-surface-variant space-y-4 leading-relaxed"></div>
 <div class="grid sm:grid-cols-2 gap-md mt-lg">
 <article class="p-lg rounded-xl bg-surface-container-low border border-outline-variant/20">
 <span class="material-symbols-outlined text-primary mb-sm">hotel_class</span>
-<h4 class="font-title-lg text-title-lg text-primary mb-sm">La experiencia</h4>
+<h4 class="font-title-lg text-title-lg text-primary mb-sm">The experience</h4>
 <p id="hotel-experiencia" class="font-body-md text-body-md text-on-surface-variant leading-relaxed"></p>
 </article>
 <article class="p-lg rounded-xl bg-surface-container-low border border-outline-variant/20">
 <span class="material-symbols-outlined text-primary mb-sm">explore</span>
-<h4 class="font-title-lg text-title-lg text-primary mb-sm">El entorno</h4>
+<h4 class="font-title-lg text-title-lg text-primary mb-sm">The surroundings</h4>
 <p id="hotel-entorno" class="font-body-md text-body-md text-on-surface-variant leading-relaxed"></p>
 </article>
 </div>
 </section>
 <!-- Amenities Section -->
 <section>
-<h3 class="font-headline-md text-headline-md text-primary mb-md border-b-2 border-tertiary-fixed-dim/30 pb-sm inline-block">Servicios</h3>
+<h3 class="font-headline-md text-headline-md text-primary mb-md border-b-2 border-tertiary-fixed-dim/30 pb-sm inline-block">Amenities</h3>
 <div id="hotel-servicios" class="grid grid-cols-2 md:grid-cols-3 gap-md"></div>
 </section>
 </div>
 <!-- Booking Sidebar -->
 <div class="col-span-1 md:col-span-4 relative">
 <div class="sticky top-[100px] bg-surface border border-outline-variant/50 rounded-xl p-lg shadow-[0_8px_30px_rgb(37,52,79,0.08)]">
-<h3 class="font-title-lg text-title-lg text-primary mb-md">Reservar</h3>
+<h3 class="font-title-lg text-title-lg text-primary mb-md">Book now</h3>
 
 <div id="reserva-error" class="hidden mb-md p-sm rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
 <div id="reserva-ok" class="hidden mb-md p-sm rounded-DEFAULT bg-secondary-container text-on-secondary-container font-body-md text-body-md"></div>
 
 <div id="reserva-form">
 <div class="flex flex-col gap-xs mb-md">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="tipo-habitacion">Tipo de habitación</label>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="tipo-habitacion">Room type</label>
 <select id="tipo-habitacion" class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md"></select>
 </div>
 <div class="grid grid-cols-2 gap-sm mb-md">
@@ -99,29 +99,29 @@
 </div>
 </div>
 <div class="flex flex-col gap-xs mb-md">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="cantidad-habitaciones">Cantidad de habitaciones</label>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="cantidad-habitaciones">Number of rooms</label>
 <input id="cantidad-habitaciones" type="number" min="1" value="1" class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md"/>
 </div>
 <div class="flex flex-col gap-xs mb-md">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="telefono">Teléfono de contacto</label>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="telefono">Contact phone</label>
 <input id="telefono" type="tel" placeholder="+54 9 11..." class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md"/>
 </div>
 <div class="grid grid-cols-2 gap-sm mb-md">
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="precio-total">Precio total</label>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="precio-total">Total price</label>
 <input id="precio-total" type="number" step="0.01" min="0" readonly class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md bg-surface-container-low cursor-not-allowed"/>
 </div>
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="moneda">Moneda</label>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase" for="moneda">Currency</label>
 <input id="moneda" type="text" value="ARS" readonly class="w-full border border-outline-variant rounded-DEFAULT px-sm py-sm font-body-md text-body-md bg-surface-container-low cursor-not-allowed"/>
 </div>
 </div>
 <p id="tarifa-hint" class="font-body-md text-body-md text-on-surface-variant mb-md"></p>
 
 <button id="btn-reservar" disabled class="stayhub-primary-action w-full font-title-lg text-title-lg py-md rounded-lg transition-all mb-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                        Agregar al carrito
+                        Add to cart
                     </button>
-<p class="text-center font-body-md text-body-md text-on-surface-variant">No se te va a cobrar en este paso.</p>
+<p class="text-center font-body-md text-body-md text-on-surface-variant">You will not be charged at this step.</p>
 </div>
 </div>
 </div>
@@ -129,7 +129,7 @@
 </div>
 </main>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     var params = new URLSearchParams(location.search);
@@ -161,7 +161,7 @@
 
     if (!hotelId) {
         loading.classList.add("hidden");
-        mostrarError(errorBanner, new Error("Falta indicar qué hotel mostrar. Volvé a Home y elegí uno."));
+        mostrarError(errorBanner, new Error("No hotel was selected. Return home and choose one."));
         errorBanner.classList.remove("hidden");
     } else {
         Api.consultarHotel(hotelId)
@@ -183,19 +183,19 @@
         document.getElementById("hotel-direccion").textContent =
             h.direccion + ", " + h.ciudad + ", " + h.pais;
         document.getElementById("hotel-canal").textContent = canalSeleccionado === "STAYHUB"
-            ? "Reserva directa" : "Publicado en " + canalSeleccionado;
+            ? "Direct booking" : "Listed on " + canalSeleccionado;
 
         var descripcionEl = document.getElementById("hotel-descripcion");
         descripcionEl.innerHTML = h.descripcion
             ? "<p>" + escapeHtml(h.descripcion) + "</p>"
-            : '<p class="italic">Este hotel todavía no cargó una descripción.</p>';
+            : '<p class="italic">This hotel does not have a description yet.</p>';
         var serviciosTexto = h.servicios && h.servicios.length
             ? h.servicios.slice(0, 3).join(", ").toLowerCase()
-            : "atención personalizada y espacios pensados para el descanso";
+            : "personalized service and spaces designed for relaxation";
         document.getElementById("hotel-experiencia").textContent =
-            "La propuesta combina " + serviciosTexto + ". Las áreas comunes y habitaciones están pensadas para que cada etapa de la estadía resulte cómoda, desde la llegada hasta el último desayuno.";
+            "The experience combines " + serviciosTexto + ". Common areas and rooms are designed to make every stage of the stay comfortable, from arrival through the final breakfast.";
         document.getElementById("hotel-entorno").textContent =
-            "Ubicado en " + h.ciudad + ", permite tomar el hotel como punto de partida para recorrer la zona y volver a un ambiente tranquilo. El equipo puede orientar sobre traslados, actividades y opciones cercanas durante la estadía.";
+            "Located in " + h.ciudad + ", it is an ideal base for exploring the area and returning to a peaceful setting. The staff can recommend transportation, activities, and nearby options during your stay.";
 
         var serviciosEl = document.getElementById("hotel-servicios");
         var servicios = h.servicios && h.servicios.length ? h.servicios : [];
@@ -205,20 +205,20 @@
                     '<span class="material-symbols-outlined text-primary">check_circle</span>' +
                     '<span class="font-body-md text-body-md">' + escapeHtml(s) + '</span></div>';
             }).join("")
-            : '<p class="italic text-on-surface-variant col-span-full">Este hotel todavía no cargó servicios.</p>';
+            : '<p class="italic text-on-surface-variant col-span-full">This hotel does not have any amenities listed yet.</p>';
 
         var select = document.getElementById("tipo-habitacion");
         var tipos = h.tiposHabitacion || [];
         select.innerHTML = tipos.length
             ? tipos.map(function (t) {
                 return '<option value="' + escapeHtml(t.codigo) + '">' + escapeHtml(t.nombre) +
-                    ' (hasta ' + t.capacidadMaxima + ' huéspedes)</option>';
+                    ' (up to ' + t.capacidadMaxima + ' guests)</option>';
             }).join("")
-            : '<option value="">Sin tipos de habitación cargados</option>';
+            : '<option value="">No room types have been loaded</option>';
 
         document.getElementById("btn-reservar").disabled = true;
         if (usuarioActual && usuarioActual.rol === "ADMIN") {
-            document.getElementById("reserva-form").innerHTML = '<div class="p-lg rounded-xl bg-surface-container-low text-on-surface-variant"><span class="material-symbols-outlined text-primary mb-sm">admin_panel_settings</span><h3 class="font-title-lg text-title-lg text-primary mb-sm">Cuenta administrativa</h3><p>Los administradores pueden consultar hoteles, disponibilidad y tarifas, pero no realizar compras ni reservas.</p></div>';
+            document.getElementById("reserva-form").innerHTML = '<div class="p-lg rounded-xl bg-surface-container-low text-on-surface-variant"><span class="material-symbols-outlined text-primary mb-sm">admin_panel_settings</span><h3 class="font-title-lg text-title-lg text-primary mb-sm">Account administrativa</h3><p>Administrators can view hotels, availability, and rates, but cannot make purchases or bookings.</p></div>';
         } else if (document.getElementById("check-in").value && document.getElementById("check-out").value) {
             calcularTarifaEstimada();
         }
@@ -234,7 +234,7 @@
         btn.disabled = true;
         document.getElementById("precio-total").value = "";
         if (!checkIn || !checkOut || !tipo) {
-            hint.textContent = "Elegí las fechas para calcular el precio.";
+            hint.textContent = "Choose dates to calculate the price.";
             return;
         }
         if (checkIn < hoyIso) {
@@ -242,7 +242,7 @@
             return;
         }
         if (checkOut <= checkIn) {
-            hint.textContent = "El checkout debe ser posterior al check-in.";
+            hint.textContent = "El checkout debe ser posterior to check-in.";
             return;
         }
 
@@ -252,27 +252,27 @@
         ]).then(function (resultado) {
                 var tarifas = resultado[0] || [];
                 var disponibilidad = resultado[1] || [];
-                var delTipo = tarifas.filter(function (t) { return t.tipoHabitacion === tipo; });
-                if (!delTipo.length) {
-                    hint.textContent = "No hay tarifa cargada para esas fechas. Elegí otro período o consultá al hotel.";
+                var delType = tarifas.filter(function (t) { return t.tipoHabitacion === tipo; });
+                if (!delType.length) {
+                    hint.textContent = "No rate is available for those dates. Choose another period or contact the hotel.";
                     return;
                 }
                 var cupo = disponibilidad.find(function (d) { return d.tipoHabitacion === tipo; });
                 var cantidad = Number(document.getElementById("cantidad-habitaciones").value || 1);
                 if (!cupo || Number(cupo.unidadesDisponibles) < cantidad) {
-                    hint.textContent = "No hay " + cantidad + " habitación(es) disponibles para todo ese período.";
+            hint.textContent = "There are not " + cantidad + " room(s) available for the entire period.";
                     return;
                 }
-                var total = delTipo.reduce(function (acc, t) { return acc + Number(t.importe); }, 0);
+                var total = delType.reduce(function (acc, t) { return acc + Number(t.importe); }, 0);
                 total = total * cantidad;
                 document.getElementById("precio-total").value = total.toFixed(2);
-                document.getElementById("moneda").value = delTipo[0].moneda || "ARS";
+                document.getElementById("moneda").value = delType[0].moneda || "ARS";
                 tarifaValida = true;
                 btn.disabled = false;
-                hint.textContent = "Disponible: " + cupo.unidadesDisponibles + " unidad(es). Precio calculado para toda la estadía.";
+                hint.textContent = "Available: " + cupo.unidadesDisponibles + " unit(s). Price calculated for the entire stay.";
             })
             .catch(function () {
-                hint.textContent = "No pudimos obtener la tarifa. Intentá nuevamente.";
+                hint.textContent = "We could not retrieve the rate. Please try again.";
             });
     }
 
@@ -293,7 +293,7 @@
         var entrada = document.getElementById("check-in").value;
         if (this.value && (this.value < hoyIso || (entrada && this.value <= entrada))) {
             this.value = "";
-            mostrarError(reservaError, new Error("El checkout debe ser posterior al check-in y no puede estar en el pasado."));
+            mostrarError(reservaError, new Error("El checkout debe ser posterior to check-in y no puede estar en el pasado."));
             calcularTarifaEstimada();
         }
     });
@@ -321,12 +321,12 @@
         var precioTotal = Number(document.getElementById("precio-total").value || 0);
         var moneda = document.getElementById("moneda").value.trim() || "ARS";
 
-        if (!tipoHabitacion) { mostrarError(reservaError, new Error("Elegí un tipo de habitación.")); return; }
-        if (!checkIn || !checkOut) { mostrarError(reservaError, new Error("Elegí check-in y checkout.")); return; }
-        if (!telefono) { mostrarError(reservaError, new Error("Ingresá un teléfono de contacto.")); return; }
+        if (!tipoHabitacion) { mostrarError(reservaError, new Error("Choose a room type.")); return; }
+        if (!checkIn || !checkOut) { mostrarError(reservaError, new Error("Choose check-in and check-out dates.")); return; }
+        if (!telefono) { mostrarError(reservaError, new Error("Enter a contact phone number.")); return; }
         if (checkIn < hoyIso) { mostrarError(reservaError, new Error("El check-in no puede estar en el pasado.")); return; }
-        if (checkOut <= checkIn) { mostrarError(reservaError, new Error("El checkout debe ser posterior al check-in.")); return; }
-        if (!tarifaValida || !precioTotal) { mostrarError(reservaError, new Error("No hay una tarifa válida para la selección.")); return; }
+        if (checkOut <= checkIn) { mostrarError(reservaError, new Error("El checkout debe ser posterior to check-in.")); return; }
+        if (!tarifaValida || !precioTotal) { mostrarError(reservaError, new Error("No valid rate is available for this selection.")); return; }
 
         var btn = document.getElementById("btn-reservar");
         btn.disabled = true;
