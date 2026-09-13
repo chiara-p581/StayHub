@@ -14,6 +14,7 @@ import com.stayhub.pagos.model.Pago;
 import com.stayhub.pagos.repository.PagoRepository;
 import com.stayhub.reservas.service.ServicioDeReservas;
 import java.math.BigDecimal;
+import java.util.List;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -53,6 +54,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         if (resultado.aprobado()) {
             pago.aprobar(resultado.referenciaExterna());
             repositorio.guardar(pago);
+            reservas.confirmarReserva(solicitud.reservaId());
             publicadorEventos.publicarPagoAprobado(new EventoPagoAprobado(
                     pago.getId(), pago.getReservaId(), pago.getMonto(), pago.getMoneda(),
                     pago.getReferenciaPasarela(), pago.getFechaPago()));
@@ -101,6 +103,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
         pago.aprobar(resultado.referenciaExterna());
         repositorio.guardar(pago);
+        solicitud.reservaIds().forEach(reservas::confirmarReserva);
         solicitud.reservaIds().forEach(reservaId -> publicadorEventos.publicarPagoAprobado(
                 new EventoPagoAprobado(pago.getId(), reservaId, pago.getMonto(), pago.getMoneda(),
                         pago.getReferenciaPasarela(), pago.getFechaPago())));
@@ -121,6 +124,11 @@ public class ServicioDePagosImpl implements ServicioDePagos {
             throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
                     "La solicitud de pago está incompleta o contiene valores inválidos");
         }
+    }
+
+    @Override
+    public List<PagoResponse> listarPorReservas(List<Long> reservaIds) {
+        return repositorio.listarPorReservas(reservaIds).stream().map(PagoMapper::aResponse).toList();
     }
 
     private void verificarNoPagada(Long reservaId) {

@@ -14,6 +14,16 @@ const Api = (() => {
     const USER_KEY = "stayhub_user";
     const CART_KEY = "stayhub_cart_v2";
     const CACHE_PREFIX = "stayhub_cache_v1:";
+    const THEME_KEY = "stayhub_theme";
+
+    function applyTheme(value) {
+        var theme = value === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem(THEME_KEY, theme);
+        return theme;
+    }
+
+    applyTheme(localStorage.getItem(THEME_KEY));
 
     function setSession(usuario) {
         if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
@@ -265,6 +275,8 @@ const Api = (() => {
         removeLocalCartItem,
         updateLocalCartItem,
         clearLocalCart: () => saveLocalCart([]),
+        theme: () => localStorage.getItem(THEME_KEY) || "light",
+        applyTheme,
 
         // ---- usuarios ----
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
@@ -361,6 +373,7 @@ const Api = (() => {
         procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true }),
         procesarPagoLote: (dto) => request("pagos/lote", { method: "POST", body: dto, auth: true }),
         consultarPago: (id) => request(`pagos/${id}`, { auth: true }),
+        listarMisPagos: () => request("pagos/mios", { auth: true }),
 
         // ---- operaciones ----
         enviarNotificacion: (dto) =>
