@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
 <style>
 /* Smooth transitions for inputs */
         .input-transition {
@@ -16,7 +16,7 @@
         }
 </style>
 </head>
-<body class="bg-background min-h-screen flex items-center justify-center relative font-body-md text-on-surface antialiased overflow-hidden">
+<body class="stayhub-auth-page bg-background min-h-screen flex items-center justify-center relative font-body-md text-on-surface antialiased">
 <!-- Ambient Background Image -->
 <div class="absolute inset-0 z-0 opacity-40 mix-blend-multiply" data-alt="A wide, slightly blurred background image of an elegant, modern boutique hotel lobby. The space features warm, ambient lighting, natural wood textures, and plush cream seating areas. A subtle, sophisticated light-mode aesthetic dominates, with soft shadows and a sense of calm luxury. High-end architectural details like a marble reception desk and minimalist brass fixtures are visible in the soft-focus distance, creating a welcoming and premium atmosphere suitable for a hospitality software interface." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuALfjs3rHjXznRlfeTEC0a6zkrzrfaVkUhZKt0sTX4DR6Bj1cdWYugh6C5zo2SUQYeELe91ILcmFFw8Qk3a0Xa7DI3bhoWFmpnc3l8tZOxpkoUKkkIt4lOrpOuO_JvYbRXzZ3ODbmh71acD-oQzs6Mj1OF3_HRdu0pMsyXDSGX3t3F95z4TvwG_MA2Yy4Gpbe710944iQ5-A6nl8CCXuUjpSXABUy60J-xbEt16kyPI2IPhvR1BhcyLrQ')">
 </div>
@@ -80,7 +80,6 @@
 <label class="font-label-md text-label-md text-on-tertiary-fixed" for="rol">Tipo de cuenta</label>
 <select class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="rol" name="rol">
 <option value="HUESPED">Huésped</option>
-<option value="ADMIN">Personal / Admin</option>
 </select>
 </div>
 <!-- Action Button -->
@@ -100,25 +99,14 @@
 </div>
 </div>
 
-<!-- Aviso: el usuario de WildFly (para poder cancelar reservas) se crea
-     aparte, con add-user.sh. Se muestra recién después de registrarse. -->
-<div id="wildfly-note" class="hidden mt-lg bg-surface-container-lowest border border-outline-variant rounded-lg p-lg text-left">
-<h3 class="font-label-md text-label-md text-primary uppercase mb-xs">Un paso más (solo para vos, no para el usuario final)</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mb-sm">
-Para que este usuario también pueda cancelar reservas (seguridad de WildFly), creá el mismo usuario en la terminal:
-</p>
-<pre id="wildfly-command" class="bg-surface-container text-on-surface font-body-md text-body-md p-md rounded-DEFAULT overflow-x-auto"></pre>
-</div>
 </main>
 
-<script src="assets/js/api.js"></script>
+<script src="assets/js/api.js?v=20260912-11"></script>
 <script>
 (function () {
     var form = document.getElementById("register-form");
     var errorBanner = document.getElementById("error-banner");
     var submitBtn = document.getElementById("submit-btn");
-    var wildflyNote = document.getElementById("wildfly-note");
-    var wildflyCommand = document.getElementById("wildfly-command");
 
     form.addEventListener("submit", function (ev) {
         ev.preventDefault();
@@ -145,14 +133,11 @@ Para que este usuario también pueda cancelar reservas (seguridad de WildFly), c
                 return Api.loginUsuario({ email: email, password: password });
             })
             .then(function (usuario) {
-                Api.setSession(email, password, usuario);
-                wildflyCommand.textContent =
-                    "~/wildfly/bin/add-user.sh -a -u '" + email + "' -p '" + password + "' -g '" + rol + "' -s";
-                wildflyNote.classList.remove("hidden");
+                Api.setSession(usuario);
                 submitBtn.textContent = "¡Cuenta creada!";
                 setTimeout(function () {
                     location.href = rol === "ADMIN" ? "admin-dashboard.html" : "index.html";
-                }, 4000);
+                }, 800);
             })
             .catch(function (err) {
                 mostrarError(errorBanner, err);

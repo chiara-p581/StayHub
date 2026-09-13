@@ -57,4 +57,12 @@ public class ReservaRepositoryJpa implements ReservaRepository {
                 .setParameter("hotelId", hotelId)
                 .getResultList();
     }
+
+    @Override
+    public List<Reserva> listarPorHuespedEmail(String email) {
+        return em.createQuery("SELECT r FROM Reserva r WHERE lower(r.huesped.email) = lower(:email) "
+                        + "ORDER BY r.checkIn DESC", Reserva.class)
+                .setParameter("email", email)
+                .getResultList();
+    }
 }

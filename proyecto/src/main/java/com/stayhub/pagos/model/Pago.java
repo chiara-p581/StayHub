@@ -3,6 +3,8 @@ package com.stayhub.pagos.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pago")
@@ -14,6 +16,11 @@ public class Pago {
 
     @Column(name = "reserva_id", nullable = false)
     private Long reservaId;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "pago_reserva", joinColumns = @JoinColumn(name = "pago_id"))
+    @Column(name = "reserva_id", nullable = false)
+    private List<Long> reservaIds = new ArrayList<>();
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal monto;
@@ -39,7 +46,12 @@ public class Pago {
     }
 
     public Pago(Long reservaId, BigDecimal monto, String moneda) {
-        this.reservaId = reservaId;
+        this(List.of(reservaId), monto, moneda);
+    }
+
+    public Pago(List<Long> reservaIds, BigDecimal monto, String moneda) {
+        this.reservaId = reservaIds.get(0);
+        this.reservaIds.addAll(reservaIds);
         this.monto = monto;
         this.moneda = moneda;
         this.estado = EstadoPago.PENDIENTE;
@@ -57,6 +69,7 @@ public class Pago {
 
     public Long getId() { return id; }
     public Long getReservaId() { return reservaId; }
+    public List<Long> getReservaIds() { return List.copyOf(reservaIds); }
     public BigDecimal getMonto() { return monto; }
     public String getMoneda() { return moneda; }
     public EstadoPago getEstado() { return estado; }

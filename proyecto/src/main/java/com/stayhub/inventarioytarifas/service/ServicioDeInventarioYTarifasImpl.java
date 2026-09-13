@@ -94,19 +94,8 @@ public class ServicioDeInventarioYTarifasImpl
     @Override
     public CargaInventarioResponse cargarInventario(CargaInventarioRequest solicitud) {
         validarCarga(solicitud);
-        int diasCargados = 0;
-        for (LocalDate fecha = solicitud.desde(); fecha.isBefore(solicitud.hasta()); fecha = fecha.plusDays(1)) {
-            LocalDate fechaActual = fecha;
-            // Bloqueante: dos cargas simultáneas del mismo día se serializan en
-            // vez de pisarse (la segunda actualiza sobre lo que dejó la primera).
-            InventarioDiario dia = inventarioRepositorio
-                    .buscarPorHotelTipoYFechaBloqueando(solicitud.hotelId(), solicitud.tipoHabitacion(), fechaActual)
-                    .orElseGet(() -> new InventarioDiario(solicitud.hotelId(), solicitud.tipoHabitacion(), fechaActual,
-                            solicitud.unidadesTotales(), solicitud.precio(), solicitud.moneda()));
-            dia.actualizarCapacidadYTarifa(solicitud.unidadesTotales(), solicitud.precio(), solicitud.moneda());
-            inventarioRepositorio.guardar(dia);
-            diasCargados++;
-        }
+        int diasCargados = inventarioRepositorio.cargarRango(solicitud.hotelId(), solicitud.tipoHabitacion(),
+                solicitud.desde(), solicitud.hasta(), solicitud.unidadesTotales(), solicitud.precio(), solicitud.moneda());
         return InventarioTarifasMapper.aCargaResponse(solicitud, diasCargados);
     }
 
@@ -322,7 +311,7 @@ public class ServicioDeInventarioYTarifasImpl
                                         LocalDate checkIn, LocalDate checkOut) {
         if (hotelId == null || tipoHabitacion == null || tipoHabitacion.isBlank()
                 || cantidadHabitaciones < 1 || checkIn == null || checkOut == null
-                || !checkOut.isAfter(checkIn)) {
+                || checkIn.isBefore(LocalDate.now()) || !checkOut.isAfter(checkIn)) {
             throw new InventarioTarifasException(CodigoErrorInventarioTarifas.SOLICITUD_INVALIDA,
                     "El pedido de hold está incompleto o contiene valores inválidos"
                             + " (hotelId / tipoHabitacion / cantidadHabitaciones >= 1 / checkIn < checkOut)");

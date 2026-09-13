@@ -29,11 +29,23 @@ no procesa pagos (ServicioDePagos), no resuelve conflictos de overbooking
 
 ## Tipo de componente
 
-`@Stateless`. Cada operación recibe todos los datos que necesita como
-parámetro; no hace falta conservar información entre llamadas. El componente
-stateful del sistema es ServicioDeInventarioYTarifas (mantiene el hold
-abierto internamente); ServicioDeReservas solo le pide y libera holds por
-id, sin guardar ese estado conversacional de su lado.
+`ServicioDeReservasImpl` es `@Stateless`: cada operación recibe todos los
+datos que necesita como parámetro; no hace falta conservar información entre
+llamadas.
+
+El componente realmente `@Stateful` del sistema es **`CarritoDeReserva`**
+(`reservas/carrito/CarritoDeReserva.java`), también dentro de
+ServicioDeReservas: el contenedor mantiene una instancia por sesión de
+usuario, que recuerda hotel/fechas/huésped mientras se arma la reserva paso
+a paso, con `@PostConstruct`/`@PreDestroy` marcando su ciclo de vida y
+`@Remove` liberándola al confirmar.
+
+ServicioDeInventarioYTarifas también maneja un concepto de estado (el hold),
+pero NO es un EJB `@Stateful`: es `@Stateless`, y ese hold vive persistido
+en la entidad `Hold` en base de datos, no en memoria de una instancia
+conversacional (ver su propio README). Son dos formas distintas de manejar
+estado — vale la pena poder explicar la diferencia si preguntan en la
+defensa oral.
 
 ## Dos caminos de entrada, una sola lógica de negocio
 
@@ -70,6 +82,27 @@ lo único que cambia es el mapeo de entrada/salida (ver `ReservaMapper`).
   > `consultarTarifas`) está pensado para que CanalesExternos publique
   > info en las OTAs, no para pedir/soltar un hold — por eso hace falta
   > este contrato adicional.
+
+## Seguridad: dueño de la reserva
+
+`cancelarReserva` y `modificarReserva` no dejan que cualquier usuario logueado
+opere sobre cualquier reserva: un ADMIN puede cancelar o modificar cualquiera,
+pero un HUESPED solo puede hacerlo sobre la SUYA (se compara el email cargado en
+la reserva contra el usuario autenticado). Es una verificación programática,
+porque el rol solo (`ADMIN`/`HUESPED`) no alcanza para expresar "esta reserva es
+tuya" — hace falta lógica propia, no solo una anotación.
+
+Quién está autenticado se resuelve en `ReservaResource`, no en el servicio: el
+login de StayHub cambió de ser manejado por el contenedor de EJBs (HTTP Basic +
+`SessionContext`) a un login por sesión propio (`POST /usuarios/login` guarda el
+usuario en la `HttpSession`, y `AutenticacionFilter` la revisa en cada request).
+Como el servicio ya no tiene forma de preguntarle al contenedor quién llama,
+`ReservaResource` lee la sesión HTTP y pasa `actorEmail`/`actorEsAdmin` como
+parámetros explícitos a `cancelarReserva`/`modificarReserva`, que los usan en un
+helper interno (`verificarPropietario`) antes de tocar la reserva.
+
+Cubierto por `ServicioDeReservasImplTest` (dueño, ajena, ADMIN, sin sesión) y por
+la carpeta "03 - Seguridad" de la colección de Postman.
 
 ## Estructura
 

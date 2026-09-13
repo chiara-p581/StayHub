@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
 <style>
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 .icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -18,7 +18,7 @@
 <!-- TopAppBar -->
 <header class="bg-surface border-b border-outline-variant transition-colors duration-200 ease-in-out">
 <div class="flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto h-16">
-<a href="index.html" class="font-headline-lg text-headline-lg text-primary">StayHub</a>
+<a href="index.html" class="font-headline-lg text-headline-lg text-primary flex items-center gap-sm"><span>StayHub</span><span id="brand-admin" class="hidden text-[10px] uppercase tracking-wider bg-secondary-container px-2 py-1 rounded-full">Admin</span></a>
 <div id="session-area" class="flex items-center gap-sm"></div>
 </div>
 </header>
@@ -28,6 +28,10 @@
 <h1 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary mb-xs">Pagos</h1>
 <p class="font-body-lg text-body-lg text-on-surface-variant">Pagá una reserva y consultá pagos ya realizados.</p>
 </div>
+<section id="hotel-pago" class="hidden mb-lg bg-surface rounded-xl overflow-hidden border border-outline-variant/20 grid md:grid-cols-[220px_1fr]">
+<img id="hotel-pago-imagen" class="w-full h-44 md:h-full object-cover" alt="Hotel de la reserva"/>
+<div class="p-lg"><p class="text-xs uppercase tracking-wider text-on-surface-variant">Estás pagando</p><h2 id="hotel-pago-nombre" class="font-headline-md text-headline-md text-primary mt-xs"></h2><p id="hotel-pago-ubicacion" class="text-on-surface-variant mt-xs"></p><p class="mt-md text-sm text-on-surface-variant">Verificá el hotel y el número de reserva antes de continuar.</p></div>
+</section>
 
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
 
@@ -96,13 +100,14 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js"></script>
+<script src="assets/js/api.js?v=20260912-11"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
 
     function pintarSesion() {
         var usuario = Api.currentUser();
+        if (usuario && usuario.rol === "ADMIN") document.getElementById("brand-admin").classList.remove("hidden");
         var area = document.getElementById("session-area");
         if (usuario) {
             area.innerHTML = '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary">' + usuario.nombre + '</a>';
@@ -115,9 +120,30 @@
     if (!Api.requireLogin()) return;
 
     var params = new URLSearchParams(location.search);
-    if (params.get("reservaId")) document.getElementById("reserva-id").value = params.get("reservaId");
-    if (params.get("monto")) document.getElementById("monto").value = params.get("monto");
-    if (params.get("moneda")) document.getElementById("moneda").value = params.get("moneda");
+    if (params.get("hotelId")) Api.consultarHotel(params.get("hotelId")).then(function (hotel) {
+        var fotos = ["stayhub-resort-hero.png", "stayhub-patagonia.png", "stayhub-costa.png"];
+        document.getElementById("hotel-pago").classList.remove("hidden");
+        document.getElementById("hotel-pago-nombre").textContent = hotel.nombre;
+        document.getElementById("hotel-pago-ubicacion").textContent = hotel.ciudad + ", " + hotel.pais;
+        document.getElementById("hotel-pago-imagen").src = "assets/images/" + fotos[Math.abs(Number(hotel.id) || 0) % fotos.length];
+    }).catch(function () {});
+    if (params.get("reservaId")) {
+        document.getElementById("reserva-id").value = params.get("reservaId");
+        document.getElementById("reserva-id").readOnly = true;
+    }
+    if (params.get("monto")) {
+        document.getElementById("monto").value = params.get("monto");
+        document.getElementById("monto").readOnly = true;
+    }
+    if (params.get("moneda")) {
+        document.getElementById("moneda").value = params.get("moneda");
+        document.getElementById("moneda").readOnly = true;
+    }
+    if (Api.currentUser().rol === "ADMIN") {
+        document.getElementById("btn-pagar").disabled = true;
+        document.getElementById("btn-pagar").textContent = "Las cuentas ADMIN no pueden realizar pagos";
+        ["reserva-id", "monto", "moneda"].forEach(function (id) { document.getElementById(id).disabled = true; });
+    }
 
     function fmtMoney(n, moneda) {
         return Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2 }) + " " + moneda;

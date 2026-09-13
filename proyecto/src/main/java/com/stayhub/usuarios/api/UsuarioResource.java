@@ -4,11 +4,16 @@ import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
+import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
+import com.stayhub.usuarios.model.RolUsuario;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Context;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.net.URI;
 
 @Path("/usuarios")
@@ -21,7 +26,9 @@ public class UsuarioResource {
 
     @POST
     public Response registrar(RegistroUsuarioRequest solicitud) {
-        UsuarioResponse usuario = servicio.registrar(solicitud);
+        RegistroUsuarioRequest registroPublico = solicitud == null ? null : new RegistroUsuarioRequest(
+                solicitud.email(), solicitud.password(), solicitud.nombre(), solicitud.apellido(), RolUsuario.HUESPED);
+        UsuarioResponse usuario = servicio.registrar(registroPublico);
         return Response.status(Response.Status.CREATED)
                 .location(URI.create("api/usuarios/" + usuario.id()))
                 .entity(usuario)
@@ -30,13 +37,46 @@ public class UsuarioResource {
 
     @POST
     @Path("/login")
-    public UsuarioResponse login(LoginRequest credenciales) {
-        return servicio.autenticar(credenciales);
+    public UsuarioResponse login(LoginRequest credenciales, @Context HttpServletRequest request) {
+        UsuarioResponse usuario = servicio.autenticar(credenciales);
+        HttpSession sesion = request.getSession(true);
+        request.changeSessionId();
+        sesion.setAttribute("usuarioId", usuario.id());
+        sesion.setAttribute("usuarioRol", usuario.rol());
+        return usuario;
+    }
+
+    @DELETE
+    @Path("/sesion")
+    public Response cerrarSesion(@Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        if (sesion != null) sesion.invalidate();
+        return Response.noContent().build();
     }
 
     @GET
     @Path("/{id}")
-    public UsuarioResponse consultar(@PathParam("id") Long id) {
+    public UsuarioResponse consultar(@PathParam("id") Long id, @Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
+        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
+        if (usuarioId == null || (!usuarioId.equals(id) && !"ADMIN".equals(rol))) {
+            throw new WebApplicationException("No podés consultar el perfil de otro usuario",
+                    Response.Status.FORBIDDEN);
+        }
         return servicio.buscarPorId(id);
+    }
+
+    @PUT
+    @Path("/me")
+    public UsuarioResponse actualizarMiPerfil(ActualizacionUsuarioRequest solicitud,
+                                                @Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        if (sesion == null || sesion.getAttribute("usuarioId") == null) {
+            throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
+        }
+        UsuarioResponse actualizado = servicio.actualizarPerfil((Long) sesion.getAttribute("usuarioId"), solicitud);
+        sesion.setAttribute("usuarioRol", actualizado.rol());
+        return actualizado;
     }
 }

@@ -4,6 +4,9 @@ import com.stayhub.reservas.dto.CarritoResumenDTO;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.dto.ReservaResponse;
 import com.stayhub.reservas.service.ServicioDeReservas;
+import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
+import com.stayhub.reservas.exception.CodigoErrorReserva;
+import com.stayhub.reservas.exception.ReservaException;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -38,6 +41,9 @@ public class CarritoDeReserva {
 
     @Inject
     private ServicioDeReservas servicioDeReservas;
+
+    @Inject
+    private ServicioDeInventarioYTarifas inventarioYTarifas;
 
     private Long hotelId;
     private String tipoHabitacion;
@@ -99,10 +105,26 @@ public class CarritoDeReserva {
      */
     @Remove
     public ReservaResponse confirmar() {
+        calcularPrecioDesdeTarifas();
         ReservaRequest solicitud = new ReservaRequest(hotelId, tipoHabitacion, cantidadHabitaciones,
                 checkIn, checkOut, huespedNombre, huespedApellido, huespedEmail, huespedTelefono,
                 precioTotal, moneda);
         return servicioDeReservas.crearReserva(solicitud);
+    }
+
+    private void calcularPrecioDesdeTarifas() {
+        if (hotelId == null || tipoHabitacion == null || checkIn == null || checkOut == null
+                || cantidadHabitaciones < 1) {
+            throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                    "Elegí hotel, habitación y fechas antes de confirmar");
+        }
+        var tarifa = inventarioYTarifas.consultarTarifas(hotelId, checkIn, checkOut).stream()
+                .filter(t -> tipoHabitacion.equals(t.tipoHabitacion()))
+                .findFirst()
+                .orElseThrow(() -> new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                        "No hay una tarifa cargada para el tipo de habitación y período elegidos"));
+        precioTotal = tarifa.importe().multiply(BigDecimal.valueOf(cantidadHabitaciones));
+        moneda = tarifa.moneda();
     }
 
     public void vaciar() {

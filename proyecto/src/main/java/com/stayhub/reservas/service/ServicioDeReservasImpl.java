@@ -13,9 +13,7 @@ import com.stayhub.reservas.model.EstadoReserva;
 import com.stayhub.reservas.model.Reserva;
 import com.stayhub.reservas.repository.ReservaRepository;
 
-import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.PermitAll;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -43,30 +41,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Ambos caminos convergen en los métodos privados crear/confirmar/cancelar,
  * para no duplicar la lógica de negocio.
  *
- * @DeclareRoles + @RolesAllowed en cancelarReserva: seguridad declarativa
- * mínima pedida por el TP. Cancelar una reserva directa exige estar
- * autenticado y tener el rol ADMIN o HUESPED; el contenedor EJB valida
- * esto solo, sin que el código de negocio tenga que preguntar "¿este
- * usuario tiene permiso?". Se apoya en el login BASIC configurado en
- * web.xml/jboss-web.xml, que autentica al llamador antes de que el pedido
- * llegue hasta acá.
- *
- * Nota: esto es autorización POR ROL, no por "dueño" de la reserva — un
- * HUESPED cualquiera puede cancelar cualquier reserva, no solo la propia.
- * Verificar que la reserva le pertenece al huésped autenticado sería una
- * capa distinta (comparar identidad contra el huésped de la reserva), más
- * allá de lo que pide la seguridad declarativa por rol de esta entrega.
- *
- * @PermitAll en el resto de los métodos: WildFly, apenas detecta CUALQUIER
- * @RolesAllowed en un bean, pasa a denegar por defecto cualquier otro
- * método del mismo bean que no tenga una anotación de seguridad explícita
- * (default-missing-method-permissions-deny-access). Sin @PermitAll acá,
- * crearReserva y el resto quedarían bloqueados para cualquiera —incluido
- * CarritoDeReserva, que los invoca sin pasar por un login HTTP— por ese
- * comportamiento del contenedor, no por el estándar Jakarta EE.
+ * La autorización HTTP se aplica en AutenticacionFilter a partir de la sesión
+ * creada por ServicioDeUsuarios. El servicio conserva @PermitAll porque también
+ * recibe invocaciones internas desde el carrito y desde Canales Externos; no debe
+ * depender de un segundo usuario duplicado en el realm de WildFly.
  */
 @Stateless
-@DeclareRoles({"ADMIN", "HUESPED"})
 public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioDeReservas {
 
     @Inject
@@ -205,9 +185,10 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
-    @RolesAllowed({"ADMIN", "HUESPED"})
-    public ReservaResponse cancelarReserva(Long id) {
+    @PermitAll
+    public ReservaResponse cancelarReserva(Long id, String actorEmail, boolean actorEsAdmin) {
         Reserva reserva = buscarOFallar(id);
+        verificarPropietario(reserva, actorEmail, actorEsAdmin);
         if (reserva.getEstado() == EstadoReserva.CANCELADA) {
             // Cancelación repetida sobre la misma reserva: no repetimos la
             // liberación del hold (mismo criterio que cancelarDesdeCanal).
@@ -219,10 +200,66 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         return ReservaMapper.aResponse(reserva);
     }
 
+    /**
+     * Modificación de una reserva DIRECTA (fechas, tipo de habitación,
+     * cantidad, precio). Mismo criterio de autorización que cancelarReserva:
+     * ADMIN cualquiera, HUESPED solo la propia — verificado con
+     * verificarPropietario() contra el actorEmail que resuelve
+     * ReservaResource desde la sesión HTTP del login nuevo. Reutiliza
+     * GestionDeDisponibilidadPort.reemplazarHold, igual que
+     * reemplazarHoldYConfirmar (canal externo), pero sin forzar CONFIRMADA:
+     * si la reserva estaba PENDIENTE sigue PENDIENTE con el hold nuevo, y si
+     * ya estaba CONFIRMADA se reconfirma con el hold nuevo.
+     */
+    @Override
+    @PermitAll
+    public ReservaResponse modificarReserva(Long id, ReservaRequest solicitud, String actorEmail, boolean actorEsAdmin) {
+        Reserva reserva = buscarOFallar(id);
+        verificarPropietario(reserva, actorEmail, actorEsAdmin);
+        if (reserva.getEstado() == EstadoReserva.CANCELADA || reserva.getEstado() == EstadoReserva.RECHAZADA) {
+            throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
+                    "No se puede modificar una reserva en estado " + reserva.getEstado());
+        }
+        validarModificacion(solicitud);
+        boolean estabaConfirmada = reserva.getEstado() == EstadoReserva.CONFIRMADA;
+
+        if (reserva.getHoldId() == null) {
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            iniciarHold(reserva);
+        } else {
+            String nuevoHoldId;
+            try {
+                nuevoHoldId = disponibilidad().reemplazarHold(reserva.getHoldId(), reserva.getHotelId(),
+                        solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(),
+                        solicitud.checkIn(), solicitud.checkOut());
+            } catch (SinDisponibilidadException ex) {
+                throw new ReservaException(CodigoErrorReserva.SIN_DISPONIBILIDAD,
+                        "No hay disponibilidad para la modificación pedida: la reserva se mantiene sin cambios", ex);
+            }
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            if (estabaConfirmada) {
+                disponibilidad().confirmarHold(nuevoHoldId);
+                reserva.confirmar(nuevoHoldId);
+            } else {
+                reserva.iniciarHold(nuevoHoldId);
+            }
+        }
+        repositorio.guardar(reserva);
+        return ReservaMapper.aResponse(reserva);
+    }
+
     @Override
     @PermitAll
     public List<ReservaResponse> listarPorHotel(Long hotelId) {
         return repositorio.listarPorHotel(hotelId).stream().map(ReservaMapper::aResponse).toList();
+    }
+
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarPorHuespedEmail(String email) {
+        return repositorio.listarPorHuespedEmail(email).stream().map(ReservaMapper::aResponse).toList();
     }
 
     // ------------------------------------------------------------------
@@ -326,6 +363,25 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         return disponibilidad.get();
     }
 
+    /**
+     * ADMIN puede operar sobre cualquier reserva. Un HUESPED solo puede
+     * cancelarla o modificarla si es la suya: comparamos el email que
+     * ReservaResource resolvió de la sesión HTTP (login nuevo, vía
+     * AutenticacionFilter) contra el email cargado en la reserva. Ya no
+     * usamos SessionContext acá: ese mecanismo dependía del login viejo
+     * manejado por el contenedor de EJBs, que este proyecto dejó de usar.
+     */
+    private void verificarPropietario(Reserva reserva, String actorEmail, boolean actorEsAdmin) {
+        if (actorEsAdmin) {
+            return;
+        }
+        String duenio = reserva.getHuesped() == null ? null : reserva.getHuesped().getEmail();
+        if (actorEmail == null || duenio == null || !actorEmail.equalsIgnoreCase(duenio)) {
+            throw new ReservaException(CodigoErrorReserva.NO_AUTORIZADO,
+                    "No podés operar sobre una reserva que no es tuya");
+        }
+    }
+
     private Reserva buscarOFallar(Long id) {
         return repositorio.buscarPorId(id)
                 .orElseThrow(() -> new ReservaException(CodigoErrorReserva.RESERVA_NO_ENCONTRADA,
@@ -340,12 +396,31 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     private void validar(SolicitudReserva s) {
         if (s == null || s.referenciaExterna() == null || s.referenciaExterna().isBlank()
                 || s.canal() == null || s.canal().isBlank() || s.hotelId() == null
-                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.checkIn() == null || s.checkOut() == null || s.checkIn().isBefore(java.time.LocalDate.now())
+                || !s.checkOut().isAfter(s.checkIn())
                 || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.cantidadHabitaciones() < 1 || s.huesped() == null || s.precioTotal() == null
                 || s.precioTotal().signum() < 0 || s.moneda() == null || s.moneda().isBlank()) {
             throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
                     "La solicitud de reserva está incompleta o contiene valores inválidos");
+        }
+    }
+
+    /**
+     * Igual que validarDirecta, pero sin exigir hotelId ni datos del
+     * huésped: una modificación no cambia de hotel ni de titular, solo
+     * fechas/tipo/cantidad/precio (ver modificarReserva).
+     */
+    private void validarModificacion(ReservaRequest s) {
+        if (s == null
+                || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
+                || s.cantidadHabitaciones() < 1
+                || s.checkIn() == null || s.checkOut() == null
+                || s.checkIn().isBefore(java.time.LocalDate.now()) || !s.checkOut().isAfter(s.checkIn())
+                || s.precioTotal() == null || s.precioTotal().signum() < 0
+                || s.moneda() == null || s.moneda().isBlank()) {
+            throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                    "La modificación está incompleta o contiene valores inválidos");
         }
     }
 
@@ -361,7 +436,8 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         if (s == null || s.hotelId() == null
                 || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.cantidadHabitaciones() < 1
-                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.checkIn() == null || s.checkOut() == null || s.checkIn().isBefore(java.time.LocalDate.now())
+                || !s.checkOut().isAfter(s.checkIn())
                 || s.huespedNombre() == null || s.huespedNombre().isBlank()
                 || s.huespedApellido() == null || s.huespedApellido().isBlank()
                 || s.huespedEmail() == null || s.huespedEmail().isBlank()

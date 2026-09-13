@@ -47,4 +47,11 @@ public class Usuario {
     public String getNombre() { return nombre; }
     public String getApellido() { return apellido; }
     public RolUsuario getRol() { return rol; }
+
+    public void actualizarPerfil(String email, String nombre, String apellido, String nuevoPasswordHash) {
+        this.email = email;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        if (nuevoPasswordHash != null) this.passwordHash = nuevoPasswordHash;
+    }
 }

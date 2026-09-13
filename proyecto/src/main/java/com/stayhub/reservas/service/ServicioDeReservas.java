@@ -20,7 +20,18 @@ public interface ServicioDeReservas {
 
     ReservaResponse confirmarReserva(Long id);
 
-    ReservaResponse cancelarReserva(Long id);
+    /**
+     * actorEmail / actorEsAdmin: identidad de quien hace el pedido, resuelta
+     * por ReservaResource a partir de la sesión HTTP (el login nuevo,
+     * basado en AutenticacionFilter, ya no pasa por el contenedor de EJBs,
+     * así que no podemos usar SessionContext acá dentro). Un ADMIN puede
+     * modificar/cancelar cualquier reserva; un HUESPED solo la propia.
+     */
+    ReservaResponse modificarReserva(Long id, ReservaRequest solicitud, String actorEmail, boolean actorEsAdmin);
+
+    ReservaResponse cancelarReserva(Long id, String actorEmail, boolean actorEsAdmin);
 
     List<ReservaResponse> listarPorHotel(Long hotelId);
+
+    List<ReservaResponse> listarPorHuespedEmail(String email);
 }

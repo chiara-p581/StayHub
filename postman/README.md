@@ -12,6 +12,7 @@ http://localhost:8080/StayHub/api
 | --- | --- |
 | `StayHub-ServicioDeHoteles.postman_collection.json` | ServicioDeHoteles |
 | `StayHub-InventarioYTarifas.postman_collection.json` | ServicioDeInventarioYTarifas |
+| `StayHub-ServicioDeReservas.postman_collection.json` | ServicioDeReservas (incluye Carrito de reserva y la seguridad por dueño) |
 | `Stayhub pagos.postman collection.json` | ServicioDePagos |
 | `Stayhub usuarios.postman.collection.json` | ServicioDeUsuarios |
 
@@ -34,5 +35,3 @@ Antes de correr las requests de `/canales-externos/otas/.../sincronizaciones` y 
 1. `GET /saludo` — smoke test, debe responder `200`.
 2. `POST /inventario-tarifas/cargas` con hotel, tipo de habitación, rango de fechas, unidades, precio y moneda — necesario para tener disponibilidad cargada antes de probar reservas o canales externos.
 3. `GET /inventario-tarifas/disponibilidad` — verificar el cupo inicial.
-
-Ver [`docs/auditorias/`](../docs/auditorias/) para un plan de pruebas más exhaustivo (casos negativos, concurrencia, idempotencia) sobre Canales Externos y ServicioDeHoteles.

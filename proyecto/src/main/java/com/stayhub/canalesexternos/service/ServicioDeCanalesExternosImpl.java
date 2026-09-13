@@ -85,7 +85,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     private void validarReserva(ReservaExternaDTO r) {
         if (r == null || r.idExterno() == null || r.idExterno().isBlank() || r.canal() == null ||
                 r.hotelId() == null || r.checkIn() == null || r.checkOut() == null ||
-                !r.checkOut().isAfter(r.checkIn()) || r.tipoHabitacion() == null ||
+                r.checkIn().isBefore(LocalDate.now()) || !r.checkOut().isAfter(r.checkIn()) || r.tipoHabitacion() == null ||
                 r.tipoHabitacion().isBlank() || r.cantidadHabitaciones() < 1 || r.huesped() == null ||
                 r.precioTotal() == null || r.precioTotal().signum() < 0 || r.moneda() == null || r.moneda().isBlank() ||
                 r.huesped().nombre() == null || r.huesped().nombre().isBlank() ||

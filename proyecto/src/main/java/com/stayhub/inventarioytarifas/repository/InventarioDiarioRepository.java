@@ -2,12 +2,17 @@ package com.stayhub.inventarioytarifas.repository;
 
 import com.stayhub.inventarioytarifas.model.InventarioDiario;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 public interface InventarioDiarioRepository {
 
     InventarioDiario guardar(InventarioDiario inventario);
+
+    /** Alta/actualización masiva del rango [desde, hasta) en PostgreSQL. */
+    int cargarRango(Long hotelId, String tipoHabitacion, LocalDate desde, LocalDate hasta,
+                    int unidadesTotales, BigDecimal precio, String moneda);
 
     /** Lectura sin bloqueo, para consultas de solo lectura (disponibilidad/tarifas). */
     Optional<InventarioDiario> buscarPorHotelTipoYFecha(Long hotelId, String tipoHabitacion, LocalDate fecha);
