@@ -385,7 +385,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-05\",\n  \"huespedNombre\": \"Flujo\",\n  \"huespedApellido\": \"Directo\",\n  \"huespedEmail\": \"flujo.directo@mail.com\",\n  \"huespedTelefono\": \"1122334455\",\n  \"precioTotal\": 60000.0,\n  \"moneda\": \"ARS\"\n}"
+              "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"2026-10-02\",\n  \"checkOut\": \"2026-10-05\",\n  \"huespedNombre\": \"Flujo\",\n  \"huespedApellido\": \"Directo\",\n  \"huespedEmail\": \"{{huespedEmail}}\",\n  \"huespedTelefono\": \"1122334455\",\n  \"precioTotal\": 60000.0,\n  \"moneda\": \"ARS\"\n}"
             }
           },
           "event": [
@@ -1165,34 +1165,6 @@
           ]
         },
         {
-          "name": "Verificar la reserva creada por el carrito",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/reservas/{{reservaIdCarrito}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "reservas",
-                "{{reservaIdCarrito}}"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Coincide con lo armado en el carrito', function () { pm.expect(pm.response.json().huespedEmail).to.eql('carrito.prueba@mail.com'); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
           "name": "Login ADMIN",
           "request": {
             "method": "POST",
@@ -1224,6 +1196,34 @@
                 "exec": [
                   "pm.test('200 OK - Login ADMIN', function () { pm.response.to.have.status(200); });",
                   "pm.test('Rol ADMIN', function () { pm.expect(pm.response.json().rol).to.eql('ADMIN'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar la reserva creada por el carrito",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaIdCarrito}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaIdCarrito}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Coincide con lo armado en el carrito', function () { pm.expect(pm.response.json().huespedEmail).to.eql('carrito.prueba@mail.com'); });"
                 ]
               }
             }
