@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>StayHub - Inventario y Tarifas</title>
+<title>StayHub - Inventory and Rates</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 </head>
 <body class="bg-background text-on-background font-body-lg flex flex-col md:flex-row min-h-screen">
 <!-- Mobile TopAppBar -->
 <header class="md:hidden w-full top-0 sticky bg-background shadow-sm flex justify-between items-center px-lg py-md z-40">
 <a href="admin-dashboard.html" class="text-primary p-2 rounded-full flex items-center justify-center"><span class="material-symbols-outlined">arrow_back</span></a>
-<a href="index.html" class="font-display-lg text-headline-md text-primary" title="Volver al inicio">StayHub Admin</a>
+<a href="index.html" class="font-display-lg text-headline-md text-primary" title="Back to home">StayHub Admin</a>
 <span class="w-8"></span>
 </header>
 <!-- Desktop NavigationDrawer -->
 <nav class="hidden md:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 flex-col py-xl z-30 shadow-none">
 <div class="px-gutter mb-8">
-<a href="index.html" class="font-headline-md text-headline-md text-primary flex items-center gap-xs" title="Volver al inicio"><span class="material-symbols-outlined">arrow_back</span><span>StayHub Admin</span></a>
+<a href="index.html" class="font-headline-md text-headline-md text-primary flex items-center gap-xs" title="Back to home"><span class="material-symbols-outlined">arrow_back</span><span>StayHub Admin</span></a>
 </div>
 <div class="flex-1 overflow-y-auto hide-scrollbar">
 <ul class="flex flex-col space-y-2">
 <li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="admin-dashboard.html"><span class="material-symbols-outlined mr-4">dashboard</span>Dashboard</a></li>
 <li><a class="flex items-center px-gutter py-3 text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out font-body-md text-body-md" href="inventory.html"><span class="material-symbols-outlined mr-4" style="font-variation-settings: 'FILL' 1;">inventory_2</span>Inventory</a></li>
 <li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="hotel-management.html"><span class="material-symbols-outlined mr-4">domain</span>Hotels</a></li>
-<li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined mr-4">event_available</span>Reservations</a></li>
+<li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined mr-4">event_available</span>Bookings</a></li>
 <li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="channels-sync.html"><span class="material-symbols-outlined mr-4">hub</span>Channels</a></li>
 <li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="payments.html"><span class="material-symbols-outlined mr-4">payments</span>Payments</a></li>
 <li><a class="flex items-center px-gutter py-3 text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out font-body-md text-body-md" href="alerts.html"><span class="material-symbols-outlined mr-4">crisis_alert</span>Operations</a></li>
@@ -39,20 +39,20 @@
 <div class="max-w-container-max mx-auto px-gutter py-8 md:py-xxl">
 <div class="flex flex-col md:flex-row md:items-center justify-between mb-xl gap-4">
 <div>
-<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Inventario y Tarifas</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">Cargá capacidad y precio por tipo de habitación, y consultá lo que ya está cargado.</p>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Inventory and Rates</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Load capacity and pricing by room type, and review existing data.</p>
 </div>
 </div>
 
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
 <div id="acceso-denegado" class="hidden p-lg rounded-xl bg-surface-container-lowest border border-outline-variant/20 text-center">
-<p class="font-body-lg text-body-lg text-on-surface-variant">Esta sección es solo para personal (rol ADMIN). <a href="index.html" class="text-primary underline">Volver al inicio</a>.</p>
+<p class="font-body-lg text-body-lg text-on-surface-variant">This section is for staff members with the ADMIN role only. <a href="index.html" class="text-primary underline">Back to home</a>.</p>
 </div>
 
 <div id="panel" class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
-<!-- Cargar inventario -->
+<!-- Load inventario -->
 <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] border border-outline-variant/20">
-<h3 class="font-title-lg text-title-lg text-on-surface mb-lg">Cargar inventario y tarifa</h3>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-lg">Load inventory and rate</h3>
 <div id="carga-error" class="hidden mb-md p-sm rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
 <div id="carga-ok" class="hidden mb-md p-sm rounded-DEFAULT bg-secondary-container text-on-secondary-container font-body-md text-body-md"></div>
 <div class="flex flex-col gap-md">
@@ -61,72 +61,72 @@
 <select id="carga-hotel" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"></select>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-tipo">Tipo de habitación (código)</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-tipo">Room type (code)</label>
 <select id="carga-tipo" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"></select>
 </div>
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-desde">Desde</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-desde">From</label>
 <input id="carga-desde" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-hasta">Hasta</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-hasta">To</label>
 <input id="carga-hasta" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 </div>
 <div class="grid grid-cols-3 gap-md">
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-unidades">Unidades</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-unidades">Units</label>
 <input id="carga-unidades" type="number" min="0" value="1" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-precio">Precio / noche</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-precio">Price / night</label>
 <input id="carga-precio" type="number" min="0" step="0.01" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-moneda">Moneda</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="carga-moneda">Currency</label>
 <input id="carga-moneda" type="text" value="ARS" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 </div>
 <button id="btn-cargar" class="bg-primary-container text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg hover:bg-primary transition-colors shadow-md">
-                        Cargar
+                        Load
                     </button>
 </div>
 </div>
 
 <!-- Consultar -->
 <div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] border border-outline-variant/20">
-<h3 class="font-title-lg text-title-lg text-on-surface mb-lg">Consultar disponibilidad y tarifas</h3>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-lg">Check availability and rates</h3>
 <div class="flex flex-col gap-md mb-lg">
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="consulta-desde">Desde</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="consulta-desde">From</label>
 <input id="consulta-desde" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="consulta-hasta">Hasta</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="consulta-hasta">To</label>
 <input id="consulta-hasta" type="date" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 </div>
 <button id="btn-consultar" class="bg-surface text-primary border border-outline font-label-md text-label-md px-6 py-3 rounded-lg hover:bg-surface-container-low transition-colors">
-                        Consultar
+                        Search
                     </button>
 </div>
-<h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Disponibilidad</h4>
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Availability</h4>
 <div class="overflow-x-auto mb-lg">
 <table class="w-full text-left text-body-md font-body-md">
-<thead><tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant"><th class="py-xs pr-md">Tipo</th><th class="py-xs pr-md">Desde</th><th class="py-xs pr-md">Hasta</th><th class="py-xs pr-md">Disponibles</th></tr></thead>
+<thead><tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant"><th class="py-xs pr-md">Type</th><th class="py-xs pr-md">From</th><th class="py-xs pr-md">To</th><th class="py-xs pr-md">Available</th></tr></thead>
 <tbody id="disponibilidad-body"></tbody>
 </table>
-<p id="disponibilidad-vacio" class="hidden text-on-surface-variant font-body-md text-body-md py-sm">Sin datos para ese rango.</p>
+<p id="disponibilidad-vacio" class="hidden text-on-surface-variant font-body-md text-body-md py-sm">No data is available for that range.</p>
 </div>
-<h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Tarifas</h4>
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-xs">Rates</h4>
 <div class="overflow-x-auto">
 <table class="w-full text-left text-body-md font-body-md">
-<thead><tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant"><th class="py-xs pr-md">Tipo</th><th class="py-xs pr-md">Desde</th><th class="py-xs pr-md">Hasta</th><th class="py-xs pr-md">Importe</th></tr></thead>
+<thead><tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant"><th class="py-xs pr-md">Type</th><th class="py-xs pr-md">From</th><th class="py-xs pr-md">To</th><th class="py-xs pr-md">Amount</th></tr></thead>
 <tbody id="tarifas-body"></tbody>
 </table>
-<p id="tarifas-vacio" class="hidden text-on-surface-variant font-body-md text-body-md py-sm">Sin datos para ese rango.</p>
+<p id="tarifas-vacio" class="hidden text-on-surface-variant font-body-md text-body-md py-sm">No data is available for that range.</p>
 </div>
 </div>
 </div>
@@ -144,11 +144,11 @@
 <span class="material-symbols-outlined mb-1">hub</span>Channels
 </a>
 <a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 transition-transform active:scale-90 px-4 py-1 rounded-full" href="settings.html">
-<span class="material-symbols-outlined mb-1">person</span>Perfil
+<span class="material-symbols-outlined mb-1">person</span>Profile
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -170,7 +170,7 @@
     function cargarHoteles() {
         return Api.listarHoteles(false).then(function (hoteles) {
             if (!hoteles.length) {
-                mostrarError(errorBanner, new Error("Todavía no hay hoteles cargados."));
+                mostrarError(errorBanner, new Error("No hotels have been loaded yet."));
                 return;
             }
             hotelSelect.innerHTML = hoteles.map(function (h) {
@@ -185,7 +185,7 @@
             tiposPorHotel[hotelId] = tipos;
             tipoSelect.innerHTML = tipos.length
                 ? tipos.map(function (t) { return '<option value="' + t.codigo + '">' + t.codigo + ' - ' + t.nombre + '</option>'; }).join("")
-                : '<option value="">Este hotel no tiene tipos de habitación cargados</option>';
+                : '<option value="">This hotel has no room types loaded</option>';
         });
     }
 
@@ -206,12 +206,12 @@
             precio: Number(document.getElementById("carga-precio").value || 0),
             moneda: document.getElementById("carga-moneda").value.trim() || "ARS",
         };
-        if (!dto.tipoHabitacion) { mostrarError(cargaError, new Error("Este hotel no tiene tipos de habitación.")); return; }
-        if (!dto.desde || !dto.hasta) { mostrarError(cargaError, new Error("Completá el rango de fechas.")); return; }
+        if (!dto.tipoHabitacion) { mostrarError(cargaError, new Error("This hotel has no room types.")); return; }
+        if (!dto.desde || !dto.hasta) { mostrarError(cargaError, new Error("Complete the date range.")); return; }
 
         Api.cargarInventario(dto)
             .then(function (resp) {
-                cargaOk.textContent = "Cargado: " + resp.diasCargados + " día(s) para " + resp.tipoHabitacion + ".";
+                cargaOk.textContent = "Loaded: " + resp.diasCargados + " day(s) for " + resp.tipoHabitacion + ".";
                 cargaOk.classList.remove("hidden");
             })
             .catch(function (err) { mostrarError(cargaError, err); });
@@ -222,7 +222,7 @@
         var hotelId = hotelSelect.value;
         var desde = document.getElementById("consulta-desde").value;
         var hasta = document.getElementById("consulta-hasta").value;
-        if (!hotelId || !desde || !hasta) { mostrarError(errorBanner, new Error("Elegí hotel y rango de fechas.")); return; }
+        if (!hotelId || !desde || !hasta) { mostrarError(errorBanner, new Error("Choose a hotel and date range.")); return; }
 
         Api.consultarDisponibilidad(hotelId, desde, hasta)
             .then(function (lista) {

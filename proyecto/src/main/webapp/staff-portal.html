@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 <style>
 .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -37,7 +37,7 @@
 <ul class="flex flex-col gap-sm">
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span><span class="font-body-md text-body-md">Dashboard</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="inventory.html"><span class="material-symbols-outlined">inventory_2</span><span class="font-body-md text-body-md">Inventory</span></a></li>
-<li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined">event_available</span><span class="font-body-md text-body-md">Reservations</span></a></li>
+<li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined">event_available</span><span class="font-body-md text-body-md">Bookings</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="channels-sync.html"><span class="material-symbols-outlined">hub</span><span class="font-body-md text-body-md">Channels</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="payments.html"><span class="material-symbols-outlined">payments</span><span class="font-body-md text-body-md">Payments</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out" href="staff-portal.html"><span class="material-symbols-outlined icon-filled">groups</span><span class="font-body-md text-body-md">Staff</span></a></li>
@@ -49,11 +49,11 @@
 </nav>
 <main class="flex-1 md:ml-64 p-lg md:p-xxl pb-32 md:pb-xxl max-w-container-max mx-auto w-full">
 <div id="acceso-denegado" class="hidden p-lg rounded-xl bg-surface-container-lowest border border-outline-variant/20 text-center">
-<p class="font-body-lg text-body-lg text-on-surface-variant">Esta sección es solo para personal (rol ADMIN). <a href="index.html" class="text-primary underline">Volver al inicio</a>.</p>
+<p class="font-body-lg text-body-lg text-on-surface-variant">This section is for staff members with the ADMIN role only. <a href="index.html" class="text-primary underline">Back to home</a>.</p>
 </div>
 <div id="panel">
 <div id="aviso-mock" class="mb-lg p-md rounded-DEFAULT bg-tertiary-fixed/40 text-on-tertiary-fixed-variant font-body-md text-body-md">
-Esta pantalla todavía es una maqueta visual: el directorio de personal y el tablón de anuncios no tienen un endpoint real en <code>ServicioDeUsuarios</code> (solo existe registrar/login/consultar por id, no "listar usuarios"). Queda documentado como pendiente.
+This page is still a visual mockup: the staff directory and notice board do not have a real endpoint in <code>ServicioDeUsuarios</code> (only register/login/find by ID exist, not “list users”). This remains documented as pending.
 </div>
 <div class="mb-xl flex flex-col md:flex-row md:items-end justify-between gap-md">
 <div>
@@ -107,7 +107,7 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 </div>
 <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] border border-tertiary-fixed-dim/30 overflow-hidden">
 <div class="px-lg py-md border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="font-title-lg text-title-lg text-primary">Team Directory &amp; Status</h3>
+<h3 class="font-title-lg text-title-lg text-primary">Team Directry &amp; Status</h3>
 <button class="text-secondary hover:text-primary transition-colors">
 <span class="material-symbols-outlined">filter_list</span>
 </button>
@@ -221,7 +221,7 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 </div>
 <div class="px-lg py-md border-t border-outline-variant/20 flex justify-center bg-surface-container-lowest">
 <button class="text-secondary font-title-lg text-body-md hover:text-primary transition-colors flex items-center gap-xs">
-                    View Full Directory
+                    View Full Directry
                     <span class="material-symbols-outlined text-sm">arrow_forward</span>
 </button>
 </div>
@@ -240,12 +240,12 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 </a>
 <a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 rounded-full px-4 py-1 transition-transform active:scale-90 group" href="settings.html">
 <span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
-<span class="font-label-md text-label-md mt-1 group-hover:text-primary transition-colors">Perfil</span>
+<span class="font-label-md text-label-md mt-1 group-hover:text-primary transition-colors">Profile</span>
 </a>
 </div>
 </nav>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     if (!Api.requireLogin()) return;
