@@ -1,0 +1,55 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Simulador del PMS legado del hotel (sistema externo SOAP).
+         Proyecto independiente de StayHub: corre fuera de WildFly, en su
+         propia JVM y en su propio puerto (9091), como correría el sistema
+         real del hotel. Se levanta con:  mvn compile exec:java -->
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stayhub</groupId>
+    <artifactId>pms-legado-mock</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- JAX-WS se quitó del JDK en Java 11 (JEP 320): se agrega la API
+             y la implementación de referencia (Eclipse Metro). -->
+        <dependency>
+            <groupId>jakarta.xml.ws</groupId>
+            <artifactId>jakarta.xml.ws-api</artifactId>
+            <version>4.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-rt</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>com.stayhub.pmslegado.PublicadorPms</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

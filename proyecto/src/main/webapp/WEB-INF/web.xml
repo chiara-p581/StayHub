@@ -9,4 +9,18 @@
        POST /api/usuarios/login. AutenticacionFilter aplica los permisos por
        rol sin disparar el diálogo BASIC nativo del navegador. -->
 
+  <!-- Servicio web SOAP (JAX-WS) que StayHub expone al PMS legado del hotel.
+       En WildFly el servlet-class de un endpoint JAX-WS es la propia clase
+       anotada con @WebService: el subsistema de webservices la detecta y la
+       publica en la URL de abajo. El WSDL generado queda en
+         http://localhost:8080/StayHub/soap/integracion-pms?wsdl -->
+  <servlet>
+    <servlet-name>IntegracionPmsService</servlet-name>
+    <servlet-class>com.stayhub.integracionpms.api.IntegracionPmsWebService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>IntegracionPmsService</servlet-name>
+    <url-pattern>/soap/integracion-pms</url-pattern>
+  </servlet-mapping>
+
 </web-app>
