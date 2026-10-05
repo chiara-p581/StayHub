@@ -28,7 +28,7 @@ const Api = (() => {
     function setSession(usuario) {
         if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
             sessionStorage.removeItem(USER_KEY);
-            throw new Error("El servidor no devolvió una sesión de usuario válida.");
+            throw new Error("The server did not return a valid user session.");
         }
         sessionStorage.setItem(USER_KEY, JSON.stringify(usuario));
     }
@@ -67,7 +67,7 @@ const Api = (() => {
 
     /**
      * Redirige a login.html si no hay sesión, guardando la página actual
-     * para volver después de loguearse. Se llama al principio de las
+     * para volver después de loguearse. Se llama to principio de las
      * páginas que necesitan un usuario logueado.
      */
     function requireLogin() {
@@ -98,7 +98,7 @@ const Api = (() => {
         if (body !== undefined) headers["Content-Type"] = "application/json";
         if (auth) {
             if (!isLoggedIn()) {
-                const err = new Error("Tenés que iniciar sesión para hacer esto.");
+                const err = new Error("You must sign in to do this.");
                 err.status = 401;
                 throw err;
             }
@@ -114,7 +114,7 @@ const Api = (() => {
             });
         } catch (networkErr) {
             const err = new Error(
-                "No se pudo conectar con el servidor. ¿WildFly está corriendo en localhost:8080?"
+                "Could not connect to the server. Is WildFly running on localhost:8080?"
             );
             err.cause = networkErr;
             throw err;
@@ -226,33 +226,50 @@ const Api = (() => {
             '<a class="stayhub-brand" href="index.html"><span class="stayhub-brand-mark">S</span><span class="stayhub-brand-name">StayHub</span>' +
             (usuario && usuario.rol === "ADMIN" ? '<span class="stayhub-admin-badge">Admin</span>' : '') + '</a>' +
             (page === "index.html" ? '<div class="stayhub-channel-shortcuts"><a href="index.html?canal=STAYHUB#hoteles">StayHub</a><a href="index.html?canal=BOOKING#hoteles">Booking</a><a href="index.html?canal=AIRBNB#hoteles">Airbnb</a><a href="index.html?canal=EXPEDIA#hoteles">Expedia</a></div>' : '') +
-            '<nav class="stayhub-header-nav" aria-label="Navegación principal">' +
-            '<a class="stayhub-header-icon" href="index.html" aria-label="Inicio" title="Inicio"><span class="material-symbols-outlined">home</span></a>' +
-            '<a class="stayhub-header-icon" href="index.html#hoteles" aria-label="Buscar hoteles" title="Buscar hoteles"><span class="material-symbols-outlined">search</span></a>' +
-            (usuario && usuario.rol === "ADMIN" ? '<a class="stayhub-header-icon" href="admin-dashboard.html" aria-label="Administración" title="Administración"><span class="material-symbols-outlined">space_dashboard</span></a>' : '') +
-            (!usuario || usuario.rol !== "ADMIN" ? '<a class="stayhub-header-icon stayhub-cart-link" href="cart.html" aria-label="Carrito" title="Carrito"><span class="material-symbols-outlined">shopping_bag</span><span id="global-cart-count" class="stayhub-cart-count">0</span></a>' : '') +
-            '<a class="stayhub-profile-pill" href="' + (usuario ? 'settings.html' : 'login.html') + '"><span class="stayhub-avatar">' + (usuario ? String(usuario.nombre || "U").charAt(0).toUpperCase() : '<span class="material-symbols-outlined">person</span>') + '</span><span>' + (usuario ? usuario.nombre : 'Ingresar') + '</span></a>' +
+            '<nav class="stayhub-header-nav" aria-label="Main navigation">' +
+            '<a class="stayhub-header-icon" href="index.html" aria-label="Home" title="Home"><span class="material-symbols-outlined">home</span></a>' +
+            '<a class="stayhub-header-icon" href="index.html#hoteles" aria-label="Search hotels" title="Search hotels"><span class="material-symbols-outlined">search</span></a>' +
+            (usuario && usuario.rol === "ADMIN" ? '<a class="stayhub-header-icon" href="admin-dashboard.html" aria-label="Administration" title="Administration"><span class="material-symbols-outlined">space_dashboard</span></a>' : '') +
+            (!usuario || usuario.rol !== "ADMIN" ? '<a class="stayhub-header-icon stayhub-cart-link" href="cart.html" aria-label="Cart" title="Cart"><span class="material-symbols-outlined">shopping_bag</span><span id="global-cart-count" class="stayhub-cart-count">0</span></a>' : '') +
+            '<a class="stayhub-profile-pill" href="' + (usuario ? 'settings.html' : 'login.html') + '"><span class="stayhub-avatar">' + (usuario ? String(usuario.nombre || "U").charAt(0).toUpperCase() : '<span class="material-symbols-outlined">person</span>') + '</span><span>' + (usuario ? usuario.nombre : 'Sign in') + '</span></a>' +
             '</nav></div>';
         document.body.insertBefore(header, document.body.firstChild);
 
         if (esAdminPage) {
             var items = [
-                ["admin-dashboard.html", "space_dashboard", "Resumen"],
-                ["inventory.html", "inventory_2", "Inventario"],
-                ["hotel-management.html", "domain", "Hoteles"],
-                ["admin-dashboard.html#reservas-table", "calendar_month", "Reservas"],
-                ["channels-sync.html", "hub", "Canales"],
-                ["payments.html", "payments", "Pagos"],
-                ["alerts.html", "notifications", "Operaciones"]
+                ["admin-dashboard.html", "space_dashboard", "Overview"],
+                ["inventory.html", "inventory_2", "Inventory"],
+                ["hotel-management.html", "domain", "Hotels"],
+                ["admin-dashboard.html#reservas-table", "calendar_month", "Bookings"],
+                ["channels-sync.html", "hub", "Channels"],
+                ["payments.html", "payments", "Payments"],
+                ["alerts.html", "notifications", "Operations"]
             ];
             var sidebar = document.createElement("aside");
             sidebar.className = "stayhub-admin-sidebar";
-            sidebar.innerHTML = '<div class="stayhub-sidebar-title"><span>Panel administrativo</span><small>Gestión de StayHub</small></div><nav>' +
+            sidebar.innerHTML = '<div class="stayhub-sidebar-title"><span>Admin panel</span><small>StayHub management</small></div><nav>' +
                 items.map(function (item) {
-                    var active = item[0].split("#")[0] === page;
-                    return '<a href="' + item[0] + '"' + (active ? ' class="active" aria-current="page"' : '') + '><span class="material-symbols-outlined">' + item[1] + '</span><span>' + item[2] + '</span></a>';
-                }).join("") + '</nav><a class="stayhub-sidebar-profile" href="settings.html"><span class="stayhub-avatar">' + String(usuario.nombre || "A").charAt(0).toUpperCase() + '</span><span><strong>' + usuario.nombre + '</strong><small>Ver perfil</small></span></a>';
+                    var parts = item[0].split("#");
+                    var itemPage = parts[0];
+                    var itemHash = parts[1] ? "#" + parts[1] : "";
+                    var active = itemPage === page && (itemHash ? location.hash === itemHash : !location.hash);
+                    return '<a href="' + item[0] + '" data-page="' + itemPage + '" data-hash="' + itemHash + '"' + (active ? ' class="active" aria-current="page"' : '') + '><span class="material-symbols-outlined">' + item[1] + '</span><span>' + item[2] + '</span></a>';
+                }).join("") + '</nav><a class="stayhub-sidebar-profile" href="settings.html"><span class="stayhub-avatar">' + String(usuario.nombre || "A").charAt(0).toUpperCase() + '</span><span><strong>' + usuario.nombre + '</strong><small>View profile</small></span></a>';
             document.body.insertBefore(sidebar, header.nextSibling);
+            function updateAdminNavigation() {
+                sidebar.querySelectorAll("nav a").forEach(function (link) {
+                    var active = link.dataset.page === page && (link.dataset.hash ? location.hash === link.dataset.hash : !location.hash);
+                    link.classList.toggle("active", active);
+                    if (active) link.setAttribute("aria-current", "page");
+                    else link.removeAttribute("aria-current");
+                });
+                var pageTitle = document.getElementById("admin-page-title");
+                if (pageTitle && page === "admin-dashboard.html") {
+                    pageTitle.textContent = location.hash === "#reservas-table" ? "Bookings" : "Overview";
+                }
+            }
+            window.addEventListener("hashchange", updateAdminNavigation);
+            updateAdminNavigation();
         }
         function updateCartBadge() {
             var badge = document.getElementById("global-cart-count");
@@ -260,6 +277,14 @@ const Api = (() => {
         }
         updateCartBadge();
         document.addEventListener("stayhub:cart-changed", updateCartBadge);
+
+        var authPages = ["login.html", "register.html", "recover-password.html"];
+        if (!esAdminPage && authPages.indexOf(page) === -1 && !document.querySelector(".stayhub-global-footer")) {
+            var footer = document.createElement("footer");
+            footer.className = "stayhub-global-footer";
+            footer.innerHTML = '<div class="stayhub-footer-inner"><div class="stayhub-footer-brand"><span class="stayhub-brand-mark">S</span><div><strong>StayHub</strong><p>Your next stay, all in one place.</p></div></div><nav aria-label="StayHub information"><a href="about-us.html">About us</a><a href="help-faq.html">Frequently asked questions</a></nav><p class="stayhub-footer-note">Academic project · Application Development II</p></div>';
+            document.body.appendChild(footer);
+        }
     }
 
     return {
@@ -392,7 +417,7 @@ else Api.initShell();
  */
 function mostrarError(el, err) {
     if (!el) return;
-    el.textContent = err && err.message ? err.message : "Ocurrió un error inesperado.";
+    el.textContent = err && err.message ? err.message : "An unexpected error occurred.";
     el.classList.remove("hidden");
 }
 

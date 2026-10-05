@@ -14,6 +14,7 @@ Plataforma de reservas de hotel desarrollada como Trabajo Práctico de **Desarro
 | `ServicioDeOverbooking` | Resolución asincrónica de conflictos de sobreventa |
 | `ServicioDeNotificaciones` | Envío de notificaciones (email/SMS/push) |
 | `ServicioDeUsuarios` | Gestión de usuarios con dos roles: **Huésped** y **Administrador** |
+| `IntegracionPms` (fachada SOAP) | Servicio web SOAP que StayHub expone al PMS legado del hotel (reservas, llegadas, disponibilidad y tarifas) |
 
 Son 7 componentes de EJB (mínimo exigido por la cátedra: 6) más el componente de usuarios.
 
@@ -68,11 +69,30 @@ Para ejercitar `/canales-externos/otas/.../sincronizaciones` y `/canales-externo
 
 La URL del OTA es un mock de Postman; la del PMS asume un servicio SOAP corriendo localmente en el puerto 9091.
 
-### 4. Base URL de la API
+### 4. PMS legado simulado (SOAP)
+
+El PMS del hotel no existe, así que se simula con un servicio JAX-WS standalone en el puerto 9091:
+
+```bash
+cd pms-legado-mock
+mvn compile exec:java
+```
+
+Ver [`pms-legado-mock/README.md`](pms-legado-mock/README.md).
+
+### 5. Base URL de la API
 
 ```
 http://localhost:8080/StayHub/api
 ```
+
+### 6. Servicio SOAP para el PMS legado
+
+```
+http://localhost:8080/StayHub/soap/integracion-pms?wsdl
+```
+
+Ver [`proyecto/src/main/java/com/stayhub/integracionpms/README.md`](proyecto/src/main/java/com/stayhub/integracionpms/README.md) y [`docs/entrega-4/integracion-soap-pms.md`](docs/entrega-4/integracion-soap-pms.md).
 
 ## Postman
 

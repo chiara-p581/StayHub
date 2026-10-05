@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 <style>
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 .icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -25,12 +25,12 @@
 <div class="flex flex-1 overflow-hidden">
 <main class="flex-1 overflow-y-auto pb-24 md:pb-8 p-md md:p-gutter lg:p-xl max-w-container-max mx-auto w-full">
 <div class="mb-lg">
-<h1 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary mb-xs">Pagos</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant">Pagá una reserva y consultá pagos ya realizados.</p>
+<h1 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary mb-xs">Payments</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Pay for a booking and review completed payments.</p>
 </div>
 <section id="hotel-pago" class="hidden mb-lg bg-surface rounded-xl overflow-hidden border border-outline-variant/20 grid md:grid-cols-[220px_1fr]">
-<img id="hotel-pago-imagen" class="w-full h-44 md:h-full object-cover" alt="Hotel de la reserva"/>
-<div class="p-lg"><p class="text-xs uppercase tracking-wider text-on-surface-variant">Estás pagando</p><h2 id="hotel-pago-nombre" class="font-headline-md text-headline-md text-primary mt-xs"></h2><p id="hotel-pago-ubicacion" class="text-on-surface-variant mt-xs"></p><p class="mt-md text-sm text-on-surface-variant">Verificá el hotel y el número de reserva antes de continuar.</p></div>
+<img id="hotel-pago-imagen" class="w-full h-44 md:h-full object-cover" alt="Booking hotel"/>
+<div class="p-lg"><p class="text-xs uppercase tracking-wider text-on-surface-variant">You are paying for</p><h2 id="hotel-pago-nombre" class="font-headline-md text-headline-md text-primary mt-xs"></h2><p id="hotel-pago-ubicacion" class="text-on-surface-variant mt-xs"></p><p class="mt-md text-sm text-on-surface-variant">Check the hotel and booking number before continuing.</p></div>
 </section>
 
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
@@ -39,21 +39,21 @@
 <!-- Pagar reserva -->
 <div class="lg:col-span-5 flex flex-col gap-gutter">
 <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] border-t-2 border-tertiary-fixed-dim p-lg flex flex-col gap-md">
-<h2 class="font-title-lg text-title-lg text-primary mb-xs">Pagar una reserva</h2>
-<p class="font-body-md text-body-md text-on-surface-variant mb-sm">StayHub todavía no guarda tarjetas guardadas: cada pago se procesa directo contra el número de reserva.</p>
+<h2 class="font-title-lg text-title-lg text-primary mb-xs">Pay for a booking</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-sm">StayHub does not store cards yet: each payment is processed against its booking number.</p>
 <div id="pago-error" class="hidden p-sm rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
 <div id="pago-ok" class="hidden p-sm rounded-DEFAULT bg-secondary-container text-on-secondary-container font-body-md text-body-md"></div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="reserva-id">N° de reserva</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="reserva-id">Booking number</label>
 <input id="reserva-id" type="number" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <div class="grid grid-cols-2 gap-md">
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="monto">Monto</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="monto">Amount</label>
 <input id="monto" type="number" step="0.01" min="0" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="moneda">Moneda</label>
+<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="moneda">Currency</label>
 <input id="moneda" type="text" value="ARS" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
 </div>
 </div>
@@ -64,10 +64,10 @@
 
 <!-- Consultar pago -->
 <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] p-lg flex flex-col gap-md">
-<h3 class="font-title-lg text-title-lg text-primary border-b border-surface-container-highest pb-sm">Consultar un pago</h3>
+<h3 class="font-title-lg text-title-lg text-primary border-b border-surface-container-highest pb-sm">Find a payment</h3>
 <div class="flex gap-sm">
 <input id="consulta-pago-id" type="number" placeholder="N° de pago" class="flex-1 border border-outline-variant rounded-DEFAULT px-md py-sm"/>
-<button id="btn-consultar-pago" class="px-lg py-sm border border-outline text-primary rounded-DEFAULT hover:bg-surface-container-low transition-colors">Buscar</button>
+<button id="btn-consultar-pago" class="px-lg py-sm border border-outline text-primary rounded-DEFAULT hover:bg-surface-container-low transition-colors">Search</button>
 </div>
 <div id="consulta-resultado" class="hidden font-body-md text-body-md text-on-surface"></div>
 </div>
@@ -77,11 +77,11 @@
 <div class="lg:col-span-7">
 <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] h-full flex flex-col">
 <div class="p-lg border-b border-surface-container-highest flex justify-between items-center">
-<h2 class="font-title-lg text-title-lg text-primary">Pagos de esta sesión</h2>
+<h2 class="font-title-lg text-title-lg text-primary">Payments in this session</h2>
 </div>
 <div class="flex-1 overflow-y-auto">
 <div id="transacciones-lista" class="flex flex-col"></div>
-<p id="transacciones-vacio" class="font-body-md text-body-md text-on-surface-variant p-lg text-center">Todavía no hiciste ningún pago en esta sesión.</p>
+<p id="transacciones-vacio" class="font-body-md text-body-md text-on-surface-variant p-lg text-center">You have not made any payments in this session yet.</p>
 </div>
 </div>
 </div>
@@ -100,7 +100,7 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -112,7 +112,7 @@
         if (usuario) {
             area.innerHTML = '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary">' + usuario.nombre + '</a>';
         } else {
-            area.innerHTML = '<a href="login.html" class="bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-full">Iniciar sesión</a>';
+            area.innerHTML = '<a href="login.html" class="bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-full">Sign in</a>';
         }
     }
     pintarSesion();
@@ -146,7 +146,7 @@
     }
 
     function fmtMoney(n, moneda) {
-        return Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2 }) + " " + moneda;
+        return Number(n).toLocaleString("en-US", { minimumFractionDigits: 2 }) + " " + moneda;
     }
 
     function agregarTransaccion(pago) {
@@ -162,12 +162,12 @@
                 '<span class="material-symbols-outlined text-on-surface-variant">receipt_long</span></div>' +
             '<div class="flex-1 min-w-0">' +
                 '<div class="flex justify-between items-baseline mb-xs">' +
-                    '<div class="font-body-lg text-body-lg font-semibold text-on-surface truncate">Reserva #' + pago.reservaId + '</div>' +
+                    '<div class="font-body-lg text-body-lg font-semibold text-on-surface truncate">Booking #' + pago.reservaId + '</div>' +
                     '<div class="font-body-lg text-body-lg font-bold text-on-surface ml-sm whitespace-nowrap">' + fmtMoney(pago.monto, pago.moneda) + '</div>' +
                 '</div>' +
                 '<div class="flex justify-between items-center">' +
-                    '<div class="font-body-md text-body-md text-on-surface-variant truncate">Pago #' + pago.id + ' · ' + (pago.referenciaPasarela || "") + '</div>' +
-                    '<div class="font-label-md text-label-md ' + estadoClass + ' px-2 py-0.5 rounded-full whitespace-nowrap ml-sm">' + pago.estado + '</div>' +
+                    '<div class="font-body-md text-body-md text-on-surface-variant truncate">Payment #' + pago.id + ' · ' + (pago.referenciaPasarela || "") + '</div>' +
+                    '<div class="font-label-md text-label-md ' + estadoClass + ' px-2 py-0.5 rounded-full whitespace-nowrap ml-sm">' + ({PENDIENTE:'PENDING',APROBADO:'APPROVED',APROBADA:'APPROVED',RECHAZADO:'REJECTED',RECHAZADA:'REJECTED'}[pago.estado]||pago.estado) + '</div>' +
                 '</div>' +
             '</div>';
         lista.prepend(div);
@@ -180,15 +180,15 @@
         var reservaId = Number(document.getElementById("reserva-id").value);
         var monto = Number(document.getElementById("monto").value);
         var moneda = document.getElementById("moneda").value.trim() || "ARS";
-        if (!reservaId) { mostrarError(document.getElementById("pago-error"), new Error("Ingresá el número de reserva.")); return; }
-        if (!monto) { mostrarError(document.getElementById("pago-error"), new Error("Ingresá el monto.")); return; }
+        if (!reservaId) { mostrarError(document.getElementById("pago-error"), new Error("Enter the booking number.")); return; }
+        if (!monto) { mostrarError(document.getElementById("pago-error"), new Error("Enter the amount.")); return; }
 
         var btn = document.getElementById("btn-pagar");
         btn.disabled = true;
         Api.procesarPago({ reservaId: reservaId, monto: monto, moneda: moneda })
             .then(function (pago) {
                 var ok = document.getElementById("pago-ok");
-                ok.textContent = "Pago #" + pago.id + " registrado con estado " + pago.estado + ".";
+                ok.textContent = "Payment #" + pago.id + " recorded with status " + ({PENDIENTE:'PENDING',APROBADO:'APPROVED',APROBADA:'APPROVED',RECHAZADO:'REJECTED',RECHAZADA:'REJECTED'}[pago.estado]||pago.estado) + ".";
                 ok.classList.remove("hidden");
                 agregarTransaccion(pago);
             })
@@ -199,14 +199,14 @@
     document.getElementById("btn-consultar-pago").addEventListener("click", function () {
         ocultarError(errorBanner);
         var id = document.getElementById("consulta-pago-id").value;
-        if (!id) { mostrarError(errorBanner, new Error("Ingresá un número de pago.")); return; }
+        if (!id) { mostrarError(errorBanner, new Error("Enter a payment number.")); return; }
         Api.consultarPago(id)
             .then(function (pago) {
                 var resultado = document.getElementById("consulta-resultado");
                 resultado.classList.remove("hidden");
                 resultado.innerHTML =
-                    "Pago #" + pago.id + " — reserva #" + pago.reservaId + " — " + fmtMoney(pago.monto, pago.moneda) +
-                    " — estado " + pago.estado + " — " + (pago.fechaPago || "");
+                    "Payment #" + pago.id + " — booking #" + pago.reservaId + " — " + fmtMoney(pago.monto, pago.moneda) +
+                    " — status " + ({PENDIENTE:'PENDING',APROBADO:'APPROVED',APROBADA:'APPROVED',RECHAZADO:'REJECTED',RECHAZADA:'REJECTED'}[pago.estado]||pago.estado) + " — " + (pago.fechaPago || "");
             })
             .catch(function (err) { mostrarError(errorBanner, err); });
     });

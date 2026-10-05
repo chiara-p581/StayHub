@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 <style>
 /* Smooth transitions for inputs */
         .input-transition {
@@ -43,11 +43,11 @@
 <!-- Nombre + Apellido -->
 <div class="grid grid-cols-2 gap-md">
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="nombre">Nombre</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="nombre">First name</label>
 <input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="nombre" name="nombre" placeholder="Jane" required type="text"/>
 </div>
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="apellido">Apellido</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="apellido">Last name</label>
 <input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="apellido" name="apellido" placeholder="Doe" required type="text"/>
 </div>
 </div>
@@ -69,17 +69,17 @@
 </div>
 <!-- Confirm Password Field -->
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="confirmPassword">Confirm Password</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="confirmPassword">Confirm password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline" style="font-variation-settings: 'FILL' 0;">verified_user</span>
 <input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary pl-[44px] pr-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required type="password"/>
 </div>
 </div>
-<!-- Tipo de cuenta -->
+<!-- Type de cuenta -->
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="rol">Tipo de cuenta</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="rol">Account type</label>
 <select class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="rol" name="rol">
-<option value="HUESPED">Huésped</option>
+<option value="HUESPED">Guest</option>
 </select>
 </div>
 <!-- Action Button -->
@@ -101,7 +101,7 @@
 
 </main>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     var form = document.getElementById("register-form");
@@ -120,7 +120,7 @@
         var rol = document.getElementById("rol").value;
 
         if (password !== confirmPassword) {
-            mostrarError(errorBanner, new Error("Las contraseñas no coinciden."));
+            mostrarError(errorBanner, new Error("Passwords do not match."));
             return;
         }
 
@@ -134,7 +134,7 @@
             })
             .then(function (usuario) {
                 Api.setSession(usuario);
-                submitBtn.textContent = "¡Cuenta creada!";
+                submitBtn.textContent = "Account created!";
                 setTimeout(function () {
                     location.href = rol === "ADMIN" ? "admin-dashboard.html" : "index.html";
                 }, 800);

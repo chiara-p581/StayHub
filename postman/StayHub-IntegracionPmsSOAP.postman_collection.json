@@ -1,0 +1,409 @@
+{
+  "info": {
+    "name": "StayHub - Integración SOAP con PMS legado",
+    "description": "Servicio web SOAP que StayHub expone al PMS legado del hotel (IntegracionPmsWebService).\n\nWSDL: {{baseUrl}}/soap/integracion-pms?wsdl\n\nSOAP 1.1, document/literal wrapped. No requiere sesión: lo consume otro sistema, no un usuario.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Ver WSDL (contrato)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Es un WSDL', () => pm.expect(pm.response.text()).to.include('definitions'));",
+              "pm.test('Publica IntegracionPmsService', () => pm.expect(pm.response.text()).to.include('IntegracionPmsService'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "description": "Contrato generado por WildFly a partir de IntegracionPmsWebService (code-first).",
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms?wsdl",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ],
+          "query": [
+            {
+              "key": "wsdl",
+              "value": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "01 - consultarReserva (OK)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Respuesta consultarReservaResponse', () => pm.expect(pm.response.text()).to.include('consultarReservaResponse'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "description": "El recepcionista busca la reserva para hacer el check-in. Crear antes una reserva con la colección de ServicioDeReservas y poner su id en la variable reservaId.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:int=\"http://soap.stayhub.com/integracion-pms\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <int:consultarReserva>\n         <reservaId>{{reservaId}}</reservaId>\n      </int:consultarReserva>\n   </soapenv:Body>\n</soapenv:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "02 - consultarReserva inexistente (Fault)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 500 (SOAP Fault)', () => pm.response.to.have.status(500));",
+              "pm.test('Es un soap:Fault', () => pm.expect(pm.response.text()).to.include('Fault'));",
+              "pm.test('Código RESERVA_NO_ENCONTRADA', () => pm.expect(pm.response.text()).to.include('RESERVA_NO_ENCONTRADA'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "description": "Caso de error: la excepción de negocio viaja como soap:Fault con detail/errorIntegracionPms.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:int=\"http://soap.stayhub.com/integracion-pms\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <int:consultarReserva>\n         <reservaId>999999</reservaId>\n      </int:consultarReserva>\n   </soapenv:Body>\n</soapenv:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "03 - listarLlegadas del día",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Respuesta listarLlegadasResponse', () => pm.expect(pm.response.text()).to.include('listarLlegadasResponse'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "description": "Reservas CONFIRMADAS del hotel con check-in en la fecha indicada.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:int=\"http://soap.stayhub.com/integracion-pms\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <int:listarLlegadas>\n         <hotelId>{{hotelId}}</hotelId>\n         <fecha>{{fecha}}</fecha>\n      </int:listarLlegadas>\n   </soapenv:Body>\n</soapenv:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "04 - consultarDisponibilidad",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Respuesta consultarDisponibilidadResponse', () => pm.expect(pm.response.text()).to.include('consultarDisponibilidadResponse'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "description": "Delegado en ServicioDeInventarioYTarifas.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:int=\"http://soap.stayhub.com/integracion-pms\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <int:consultarDisponibilidad>\n         <hotelId>{{hotelId}}</hotelId>\n         <desde>{{desde}}</desde>\n         <hasta>{{hasta}}</hasta>\n      </int:consultarDisponibilidad>\n   </soapenv:Body>\n</soapenv:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "05 - consultarTarifas",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Respuesta consultarTarifasResponse', () => pm.expect(pm.response.text()).to.include('consultarTarifasResponse'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "description": "Delegado en ServicioDeInventarioYTarifas.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:int=\"http://soap.stayhub.com/integracion-pms\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <int:consultarTarifas>\n         <hotelId>{{hotelId}}</hotelId>\n         <desde>{{desde}}</desde>\n         <hasta>{{hasta}}</hasta>\n      </int:consultarTarifas>\n   </soapenv:Body>\n</soapenv:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "06 - fecha mal formada (Fault)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 500 (SOAP Fault)', () => pm.response.to.have.status(500));",
+              "pm.test('Es un soap:Fault', () => pm.expect(pm.response.text()).to.include('Fault'));",
+              "pm.test('Código SOLICITUD_INVALIDA', () => pm.expect(pm.response.text()).to.include('SOLICITUD_INVALIDA'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "description": "Validación de entrada: las fechas van en formato AAAA-MM-DD.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:int=\"http://soap.stayhub.com/integracion-pms\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <int:listarLlegadas>\n         <hotelId>{{hotelId}}</hotelId>\n         <fecha>09/11/2026</fecha>\n      </int:listarLlegadas>\n   </soapenv:Body>\n</soapenv:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ]
+        }
+      }
+    },
+    {
+      "name": "07 - cancelarReserva (no-show en recepción)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Respuesta CANCELADA', () => pm.expect(pm.response.text()).to.include('CANCELADA'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "description": "Cancela la reserva y libera el hold de inventario. Correrlo al final: deja la reserva CANCELADA.",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "SOAPAction",
+            "value": "\"\""
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:int=\"http://soap.stayhub.com/integracion-pms\">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <int:cancelarReserva>\n         <reservaId>{{reservaId}}</reservaId>\n      </int:cancelarReserva>\n   </soapenv:Body>\n</soapenv:Envelope>",
+          "options": {
+            "raw": {
+              "language": "xml"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/soap/integracion-pms",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "soap",
+            "integracion-pms"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/StayHub"
+    },
+    {
+      "key": "reservaId",
+      "value": "1"
+    },
+    {
+      "key": "hotelId",
+      "value": "1"
+    },
+    {
+      "key": "fecha",
+      "value": "2026-11-09"
+    },
+    {
+      "key": "desde",
+      "value": "2026-11-09"
+    },
+    {
+      "key": "hasta",
+      "value": "2026-11-12"
+    }
+  ]
+}

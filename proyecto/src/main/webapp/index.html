@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -8,7 +8,7 @@
 <script src="assets/js/tailwind-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260912-11" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 <style>
 .hero-shadow { box-shadow: 0 4px 60px rgba(37, 52, 79, 0.08); }
 </style>
@@ -29,7 +29,7 @@
 </nav>
 <!-- Trailing Action -->
 <div class="flex items-center gap-4">
-<a href="alerts.html" aria-label="Centro de operaciones" title="Centro de operaciones" class="text-on-surface-variant hover:bg-surface-container-high p-xs rounded-full transition-colors duration-200 ease-in-out flex items-center justify-center">
+<a href="alerts.html" aria-label="Operations center" title="Operations center" class="text-on-surface-variant hover:bg-surface-container-high p-xs rounded-full transition-colors duration-200 ease-in-out flex items-center justify-center">
 <svg aria-hidden="true" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
 </a>
 <div id="session-area" class="flex items-center gap-sm"></div>
@@ -40,7 +40,7 @@
 <!-- Hero Section -->
 <section class="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
 <div class="absolute inset-0 z-0">
-<div class="bg-cover bg-center w-full h-full" role="img" aria-label="Resort boutique entre viñedos y montañas" style="background-image: url('assets/images/stayhub-resort-hero.png')"></div>
+<div class="bg-cover bg-center w-full h-full" role="img" aria-label="Boutique resort among vineyards and mountains" style="background-image: url('assets/images/stayhub-resort-hero.png')"></div>
 <div class="absolute inset-0 bg-primary/40 backdrop-blur-[2px]"></div>
 </div>
 <div class="relative z-10 w-full max-w-container-max mx-auto px-md flex flex-col items-center text-center gap-lg">
@@ -52,21 +52,21 @@
 <span class="material-symbols-outlined text-outline">location_on</span>
 <div class="flex flex-col text-left">
 <label class="font-label-md text-label-md text-on-surface-variant uppercase">Where to?</label>
-<input id="search-destino" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="Ciudad, país u hotel" type="text"/>
+<input id="search-destino" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="City, country, or hotel" type="text"/>
 </div>
 </div>
 <div class="flex-1 flex items-center gap-sm px-lg py-sm border-b md:border-b-0 md:border-r border-outline-variant/30 w-full">
 <span class="material-symbols-outlined text-outline">calendar_today</span>
 <div class="flex flex-col text-left">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase">Fechas</label>
-<div class="flex gap-xs"><input id="search-checkin" aria-label="Entrada" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/><input id="search-checkout" aria-label="Salida" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/></div>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Dates</label>
+<div class="flex gap-xs"><input id="search-checkin" aria-label="Check-in" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/><input id="search-checkout" aria-label="Check-out" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/></div>
 </div>
 </div>
 <div class="flex-1 flex items-center justify-between px-lg py-sm w-full">
 <div class="flex items-center gap-sm">
 <span class="material-symbols-outlined text-outline">group</span>
 <div class="flex flex-col text-left">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase">Huéspedes</label>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Guestes</label>
 <input id="search-guests" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface w-full" min="1" max="8" value="2" type="number"/>
 </div>
 </div>
@@ -81,8 +81,8 @@
 <section id="hoteles" class="max-w-container-max mx-auto px-md py-xxl">
 <div class="flex items-end justify-between mb-xl">
 <div>
-<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Hoteles disponibles</h2>
-<p id="hoteles-subtitulo" class="font-body-lg text-body-lg text-on-surface-variant">Explorá nuestras propiedades.</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Available hotels</h2>
+<p id="hoteles-subtitulo" class="font-body-lg text-body-lg text-on-surface-variant">Explore our properties.</p>
 </div>
 </div>
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
@@ -93,9 +93,9 @@
 <button data-canal="AIRBNB" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Airbnb</button>
 <button data-canal="EXPEDIA" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Expedia</button>
 <button data-canal="DESPEGAR" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Despegar</button>
-<span class="text-sm text-on-surface-variant ml-sm">Fuentes externas simuladas para pruebas.</span>
+<span class="text-sm text-on-surface-variant ml-sm">Simulated external sources for testing.</span>
 </div>
-<div id="hoteles-loading" class="font-body-lg text-body-lg text-on-surface-variant">Cargando hoteles...</div>
+<div id="hoteles-loading" class="font-body-lg text-body-lg text-on-surface-variant">Loading hotels...</div>
 <div id="hoteles-grid" class="grid grid-cols-1 md:grid-cols-3 gap-gutter"></div>
 </section>
 </main>
@@ -115,7 +115,7 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260912-11"></script>
+<script src="assets/js/api.js?v=20260913-6"></script>
 <script>
 (function () {
     var errorBanner = document.getElementById("error-banner");
@@ -134,14 +134,14 @@
             document.getElementById("nav-admin").classList.toggle("hidden", usuario.rol !== "ADMIN");
             sessionArea.innerHTML =
                 '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">' + usuario.nombre + '</a>' +
-                '<button id="btn-logout" class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container" title="Cerrar sesión"><span class="material-symbols-outlined" style="font-size:18px;">logout</span></button>';
+                '<button id="btn-logout" class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container" title="Sign out"><span class="material-symbols-outlined" style="font-size:18px;">logout</span></button>';
             document.getElementById("btn-logout").addEventListener("click", function () {
                 Api.clearSession();
                 location.reload();
             });
         } else {
             sessionArea.innerHTML =
-                '<a href="login.html" class="bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-full hover:bg-primary-container transition-colors">Iniciar sesión</a>';
+                '<a href="login.html" class="bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-full hover:bg-primary-container transition-colors">Sign in</a>';
         }
     }
 
