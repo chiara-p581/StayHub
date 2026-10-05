@@ -278,7 +278,7 @@ const Api = (() => {
         updateCartBadge();
         document.addEventListener("stayhub:cart-changed", updateCartBadge);
 
-        var authPages = ["login.html", "register.html", "recover-password.html"];
+        var authPages = ["login.html", "register.html", "recover-password.html", "reset-password.html"];
         if (!esAdminPage && authPages.indexOf(page) === -1 && !document.querySelector(".stayhub-global-footer")) {
             var footer = document.createElement("footer");
             footer.className = "stayhub-global-footer";

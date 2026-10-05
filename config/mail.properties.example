@@ -1,8 +1,10 @@
-# Configuración de ejemplo.
-# El archivo real va en C:/Users/TU_USUARIO/.stayhub/mail.properties
+# Configuración de ejemplo. NO poner datos reales acá: este archivo se sube a GitHub.
+# El archivo real va en tu carpeta personal:
+#   Mac:     ~/.stayhub/mail.properties
+#   Windows: C:/Users/TU_USUARIO/.stayhub/mail.properties
 
-stayhub.mail.remitente=stayhub.uade2026@gmail.com
-stayhub.mail.password=imiyblnkobujkowe
+stayhub.mail.remitente=REEMPLAZAR@gmail.com
+stayhub.mail.password=REEMPLAZAR_CON_PASSWORD_DE_APLICACION
 stayhub.mail.host=smtp.gmail.com
 stayhub.mail.port=587
 stayhub.web.base-url=http://localhost:8080/StayHub

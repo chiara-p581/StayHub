@@ -10,4 +10,6 @@ public interface UsuarioRepository {
     Optional<Usuario> buscarPorId(Long id);
 
     Optional<Usuario> buscarPorEmail(String email);
+
+    Optional<Usuario> buscarPorResetTokenHash(String hash);
 }

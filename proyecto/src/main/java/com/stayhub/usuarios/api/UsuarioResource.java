@@ -1,20 +1,23 @@
 package com.stayhub.usuarios.api;
 
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
+import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
+import com.stayhub.usuarios.dto.ResetPasswordRequest;
+import com.stayhub.usuarios.dto.SolicitudRecuperacionRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
-import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.model.RolUsuario;
 
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Context;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Map;
 
 @Path("/usuarios")
 @Produces(MediaType.APPLICATION_JSON)
@@ -70,7 +73,7 @@ public class UsuarioResource {
     @PUT
     @Path("/me")
     public UsuarioResponse actualizarMiPerfil(ActualizacionUsuarioRequest solicitud,
-                                                @Context HttpServletRequest request) {
+                                              @Context HttpServletRequest request) {
         HttpSession sesion = request.getSession(false);
         if (sesion == null || sesion.getAttribute("usuarioId") == null) {
             throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
@@ -78,5 +81,25 @@ public class UsuarioResource {
         UsuarioResponse actualizado = servicio.actualizarPerfil((Long) sesion.getAttribute("usuarioId"), solicitud);
         sesion.setAttribute("usuarioRol", actualizado.rol());
         return actualizado;
+    }
+
+    // ---- Recuperación de contraseña (públicos: se usan sin estar logueado) ----
+
+    @POST
+    @Path("/recuperar-password")
+    public Response recuperar(SolicitudRecuperacionRequest s) {
+        if (s == null) throw new BadRequestException("Falta la solicitud");
+        servicio.solicitarRecuperacionPassword(s.email());
+        // Misma respuesta exista o no la cuenta
+        return Response.accepted(Map.of("mensaje",
+                "Si existe la cuenta, recibirás un enlace de recuperación")).build();
+    }
+
+    @POST
+    @Path("/resetear-password")
+    public Response resetear(ResetPasswordRequest s) {
+        if (s == null) throw new BadRequestException("Falta la solicitud");
+        servicio.resetearPassword(s.token(), s.nuevaPassword());
+        return Response.noContent().build();
     }
 }
