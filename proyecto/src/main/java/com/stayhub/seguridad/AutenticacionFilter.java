@@ -61,7 +61,9 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     }
 
     boolean esPublica(String ruta, String metodo) {
-        if ("POST".equals(metodo) && ("usuarios".equals(ruta) || "usuarios/login".equals(ruta))) return true;
+        // Registro, login y recuperación de contraseña: se usan sin sesión iniciada
+        if ("POST".equals(metodo) && ("usuarios".equals(ruta) || "usuarios/login".equals(ruta)
+                || "usuarios/recuperar-password".equals(ruta) || "usuarios/resetear-password".equals(ruta))) return true;
         if ("GET".equals(metodo) && (ruta.equals("hoteles") || ruta.startsWith("hoteles/"))) return true;
         if ("GET".equals(metodo) && ruta.startsWith("catalogo-canales/")) return true;
         return "GET".equals(metodo) && ruta.startsWith("inventario-tarifas/");

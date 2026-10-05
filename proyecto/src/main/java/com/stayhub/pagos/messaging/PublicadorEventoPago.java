@@ -3,6 +3,7 @@ package com.stayhub.pagos.messaging;
 import jakarta.annotation.Resource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.jms.JMSConnectionFactory;
 import jakarta.jms.JMSContext;
 import jakarta.jms.JMSDestinationDefinition;
 import jakarta.jms.Topic;
@@ -17,6 +18,7 @@ public class PublicadorEventoPago {
     public static final String JNDI_TOPICO = "java:/jms/topic/PagosEventos";
 
     @Inject
+    @JMSConnectionFactory("java:/JmsXA")
     private JMSContext contexto;
 
     @Resource(lookup = JNDI_TOPICO)

@@ -54,10 +54,8 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         if (resultado.aprobado()) {
             pago.aprobar(resultado.referenciaExterna());
             repositorio.guardar(pago);
-            reservas.confirmarReserva(solicitud.reservaId());
-            publicadorEventos.publicarPagoAprobado(new EventoPagoAprobado(
-                    pago.getId(), pago.getReservaId(), pago.getMonto(), pago.getMoneda(),
-                    pago.getReferenciaPasarela(), pago.getFechaPago()));
+            var confirmada = reservas.confirmarReserva(solicitud.reservaId());
+            publicadorEventos.publicarPagoAprobado(EventoPagoAprobado.desde(pago, confirmada));
             return PagoMapper.aResponse(pago);
         }
 
@@ -103,10 +101,8 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
         pago.aprobar(resultado.referenciaExterna());
         repositorio.guardar(pago);
-        solicitud.reservaIds().forEach(reservas::confirmarReserva);
-        solicitud.reservaIds().forEach(reservaId -> publicadorEventos.publicarPagoAprobado(
-                new EventoPagoAprobado(pago.getId(), reservaId, pago.getMonto(), pago.getMoneda(),
-                        pago.getReferenciaPasarela(), pago.getFechaPago())));
+        var confirmadas = solicitud.reservaIds().stream().map(reservas::confirmarReserva).toList();
+        confirmadas.forEach(reserva -> publicadorEventos.publicarPagoAprobado(EventoPagoAprobado.desde(pago, reserva)));
         return PagoMapper.aResponse(pago);
     }
 
