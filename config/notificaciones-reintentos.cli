@@ -1,0 +1,41 @@
+# Ejecutar con:
+# jboss-cli.bat --connect --file=RUTA_A_ESTE_ARCHIVO
+#
+# Verificar antes la dirección runtime de StayHubEmailDLQ.
+# Este script usa jms.queue.StayHubEmailDLQ.
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/jms-queue=StayHubEmailDLQ:read-resource
+ /subsystem=messaging-activemq/server=default/jms-queue=StayHubEmailDLQ:add(entries=["java:/jms/queue/StayHubEmailDLQ"])
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosEventos":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosEventos":add(dead-letter-address="jms.queue.StayHubEmailDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosEventos":write-attribute(name=dead-letter-address,value="jms.queue.StayHubEmailDLQ")
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosEventos":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosEventos":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="#.PagosEventos":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="#.PagosEventos":add(dead-letter-address="jms.queue.StayHubEmailDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="#.PagosEventos":write-attribute(name=dead-letter-address,value="jms.queue.StayHubEmailDLQ")
+ /subsystem=messaging-activemq/server=default/address-setting="#.PagosEventos":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="#.PagosEventos":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosPassword":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosPassword":add(dead-letter-address="jms.queue.StayHubEmailDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosPassword":write-attribute(name=dead-letter-address,value="jms.queue.StayHubEmailDLQ")
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosPassword":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="#.UsuariosPassword":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="#.OverbookingNotificaciones":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="#.OverbookingNotificaciones":add(dead-letter-address="jms.queue.StayHubEmailDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="#.OverbookingNotificaciones":write-attribute(name=dead-letter-address,value="jms.queue.StayHubEmailDLQ")
+ /subsystem=messaging-activemq/server=default/address-setting="#.OverbookingNotificaciones":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="#.OverbookingNotificaciones":write-attribute(name=redelivery-delay,value=10000)
+end-if
