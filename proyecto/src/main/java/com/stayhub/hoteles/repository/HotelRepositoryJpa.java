@@ -16,6 +16,7 @@ public class HotelRepositoryJpa implements HotelRepository {
     @Override public Hotel guardar(Hotel hotel) { return persistirOMezclar(hotel, hotel.getId()); }
     @Override public TipoHabitacion guardar(TipoHabitacion tipo) { return persistirOMezclar(tipo, tipo.getId()); }
     @Override public Habitacion guardar(Habitacion habitacion) { return persistirOMezclar(habitacion, habitacion.getId()); }
+    @Override public void sincronizar() { em.flush(); }
 
     private <T> T persistirOMezclar(T entidad, Long id) {
         if (id == null) { em.persist(entidad); return entidad; }

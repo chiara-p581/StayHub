@@ -13,6 +13,11 @@ public interface HotelRepository {
     Hotel guardar(Hotel hotel);
     TipoHabitacion guardar(TipoHabitacion tipo);
     Habitacion guardar(Habitacion habitacion);
+    /**
+     * Sincroniza los cambios pendientes con la base para detectar restricciones antes de que la
+     * Facade termine y el contenedor confirme la transacción.
+     */
+    void sincronizar();
     Optional<Hotel> buscarHotel(Long id);
     Optional<TipoHabitacion> buscarTipo(Long id);
     Optional<TipoHabitacion> buscarTipoPorCodigo(Long hotelId, String codigo);

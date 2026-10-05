@@ -73,7 +73,7 @@ public class DemoDataResource {
                 .filter(t -> t.codigo().equalsIgnoreCase(codigo)).findFirst().orElse(null);
         if (tipo == null) {
             tipo = hoteles.crearTipo(hotelId, new TipoHabitacionRequest(codigo, nombre,
-                    "Opción demostrativa con disponibilidad real", capacidad, Set.of("Baño privado", "WiFi")));
+                    "Opción demostrativa con disponibilidad real", BigDecimal.valueOf(capacidad), Set.of("Baño privado", "WiFi")));
         }
         var habitaciones = hoteles.listarHabitaciones(hotelId, true);
         for (int i = 1; i <= 5; i++) {
