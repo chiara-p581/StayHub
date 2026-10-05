@@ -1,0 +1,8 @@
+# Configuración de ejemplo.
+# El archivo real va en C:/Users/TU_USUARIO/.stayhub/mail.properties
+
+stayhub.mail.remitente=stayhub.uade2026@gmail.com
+stayhub.mail.password=imiyblnkobujkowe
+stayhub.mail.host=smtp.gmail.com
+stayhub.mail.port=587
+stayhub.web.base-url=http://localhost:8080/StayHub

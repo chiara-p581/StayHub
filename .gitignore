@@ -1,3 +1,10 @@
 .DS_Store
 proyecto/target/
 pms-legado-mock/target/
+
+# Configuración privada del correo
+mail.local.properties
+mail.properties
+.env
+.env.*
+!.env.example
