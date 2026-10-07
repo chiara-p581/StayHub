@@ -5,6 +5,7 @@ import com.stayhub.notificaciones.dto.CanalNotificacion;
 import com.stayhub.notificaciones.dto.SolicitudNotificacionDTO;
 import com.stayhub.notificaciones.dto.TipoEvento;
 import com.stayhub.notificaciones.service.EnvioCorreoIdempotente;
+import com.stayhub.notificaciones.service.PlantillaEmail;
 import com.stayhub.usuarios.messaging.EventoPassword;
 import com.stayhub.usuarios.messaging.PublicadorEventoPassword;
 import jakarta.ejb.ActivationConfigProperty;
@@ -33,14 +34,27 @@ public class ConsumidorEventoPassword implements MessageListener {
                 case SOLICITUD_RECUPERACION -> new SolicitudNotificacionDTO(
                         evento.email(), TipoEvento.RECUPERACION_PASSWORD, CanalNotificacion.EMAIL,
                         "Recuperá tu contraseña — StayHub",
-                        "Hola " + evento.nombre() + ", abrí este enlace para restablecer tu contraseña: "
-                                + configuracion.baseUrl() + "/reset-password.html#token=" + evento.token()
-                                + " (válido por 1 hora). Si no lo pediste vos, ignorá este mensaje.");
+                        PlantillaEmail.armar(
+                                "Restablecé tu contraseña",
+                                "Hola " + evento.nombre() + ",",
+                                "Recibimos un pedido para restablecer la contraseña de tu cuenta. "
+                                        + "Tocá el botón para elegir una nueva. El enlace vence en 1 hora.",
+                                null,
+                                "Elegir nueva contraseña",
+                                configuracion.baseUrl() + "/reset-password.html#token=" + evento.token(),
+                                "Si no lo pediste vos, ignorá este mensaje: tu contraseña actual sigue funcionando."));
                 case PASSWORD_CAMBIADA -> new SolicitudNotificacionDTO(
                         evento.email(), TipoEvento.CAMBIO_PASSWORD, CanalNotificacion.EMAIL,
                         "Tu contraseña fue actualizada — StayHub",
-                        "Hola " + evento.nombre() + ", te confirmamos que tu contraseña se cambió con éxito. "
-                                + "Si no fuiste vos, contactanos de inmediato.");
+                        PlantillaEmail.armar(
+                                "Tu contraseña fue actualizada",
+                                "Hola " + evento.nombre() + ",",
+                                "Te confirmamos que la contraseña de tu cuenta se cambió con éxito. "
+                                        + "Ya podés iniciar sesión con la nueva.",
+                                null,
+                                "Iniciar sesión",
+                                configuracion.baseUrl() + "/login.html",
+                                "Si no fuiste vos, recuperá tu cuenta lo antes posible desde \"¿Olvidaste tu contraseña?\"."));
             };
             servicio.enviar("password:" + mensaje.getJMSMessageID(), dto);
         } catch (Exception ex) {
