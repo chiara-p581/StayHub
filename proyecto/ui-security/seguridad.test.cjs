@@ -20,3 +20,28 @@ test('login manda CSRF y logout espera al servidor y limpia carrito',async()=>{
  w.eval(fs.readFileSync(path.join(web,'assets/js/api.js'),'utf8')+'\nwindow.testApi=Api;');await w.testApi.loginUsuario({email:'ana@test.com',password:'password'});assert.equal(calls[0].url,'api/seguridad/csrf');assert.equal(calls[1].options.headers['X-CSRF-Token'],'token-prueba');
  w.testApi.setSession({id:1,rol:'HUESPED'});w.testApi.addLocalCartItem({hotelNombre:'Hotel'});await w.testApi.clearSession();assert.equal(w.testApi.currentUser(),null);assert.equal(w.testApi.localCart().length,0);assert.equal(calls.at(-1).options.method,'DELETE');assert.equal(calls.at(-1).options.headers['X-CSRF-Token'],'token-prueba');dom.window.close();
 });
+
+test('recuperar y resetear funcionan sin login y envían CSRF desde las páginas reales', async()=>{
+ for(const reset of [false,true]){
+  const page=reset?'reset-password.html':'recover-password.html';
+  const dom=new JSDOM(fs.readFileSync(path.join(web,page),'utf8'),{url:'https://stayhub.test/StayHub/'+page+(reset?'#token=token-recuperacion':''),runScripts:'outside-only'});
+  const w=dom.window,calls=[],errors=[];
+  w.addEventListener("error",event=>errors.push(event.error));
+  w.eval(fs.readFileSync(path.join(web,"assets/js/vendor/purify.min.js"),"utf8"));
+  w.eval(fs.readFileSync(path.join(web,"assets/js/dom-seguro.js"),"utf8")+"\nwindow.StayHubDOM=StayHubDOM;");
+  w.fetch=async(url,options)=>{calls.push({url,options});return{ok:true,status:url.endsWith('csrf')?200:204,headers:{get:()=> 'application/json'},json:async()=>({token:'csrf-prueba'})};};
+  w.eval(fs.readFileSync(path.join(web,'assets/js/api.js'),'utf8')+'\nwindow.Api=Api;');
+  w.eval(fs.readFileSync(path.join(web,'assets/js/pages/'+(reset?'reset-password-1.js':'recover-password-1.js')),'utf8'));
+  if(reset){assert.equal(w.location.hash,'');w.document.getElementById('password').value='nueva-password';w.document.getElementById('confirm-password').value='nueva-password';}
+  else w.document.getElementById('email').value='ana@test.com';
+  w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(calls.length,2);assert.equal(calls[0].url,'api/seguridad/csrf');
+  assert.equal(calls[1].url,'api/usuarios/'+(reset?'resetear-password':'recuperar-password'));
+  assert.equal(calls[1].options.headers['X-CSRF-Token'],'csrf-prueba');
+  assert.equal(calls[1].options.credentials,'same-origin');
+  assert.deepEqual(JSON.parse(calls[1].options.body),reset?{token:'token-recuperacion',nuevaPassword:'nueva-password'}:{email:'ana@test.com'});
+  assert.match(w.document.getElementById('aviso-pendiente').textContent,reset?/Contraseña actualizada/:/Si existe la cuenta/);
+  assert.equal(w.Api.currentUser(),null);assert.deepEqual(errors,[]);dom.window.close();
+ }
+});

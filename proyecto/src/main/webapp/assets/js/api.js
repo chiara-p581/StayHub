@@ -291,7 +291,7 @@ const Api = (() => {
         updateCartBadge();
         document.addEventListener("stayhub:cart-changed", updateCartBadge);
 
-        var authPages = ["login.html", "register.html", "recover-password.html"];
+        var authPages = ["login.html", "register.html", "recover-password.html", "reset-password.html"];
         if (!esAdminPage && authPages.indexOf(page) === -1 && !document.querySelector(".stayhub-global-footer")) {
             var footer = document.createElement("footer");
             footer.className = "stayhub-global-footer";
@@ -317,6 +317,8 @@ const Api = (() => {
         applyTheme,
 
         // ---- usuarios ----
+        solicitarRecuperacionPassword: (email) => request("usuarios/recuperar-password", { method: "POST", body: { email } }),
+        resetearPassword: (dto) => request("usuarios/resetear-password", { method: "POST", body: dto }),
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
         loginUsuario: (dto) => request("usuarios/login", { method: "POST", body: dto }),
         consultarUsuario: (id) => request(`usuarios/${id}`, { auth: true }),
