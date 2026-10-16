@@ -2,7 +2,7 @@
 # El archivo real va en C:/Users/TU_USUARIO/.stayhub/mail.properties
 
 stayhub.mail.remitente=stayhub.uade2026@gmail.com
-stayhub.mail.password=imiyblnkobujkowe
+stayhub.mail.password=REEMPLAZAR_POR_SECRETO_LOCAL
 stayhub.mail.host=smtp.gmail.com
 stayhub.mail.port=587
-stayhub.web.base-url=http://localhost:8080/StayHub
+stayhub.web.base-url=https://localhost:8443/StayHub

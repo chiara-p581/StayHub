@@ -24,6 +24,7 @@ final class InventarioTarifasMapper {
      */
     static List<DisponibilidadDTO> aDisponibilidad(List<InventarioDiario> dias, LocalDate desde, LocalDate hasta) {
         return porTipoHabitacion(dias).entrySet().stream()
+                .filter(e -> e.getValue().size() == java.time.temporal.ChronoUnit.DAYS.between(desde, hasta))
                 .map(e -> new DisponibilidadDTO(
                         e.getValue().get(0).getHotelId(),
                         e.getKey(),
@@ -36,6 +37,8 @@ final class InventarioTarifasMapper {
     /** El importe de un rango es la suma de la tarifa de cada uno de sus días. */
     static List<TarifaDTO> aTarifas(List<InventarioDiario> dias, LocalDate desde, LocalDate hasta) {
         return porTipoHabitacion(dias).entrySet().stream()
+                .filter(e -> e.getValue().size() == java.time.temporal.ChronoUnit.DAYS.between(desde, hasta))
+                .filter(e -> e.getValue().stream().map(InventarioDiario::getMoneda).distinct().count() == 1)
                 .map(e -> new TarifaDTO(
                         e.getValue().get(0).getHotelId(),
                         e.getKey(),

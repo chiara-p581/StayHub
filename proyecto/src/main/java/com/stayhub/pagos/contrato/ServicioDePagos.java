@@ -14,4 +14,5 @@ public interface ServicioDePagos {
     PagoResponse consultarPago(Long id);
 
     List<PagoResponse> listarPorReservas(List<Long> reservaIds);
+    List<PagoResponse> listarMios(int offset, int limite);
 }

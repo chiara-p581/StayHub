@@ -4,11 +4,12 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Inventory and Rates</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
+<link href="assets/css/tailwind.css" rel="stylesheet"/>
+
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-lg flex flex-col md:flex-row min-h-screen">
 <!-- Mobile TopAppBar -->
@@ -148,104 +149,6 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260913-6"></script>
-<script>
-(function () {
-    var errorBanner = document.getElementById("error-banner");
-    var acceso = document.getElementById("acceso-denegado");
-    var panel = document.getElementById("panel");
-
-    if (!Api.requireLogin()) return;
-    var usuario = Api.currentUser();
-    if (usuario.rol !== "ADMIN") {
-        acceso.classList.remove("hidden");
-        panel.classList.add("hidden");
-        return;
-    }
-
-    var hotelSelect = document.getElementById("carga-hotel");
-    var tipoSelect = document.getElementById("carga-tipo");
-    var tiposPorHotel = {};
-
-    function cargarHoteles() {
-        return Api.listarHoteles(false).then(function (hoteles) {
-            if (!hoteles.length) {
-                mostrarError(errorBanner, new Error("No hotels have been loaded yet."));
-                return;
-            }
-            hotelSelect.innerHTML = hoteles.map(function (h) {
-                return '<option value="' + h.id + '">' + h.nombre + ' (' + h.ciudad + ')</option>';
-            }).join("");
-            return refrescarTipos(hoteles[0].id);
-        });
-    }
-
-    function refrescarTipos(hotelId) {
-        return Api.listarTiposHabitacion(hotelId).then(function (tipos) {
-            tiposPorHotel[hotelId] = tipos;
-            tipoSelect.innerHTML = tipos.length
-                ? tipos.map(function (t) { return '<option value="' + t.codigo + '">' + t.codigo + ' - ' + t.nombre + '</option>'; }).join("")
-                : '<option value="">This hotel has no room types loaded</option>';
-        });
-    }
-
-    hotelSelect.addEventListener("change", function () { refrescarTipos(this.value); });
-
-    document.getElementById("btn-cargar").addEventListener("click", function () {
-        var cargaError = document.getElementById("carga-error");
-        var cargaOk = document.getElementById("carga-ok");
-        ocultarError(cargaError);
-        cargaOk.classList.add("hidden");
-
-        var dto = {
-            hotelId: Number(hotelSelect.value),
-            tipoHabitacion: tipoSelect.value,
-            desde: document.getElementById("carga-desde").value,
-            hasta: document.getElementById("carga-hasta").value,
-            unidadesTotales: Number(document.getElementById("carga-unidades").value || 0),
-            precio: Number(document.getElementById("carga-precio").value || 0),
-            moneda: document.getElementById("carga-moneda").value.trim() || "ARS",
-        };
-        if (!dto.tipoHabitacion) { mostrarError(cargaError, new Error("This hotel has no room types.")); return; }
-        if (!dto.desde || !dto.hasta) { mostrarError(cargaError, new Error("Complete the date range.")); return; }
-
-        Api.cargarInventario(dto)
-            .then(function (resp) {
-                cargaOk.textContent = "Loaded: " + resp.diasCargados + " day(s) for " + resp.tipoHabitacion + ".";
-                cargaOk.classList.remove("hidden");
-            })
-            .catch(function (err) { mostrarError(cargaError, err); });
-    });
-
-    document.getElementById("btn-consultar").addEventListener("click", function () {
-        ocultarError(errorBanner);
-        var hotelId = hotelSelect.value;
-        var desde = document.getElementById("consulta-desde").value;
-        var hasta = document.getElementById("consulta-hasta").value;
-        if (!hotelId || !desde || !hasta) { mostrarError(errorBanner, new Error("Choose a hotel and date range.")); return; }
-
-        Api.consultarDisponibilidad(hotelId, desde, hasta)
-            .then(function (lista) {
-                var body = document.getElementById("disponibilidad-body");
-                body.innerHTML = lista.map(function (d) {
-                    return '<tr class="border-b border-surface-container-high"><td class="py-xs pr-md">' + d.tipoHabitacion + '</td><td class="py-xs pr-md">' + d.desde + '</td><td class="py-xs pr-md">' + d.hasta + '</td><td class="py-xs pr-md">' + d.unidadesDisponibles + '</td></tr>';
-                }).join("");
-                document.getElementById("disponibilidad-vacio").classList.toggle("hidden", lista.length > 0);
-            })
-            .catch(function (err) { mostrarError(errorBanner, err); });
-
-        Api.consultarTarifas(hotelId, desde, hasta)
-            .then(function (lista) {
-                var body = document.getElementById("tarifas-body");
-                body.innerHTML = lista.map(function (t) {
-                    return '<tr class="border-b border-surface-container-high"><td class="py-xs pr-md">' + t.tipoHabitacion + '</td><td class="py-xs pr-md">' + t.desde + '</td><td class="py-xs pr-md">' + t.hasta + '</td><td class="py-xs pr-md">' + t.importe + ' ' + t.moneda + '</td></tr>';
-                }).join("");
-                document.getElementById("tarifas-vacio").classList.toggle("hidden", lista.length > 0);
-            })
-            .catch(function (err) { mostrarError(errorBanner, err); });
-    });
-
-    cargarHoteles().catch(function (err) { mostrarError(errorBanner, err); });
-})();
-</script>
+<script src="assets/js/api.js?v=seguridad-a-1"></script>
+<script src="assets/js/pages/inventory-1.js"></script>
 </body></html>

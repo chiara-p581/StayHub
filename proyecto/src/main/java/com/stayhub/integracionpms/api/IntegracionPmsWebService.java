@@ -1,5 +1,6 @@
 package com.stayhub.integracionpms.api;
 
+import com.stayhub.seguridad.*;
 import com.stayhub.integracionpms.dto.DisponibilidadPmsDTO;
 import com.stayhub.integracionpms.dto.ReservaPmsDTO;
 import com.stayhub.integracionpms.dto.TarifaPmsDTO;
@@ -64,6 +65,8 @@ public class IntegracionPmsWebService {
 
     private static final Logger LOG = Logger.getLogger(IntegracionPmsWebService.class.getName());
 
+    @Inject private IdentidadActual identidad;
+
     @Inject
     private ServicioDeReservas reservas;
 
@@ -79,8 +82,9 @@ public class IntegracionPmsWebService {
     @WebResult(name = "reserva")
     public ReservaPmsDTO consultarReserva(
             @WebParam(name = "reservaId") Long reservaId) throws IntegracionPmsFault {
+        autenticar();
         requerido(reservaId, "reservaId");
-        return ejecutar(() -> IntegracionPmsMapper.aReserva(reservas.consultarReserva(reservaId)));
+        return ejecutar(() -> { var reserva = reservas.consultarReserva(reservaId); identidad.autorizarHotel(reserva.hotelId()); return IntegracionPmsMapper.aReserva(reserva); });
     }
 
     /**
@@ -92,11 +96,11 @@ public class IntegracionPmsWebService {
     public List<ReservaPmsDTO> listarLlegadas(
             @WebParam(name = "hotelId") Long hotelId,
             @WebParam(name = "fecha") String fecha) throws IntegracionPmsFault {
+        autenticar();
+        ejecutar(() -> { identidad.autorizarHotel(hotelId); return null; });
         requerido(hotelId, "hotelId");
         LocalDate dia = fecha(fecha, "fecha");
-        return ejecutar(() -> reservas.listarPorHotel(hotelId).stream()
-                .filter(r -> "CONFIRMADA".equals(r.estado()))
-                .filter(r -> dia.equals(r.checkIn()))
+        return ejecutar(() -> reservas.listarLlegadas(hotelId, dia).stream()
                 .map(IntegracionPmsMapper::aReserva)
                 .toList());
     }
@@ -106,9 +110,13 @@ public class IntegracionPmsWebService {
     @WebResult(name = "reserva")
     public ReservaPmsDTO cancelarReserva(
             @WebParam(name = "reservaId") Long reservaId) throws IntegracionPmsFault {
+        autenticar();
         requerido(reservaId, "reservaId");
-        return ejecutar(() -> IntegracionPmsMapper.aReserva(
-                reservas.cancelarReserva(reservaId, ACTOR_PMS, true)));
+        return ejecutar(() -> {
+            var reserva = reservas.consultarReserva(reservaId);
+            identidad.autorizarHotel(reserva.hotelId());
+            return IntegracionPmsMapper.aReserva(reservas.cancelarReserva(reservaId));
+        });
     }
 
     // ------------------------------------------------------------------
@@ -122,6 +130,8 @@ public class IntegracionPmsWebService {
             @WebParam(name = "hotelId") Long hotelId,
             @WebParam(name = "desde") String desde,
             @WebParam(name = "hasta") String hasta) throws IntegracionPmsFault {
+        autenticar();
+        ejecutar(() -> { identidad.autorizarHotel(hotelId); return null; });
         requerido(hotelId, "hotelId");
         LocalDate d = fecha(desde, "desde");
         LocalDate h = fecha(hasta, "hasta");
@@ -137,6 +147,8 @@ public class IntegracionPmsWebService {
             @WebParam(name = "hotelId") Long hotelId,
             @WebParam(name = "desde") String desde,
             @WebParam(name = "hasta") String hasta) throws IntegracionPmsFault {
+        autenticar();
+        ejecutar(() -> { identidad.autorizarHotel(hotelId); return null; });
         requerido(hotelId, "hotelId");
         LocalDate d = fecha(desde, "desde");
         LocalDate h = fecha(hasta, "hasta");
@@ -148,6 +160,10 @@ public class IntegracionPmsWebService {
     // ------------------------------------------------------------------
     // Validación de entrada y traducción de errores a SOAP Fault
     // ------------------------------------------------------------------
+
+    private void autenticar() throws IntegracionPmsFault {
+        if (!identidad.pms()) throw new IntegracionPmsFault(CodigoErrorIntegracionPms.NO_AUTORIZADO, "Identidad PMS requerida");
+    }
 
     private static void requerido(Object valor, String campo) throws IntegracionPmsFault {
         if (valor == null) {
@@ -187,6 +203,7 @@ public class IntegracionPmsWebService {
 
     static IntegracionPmsFault traducir(Throwable ex) {
         for (Throwable t = ex; t != null; t = t.getCause()) {
+            if (t instanceof SeguridadException se) return new IntegracionPmsFault(CodigoErrorIntegracionPms.NO_AUTORIZADO, "Solicitud PMS rechazada", se);
             if (t instanceof ReservaException re) {
                 return new IntegracionPmsFault(CodigoErrorIntegracionPms.desde(re.getCodigo()), re.getMessage(), re);
             }

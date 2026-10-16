@@ -4,14 +4,15 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Home</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
+<link href="assets/css/tailwind.css" rel="stylesheet"/>
+
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
 <style>
 .hero-shadow { box-shadow: 0 4px 60px rgba(37, 52, 79, 0.08); }
 </style>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="font-body-md text-body-md antialiased flex flex-col min-h-screen">
 <!-- TopAppBar -->
@@ -115,125 +116,6 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20260913-6"></script>
-<script>
-(function () {
-    var errorBanner = document.getElementById("error-banner");
-    var sessionArea = document.getElementById("session-area");
-    var loading = document.getElementById("hoteles-loading");
-    var grid = document.getElementById("hoteles-grid");
-    var subtitulo = document.getElementById("hoteles-subtitulo");
-    var todosLosHoteles = [];
-    var ofertas = [];
-    var canalActivo = new URLSearchParams(location.search).get("canal") || "TODOS";
-
-    function pintarSesion() {
-        var usuario = Api.currentUser();
-        if (usuario) {
-            document.getElementById("brand-admin").classList.toggle("hidden", usuario.rol !== "ADMIN");
-            document.getElementById("nav-admin").classList.toggle("hidden", usuario.rol !== "ADMIN");
-            sessionArea.innerHTML =
-                '<a href="settings.html" class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">' + usuario.nombre + '</a>' +
-                '<button id="btn-logout" class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container" title="Sign out"><span class="material-symbols-outlined" style="font-size:18px;">logout</span></button>';
-            document.getElementById("btn-logout").addEventListener("click", function () {
-                Api.clearSession();
-                location.reload();
-            });
-        } else {
-            sessionArea.innerHTML =
-                '<a href="login.html" class="bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-full hover:bg-primary-container transition-colors">Sign in</a>';
-        }
-    }
-
-    function tarjetaHotel(hotel) {
-        var fotos = ["stayhub-resort-hero.png", "stayhub-patagonia.png", "stayhub-costa.png"];
-        var foto = fotos[Math.abs(Number(hotel.id) || 0) % fotos.length];
-        var fechas = '&checkIn=' + encodeURIComponent(document.getElementById('search-checkin').value || '') + '&checkOut=' + encodeURIComponent(document.getElementById('search-checkout').value || '') + '&huespedes=' + encodeURIComponent(document.getElementById('search-guests').value || '2');
-        var div = document.createElement("div");
-        div.className = "group cursor-pointer rounded-xl overflow-hidden relative h-72 hero-shadow bg-surface-container-lowest border border-outline-variant/20 flex flex-col";
-        var fuentes = ofertas.filter(function (o) { return o.hotelId === hotel.id; });
-        var badges = fuentes.map(function (o) { return '<span class="px-2 py-1 rounded-full bg-surface-container-high text-[11px] font-semibold">' + escapeHtml(o.canal === 'STAYHUB' ? 'Directo' : o.canal) + ' · ' + Number(o.puntuacion).toFixed(1) + '</span>'; }).join('');
-        div.innerHTML =
-            '<div class="h-40 bg-primary-container overflow-hidden"><img src="assets/images/' + foto + '" alt="' + escapeHtml(hotel.nombre) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/></div>' +
-            '<div class="p-lg flex-1 flex flex-col justify-between">' +
-                '<div>' +
-                    '<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">' + escapeHtml(hotel.nombre) + '</h3>' +
-                    '<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">' +
-                        '<span class="material-symbols-outlined" style="font-size:16px;">location_on</span>' +
-                        escapeHtml(hotel.ciudad) + ', ' + escapeHtml(hotel.pais) +
-                    '</p>' +
-                    '<div class="flex flex-wrap gap-xs mt-sm">' + badges + '</div>' +
-                '</div>' +
-                '<a href="hotel-details.html?hotelId=' + hotel.id + '&canal=' + (canalActivo === 'TODOS' ? 'STAYHUB' : canalActivo) + fechas + '" class="mt-md inline-flex items-center gap-xs font-label-md text-label-md text-primary uppercase tracking-wider hover:text-primary-container transition-colors">' +
-                    'Ver hotel <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>' +
-                '</a>' +
-            '</div>';
-        return div;
-    }
-
-    function escapeHtml(s) {
-        var d = document.createElement("div");
-        d.textContent = s == null ? "" : s;
-        return d.innerHTML;
-    }
-
-    function pintarGrid(lista) {
-        grid.innerHTML = "";
-        if (!lista.length) {
-            grid.innerHTML = '<p class="font-body-lg text-body-lg text-on-surface-variant col-span-full">No encontramos hoteles con ese criterio.</p>';
-            return;
-        }
-        lista.forEach(function (h) { grid.appendChild(tarjetaHotel(h)); });
-    }
-
-    function buscar() {
-        var texto = (document.getElementById("search-destino").value || "").trim().toLowerCase();
-        var filtrados = todosLosHoteles.filter(function (h) {
-            var coincideTexto = !texto || (h.nombre + " " + h.ciudad + " " + h.pais).toLowerCase().indexOf(texto) !== -1;
-            var coincideCanal = canalActivo === "TODOS" || ofertas.some(function (o) { return o.hotelId === h.id && o.canal === canalActivo; });
-            return coincideTexto && coincideCanal;
-        });
-        pintarGrid(filtrados);
-    }
-
-    document.querySelectorAll(".canal-chip").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            canalActivo = btn.dataset.canal;
-            document.querySelectorAll(".canal-chip").forEach(function (b) { b.classList.remove("bg-primary", "text-on-primary"); });
-            btn.classList.add("bg-primary", "text-on-primary");
-            buscar();
-        });
-        if (btn.dataset.canal === canalActivo) {
-            document.querySelectorAll(".canal-chip").forEach(function (b) { b.classList.remove("bg-primary", "text-on-primary"); });
-            btn.classList.add("bg-primary", "text-on-primary");
-        }
-    });
-
-    document.getElementById("btn-buscar").addEventListener("click", function (ev) {
-        ev.preventDefault();
-        buscar();
-        document.getElementById("hoteles").scrollIntoView({ behavior: "smooth" });
-    });
-    document.getElementById("search-destino").addEventListener("keyup", function (ev) {
-        if (ev.key === "Enter") buscar();
-    });
-
-    pintarSesion();
-    var hoyBusqueda = new Date();
-    var hoyBusquedaIso = new Date(hoyBusqueda.getTime() - hoyBusqueda.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    document.getElementById("search-checkin").min = hoyBusquedaIso;
-    document.getElementById("search-checkout").min = hoyBusquedaIso;
-    ocultarError(errorBanner);
-    Promise.all([Api.listarHoteles(false), Api.listarOfertasCanales().catch(function () { return []; })])
-        .then(function (resultado) {
-            var hoteles = resultado[0] || [];
-            ofertas = resultado[1] || [];
-            todosLosHoteles = hoteles;
-            subtitulo.textContent = hoteles.length + " propiedad" + (hoteles.length === 1 ? "" : "es") + " disponible" + (hoteles.length === 1 ? "" : "s") + ".";
-            buscar();
-        })
-        .catch(function (err) { mostrarError(errorBanner, err); })
-        .finally(function () { loading.classList.add("hidden"); });
-})();
-</script>
+<script src="assets/js/api.js?v=seguridad-a-1"></script>
+<script src="assets/js/pages/index-1.js"></script>
 </body></html>

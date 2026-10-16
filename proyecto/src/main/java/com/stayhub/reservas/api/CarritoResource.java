@@ -39,6 +39,7 @@ public class CarritoResource implements Serializable {
     @POST
     @Path("/hotel")
     public CarritoResumenDTO seleccionarHotel(SeleccionHotelYHabitacionRequest s) {
+        if (s == null) throw new com.stayhub.seguridad.SeguridadException(400, "Selección requerida");
         carrito.seleccionarHotelYHabitacion(s.hotelId(), s.tipoHabitacion(), s.cantidadHabitaciones());
         return carrito.resumen();
     }
@@ -46,6 +47,7 @@ public class CarritoResource implements Serializable {
     @POST
     @Path("/fechas")
     public CarritoResumenDTO seleccionarFechas(SeleccionFechasRequest s) {
+        if (s == null) throw new com.stayhub.seguridad.SeguridadException(400, "Selección requerida");
         carrito.seleccionarFechas(s.checkIn(), s.checkOut());
         return carrito.resumen();
     }
@@ -53,6 +55,7 @@ public class CarritoResource implements Serializable {
     @POST
     @Path("/huesped")
     public CarritoResumenDTO seleccionarHuesped(SeleccionHuespedYPrecioRequest s) {
+        if (s == null) throw new com.stayhub.seguridad.SeguridadException(400, "Selección requerida");
         carrito.seleccionarHuespedYPrecio(s.huespedNombre(), s.huespedApellido(), s.huespedEmail(),
                 s.huespedTelefono(), s.precioTotal(), s.moneda());
         return carrito.resumen();

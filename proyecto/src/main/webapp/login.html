@@ -4,11 +4,12 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Sign in</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
+<link href="assets/css/tailwind.css" rel="stylesheet"/>
+
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="stayhub-auth-page h-full bg-background flex flex-col">
 <!-- Transactional Screen - No Navigation Shell -->
@@ -73,51 +74,6 @@
 </div>
 </main>
 
-<script src="assets/js/api.js?v=20260913-6"></script>
-<script>
-(function () {
-    var form = document.getElementById("login-form");
-    var errorBanner = document.getElementById("error-banner");
-    var submitBtn = document.getElementById("submit-btn");
-
-    // Si ya había una sesión activa, la mostramos como pre-cargada
-    // (no auto-redirige: el usuario puede querer loguearse con otra cuenta).
-
-    form.addEventListener("submit", function (ev) {
-        ev.preventDefault();
-        ocultarError(errorBanner);
-
-        var email = document.getElementById("email").value.trim();
-        var password = document.getElementById("password").value;
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Ingresando...";
-
-        Api.loginUsuario({ email: email, password: password })
-            .then(function (usuario) {
-                Api.setSession(usuario);
-
-                var params = new URLSearchParams(location.search);
-                var next = params.get("next");
-                if (next) {
-                    location.href = decodeURIComponent(next);
-                } else if (usuario.rol === "ADMIN") {
-                    location.href = "admin-dashboard.html";
-                } else {
-                    location.href = "index.html";
-                }
-            })
-            .catch(function (err) {
-                mostrarError(
-                    errorBanner,
-                    err.status === 401 || err.status === 404
-                        ? new Error("Incorrect email or password.")
-                        : err
-                );
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Sign in";
-            });
-    });
-})();
-</script>
+<script src="assets/js/api.js?v=seguridad-a-1"></script>
+<script src="assets/js/pages/login-1.js"></script>
 </body></html>

@@ -32,8 +32,6 @@ public class ReservaResource {
     @Inject
     private ServicioDeReservas servicio;
 
-    @Inject
-    private ServicioDeUsuarios servicioDeUsuarios;
 
     @Context
     private UriInfo uriInfo;
@@ -41,33 +39,10 @@ public class ReservaResource {
     @Context
     private HttpServletRequest request;
 
-    /**
-     * Resuelve quién está haciendo el pedido a partir de la sesión HTTP que
-     * arma el login nuevo (POST /api/usuarios/login + AutenticacionFilter).
-     * Ya no existe un login manejado por el contenedor de EJBs, así que
-     * este es el único lugar donde se puede obtener esa identidad — por
-     * eso se resuelve acá y se pasa como parámetro al servicio.
-     */
-    private String emailDelActor() {
-        HttpSession sesion = request.getSession(false);
-        Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
-        return usuarioId == null ? null : servicioDeUsuarios.buscarPorId(usuarioId).email();
-    }
-
-    private boolean actorEsAdmin() {
-        HttpSession sesion = request.getSession(false);
-        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
-        return "ADMIN".equals(rol);
-    }
-
     @GET
     @Path("/mias")
-    public List<ReservaResponse> listarMias() {
-        String email = emailDelActor();
-        if (email == null) {
-            throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
-        }
-        return servicio.listarPorHuespedEmail(email);
+    public List<ReservaResponse> listarMias(@QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarMias(offset, limite);
     }
 
     @POST
@@ -84,13 +59,7 @@ public class ReservaResource {
     @GET
     @Path("/{id}")
     public ReservaResponse consultar(@PathParam("id") Long id) {
-        ReservaResponse reserva = servicio.consultarReserva(id);
-        String email = emailDelActor();
-        if (!actorEsAdmin() && (email == null || !email.equalsIgnoreCase(reserva.huespedEmail()))) {
-            throw new WebApplicationException("No podés consultar una reserva ajena",
-                    Response.Status.FORBIDDEN);
-        }
-        return reserva;
+        return servicio.consultarReserva(id);
     }
 
     @POST
@@ -102,17 +71,17 @@ public class ReservaResource {
     @PUT
     @Path("/{id}")
     public ReservaResponse modificar(@PathParam("id") Long id, ReservaRequest solicitud) {
-        return servicio.modificarReserva(id, solicitud, emailDelActor(), actorEsAdmin());
+        return servicio.modificarReserva(id, solicitud);
     }
 
     @DELETE
     @Path("/{id}")
     public ReservaResponse cancelar(@PathParam("id") Long id) {
-        return servicio.cancelarReserva(id, emailDelActor(), actorEsAdmin());
+        return servicio.cancelarReserva(id);
     }
 
     @GET
-    public List<ReservaResponse> listarPorHotel(@QueryParam("hotelId") Long hotelId) {
-        return servicio.listarPorHotel(hotelId);
+    public List<ReservaResponse> listarPorHotel(@QueryParam("hotelId") Long hotelId, @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarPorHotel(hotelId, offset, limite);
     }
 }

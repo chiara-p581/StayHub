@@ -1,0 +1,13 @@
+# Requiere la configuración TLS StayHubTLS existente.
+# Ejecutar conectado a WildFly; recargar el servidor al finalizar.
+:take-snapshot
+batch
+/socket-binding-group=standard-sockets/socket-binding=http:write-attribute(name=port,value=8081)
+/socket-binding-group=standard-sockets/socket-binding=https:write-attribute(name=port,value=8080)
+/system-property=stayhub.seguridad.http-local:write-attribute(name=value,value=false)
+/system-property=stayhub.web.base-url:write-attribute(name=value,value="https://localhost:8080/StayHub")
+/subsystem=undertow/configuration=filter/expression-filter=StayHubHTTPSRedirect:write-attribute(name=expression,value="method(GET) or method(HEAD) -> redirect('https://localhost:8080%U%q') else response-code(426)")
+run-batch
+if (outcome != success) of /subsystem=undertow/server=default-server/host=default-host/filter-ref=StayHubHTTPSRedirect:read-resource
+ /subsystem=undertow/server=default-server/host=default-host/filter-ref=StayHubHTTPSRedirect:add(priority=2,predicate="path-prefix('/StayHub') and not secure()")
+end-if

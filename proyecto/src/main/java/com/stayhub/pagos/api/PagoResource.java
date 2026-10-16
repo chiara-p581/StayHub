@@ -33,13 +33,9 @@ public class PagoResource {
 
     @GET
     @Path("/mios")
-    public List<PagoResponse> listarMios(@Context HttpServletRequest request) {
-        HttpSession sesion = request.getSession(false);
-        Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
-        if (usuarioId == null) throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
-        String email = usuarios.buscarPorId(usuarioId).email();
-        List<Long> reservaIds = reservas.listarPorHuespedEmail(email).stream().map(r -> r.id()).toList();
-        return servicio.listarPorReservas(reservaIds);
+    public List<PagoResponse> listarMios(@QueryParam("offset") @DefaultValue("0") int offset,
+                                       @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarMios(offset, limite);
     }
 
     @POST

@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Operations</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script src="assets/js/tailwind-config.js"></script>
+<link href="assets/css/tailwind.css" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/><link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex">
 <aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 p-md z-40">
@@ -43,16 +44,6 @@
 </main>
 <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around p-sm z-50"><a href="admin-dashboard.html" class="mobile-nav"><span class="material-symbols-outlined">dashboard</span>Home</a><a href="hotel-management.html" class="mobile-nav"><span class="material-symbols-outlined">domain</span>Hotels</a><a href="channels-sync.html" class="mobile-nav"><span class="material-symbols-outlined">hub</span>Channels</a><a href="alerts.html" class="mobile-nav text-primary"><span class="material-symbols-outlined">crisis_alert</span>Operations</a></nav>
 <style>.nav{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:.5rem;color:#45464f}.nav:hover{background:#e4e2e4}.card{background:#fff;border:1px solid rgba(213,184,147,.3);border-radius:.75rem;padding:1.25rem;box-shadow:0 4px 20px -4px rgba(37,52,79,.08)}.field{display:flex;flex-direction:column;gap:.35rem;color:#45464f;font-size:.875rem}.field input,.field textarea,.field select{border:1px solid #c5c6ce;border-radius:.5rem;background:#fff;padding:.65rem .75rem;color:#1b1b1f}.btn-primary{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.65rem 1.1rem;background:#9fcaaf;color:#123724;font-weight:600}.btn-primary:disabled{opacity:.55}.icon{width:3rem;height:3rem;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}.mobile-nav{display:flex;flex-direction:column;align-items:center;font-size:.7rem;color:#5d5f68}</style>
-<script src="assets/js/api.js?v=20260913-6"></script>
-<script>
-(function(){
- var usuario,error=document.getElementById('error-banner'),ok=document.getElementById('success-banner');if(!Api.requireLogin())return;usuario=Api.currentUser();if(!usuario||usuario.rol!=='ADMIN'){document.getElementById('acceso-denegado').classList.remove('hidden');document.getElementById('panel').classList.add('hidden');return}
- function fallo(e){mostrarError(error,e);window.scrollTo({top:0,behavior:'smooth'})}function exito(m){ok.textContent=m;ok.classList.remove('hidden');error.classList.add('hidden');setTimeout(function(){ok.classList.add('hidden')},3000)}
- var hotelSelect=document.getElementById('ov-hotel'),tipoSelect=document.getElementById('ov-tipo');
- function cargarTipos(){if(!hotelSelect.value)return;Api.listarTiposHabitacion(hotelSelect.value).then(function(ts){tipoSelect.innerHTML=(ts||[]).map(function(t){return '<option value="'+t.codigo+'">'+t.codigo+' · '+t.nombre+'</option>'}).join('')}).catch(fallo)}
- Api.listarHoteles(false).then(function(hs){hotelSelect.innerHTML=(hs||[]).map(function(h){return '<option value="'+h.id+'">'+h.nombre+'</option>'}).join('');return cargarTipos()}).catch(fallo);hotelSelect.onchange=cargarTipos;
- document.getElementById('overbooking-form').onsubmit=function(e){e.preventDefault();var b=e.submitter;b.disabled=true;var dto={reservaIdConflictiva:Number(document.getElementById('ov-reserva').value),hotelId:Number(hotelSelect.value),tipoHabitacion:tipoSelect.value,cantidadHabitaciones:Number(document.getElementById('ov-cantidad').value),checkIn:document.getElementById('ov-checkin').value,checkOut:document.getElementById('ov-checkout').value,canalOrigen:document.getElementById('ov-canal').value,referenciaExterna:document.getElementById('ov-referencia').value.trim(),huespedEmail:document.getElementById('ov-email').value.trim()};Api.resolverOverbooking(dto).then(function(r){var c=document.getElementById('ov-resultado');c.classList.remove('hidden');c.innerHTML='<p class="font-semibold text-primary">'+(r.resuelto?'Issue resolved':'No alternative was found')+'</p><p class="text-sm text-on-surface-variant mt-xs">'+r.mensaje+'</p><dl class="grid grid-cols-2 gap-xs mt-md text-sm"><dt>Strategy</dt><dd>'+r.estrategia+'</dd><dt>Alternative room type</dt><dd>'+(r.tipoHabitacionAlternativa||'—')+'</dd><dt>Hold</dt><dd>'+(r.holdAlternativoId||'—')+'</dd></dl>';exito('Resolution processed.')}).catch(fallo).finally(function(){b.disabled=false})};
- document.getElementById('notificacion-form').onsubmit=function(e){e.preventDefault();var b=e.submitter;b.disabled=true;var dto={destinatario:document.getElementById('notif-destinatario').value.trim(),tipoEvento:document.getElementById('notif-evento').value,canalPreferido:document.getElementById('notif-canal').value,asunto:document.getElementById('notif-asunto').value.trim(),mensaje:document.getElementById('notif-mensaje').value.trim()};Api.enviarNotificacion(dto).then(function(r){var c=document.getElementById('notif-resultado');c.classList.remove('hidden');c.innerHTML='<p class="font-semibold text-primary">'+(r.enviado?'Notification sent':'Could not send')+'</p><p class="text-sm text-on-surface-variant mt-xs">Channel: '+r.canalUtilizado+' · '+new Date(r.fecha).toLocaleString('en-US')+'</p>';exito('Notification processed.')}).catch(fallo).finally(function(){b.disabled=false})};
-})();
-</script>
+<script src="assets/js/api.js?v=seguridad-a-1"></script>
+<script src="assets/js/pages/alerts-1.js"></script>
 </body></html>

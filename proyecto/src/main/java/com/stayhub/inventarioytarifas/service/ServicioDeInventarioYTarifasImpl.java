@@ -1,5 +1,6 @@
 package com.stayhub.inventarioytarifas.service;
 
+import com.stayhub.seguridad.Limites;
 import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
 import com.stayhub.inventarioytarifas.dto.CargaInventarioRequest;
 import com.stayhub.inventarioytarifas.dto.CargaInventarioResponse;
@@ -309,6 +310,7 @@ public class ServicioDeInventarioYTarifasImpl
      */
     private void validarSolicitudDeHold(Long hotelId, String tipoHabitacion, int cantidadHabitaciones,
                                         LocalDate checkIn, LocalDate checkOut) {
+        Limites.rango(checkIn, checkOut); Limites.cantidad(cantidadHabitaciones); Limites.texto(tipoHabitacion, 30, true);
         if (hotelId == null || tipoHabitacion == null || tipoHabitacion.isBlank()
                 || cantidadHabitaciones < 1 || checkIn == null || checkOut == null
                 || checkIn.isBefore(LocalDate.now()) || !checkOut.isAfter(checkIn)) {
@@ -319,6 +321,7 @@ public class ServicioDeInventarioYTarifasImpl
     }
 
     private void validarPeriodo(Long hotelId, LocalDate desde, LocalDate hasta) {
+        Limites.rango(desde, hasta);
         if (hotelId == null || desde == null || hasta == null || !hasta.isAfter(desde)) {
             throw new InventarioTarifasException(CodigoErrorInventarioTarifas.SOLICITUD_INVALIDA,
                     "hotelId y un período válido son obligatorios");
@@ -326,6 +329,9 @@ public class ServicioDeInventarioYTarifasImpl
     }
 
     private void validarCarga(CargaInventarioRequest s) {
+        if (s == null) throw new com.stayhub.seguridad.SeguridadException(400, "Carga inválida");
+        Limites.rango(s.desde(), s.hasta()); Limites.texto(s.tipoHabitacion(), 30, true); Limites.texto(s.moneda(), 3, true);
+        if (s.unidadesTotales() > 10000 || s.precio() != null && (s.precio().precision() > 12 || s.precio().scale() > 2)) throw new com.stayhub.seguridad.SeguridadException(400, "Carga fuera de límites");
         if (s == null || s.hotelId() == null || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.desde() == null || s.hasta() == null || !s.hasta().isAfter(s.desde())
                 || s.unidadesTotales() < 0 || s.precio() == null || s.precio().compareTo(BigDecimal.ZERO) < 0

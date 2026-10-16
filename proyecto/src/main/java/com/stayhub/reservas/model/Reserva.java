@@ -38,6 +38,15 @@ public class Reserva {
     @Column(name = "referencia_externa", length = 60)
     private String referenciaExterna;
 
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
+    public Long getUsuarioId() { return usuarioId; }
+    public void asignarPropietario(Long id) {
+        if (usuarioId != null || id == null) throw new IllegalStateException("Propietario inmutable");
+        usuarioId = id;
+    }
+
     @Column(name = "hotel_id", nullable = false)
     private Long hotelId;
 

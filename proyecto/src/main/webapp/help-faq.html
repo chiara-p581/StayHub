@@ -4,8 +4,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Help &amp;amp; FAQ</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
+<link href="assets/css/tailwind.css" rel="stylesheet"/>
+
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
@@ -33,6 +33,7 @@
             border: 1px solid rgba(197, 198, 206, 0.3);
         }
 </style>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
 <!-- TopAppBar (Suppressed as this is likely a modal or focused task screen, but keeping a simple header for context as requested by prompt "Help and FAQ screen") -->
@@ -98,7 +99,7 @@
 <div class="flex flex-col gap-sm">
 <!-- FAQ Item 1 -->
 <div class="accordion-item bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm">
-<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg"  data-stayhub-event="0">
 <span class="font-title-lg text-title-lg text-on-surface">What is your standard cancellation policy?</span>
 <span class="material-symbols-outlined accordion-icon text-on-surface-variant transition-transform duration-300">expand_more</span>
 </button>
@@ -110,7 +111,7 @@
 </div>
 <!-- FAQ Item 2 -->
 <div class="accordion-item bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm">
-<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg"  data-stayhub-event="1">
 <span class="font-title-lg text-title-lg text-on-surface">Can I request an early check-in or late check-out?</span>
 <span class="material-symbols-outlined accordion-icon text-on-surface-variant transition-transform duration-300">expand_more</span>
 </button>
@@ -122,7 +123,7 @@
 </div>
 <!-- FAQ Item 3 -->
 <div class="accordion-item bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm">
-<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg" onclick="this.parentElement.classList.toggle('active')">
+<button class="w-full flex items-center justify-between p-lg text-left focus:outline-none hover:bg-surface-container-low transition-colors rounded-lg"  data-stayhub-event="2">
 <span class="font-title-lg text-title-lg text-on-surface">Are pets allowed at the property?</span>
 <span class="material-symbols-outlined accordion-icon text-on-surface-variant transition-transform duration-300">expand_more</span>
 </button>
@@ -146,5 +147,5 @@
             </button>
 </div>
 </main>
-<script src="assets/js/api.js?v=20260913-6"></script>
-</body></html>
+<script src="assets/js/api.js?v=seguridad-a-1"></script>
+<script src="assets/js/pages/help-faq-events.js"></script></body></html>

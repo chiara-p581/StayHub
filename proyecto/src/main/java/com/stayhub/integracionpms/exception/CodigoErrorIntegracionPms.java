@@ -9,6 +9,7 @@ import com.stayhub.reservas.exception.CodigoErrorReserva;
  * internos para que el sistema legado no dependa de ellos.
  */
 public enum CodigoErrorIntegracionPms {
+    NO_AUTORIZADO,
     SOLICITUD_INVALIDA,
     RESERVA_NO_ENCONTRADA,
     TRANSICION_DE_ESTADO_INVALIDA,

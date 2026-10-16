@@ -151,6 +151,9 @@ public class ServicioDeOverbookingImpl implements ServicioDeOverbooking {
     }
 
     private void validar(ConflictoReservaDTO dto) {
+        if (dto == null) throw new com.stayhub.seguridad.SeguridadException(400, "Conflicto requerido");
+        com.stayhub.seguridad.Limites.rango(dto.checkIn(), dto.checkOut());
+        com.stayhub.seguridad.Limites.cantidad(dto.cantidadHabitaciones());
         if (dto == null
                 || dto.reservaIdConflictiva() == null
                 || dto.hotelId() == null

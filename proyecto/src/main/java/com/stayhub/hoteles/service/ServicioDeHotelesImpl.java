@@ -76,8 +76,7 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
     public HotelResponse darDeBajaHotel(Long id) {
         Hotel hotel = hotel(id);
         hotel.darDeBaja();
-        repositorio.listarHabitaciones(id).forEach(h -> { h.darDeBaja(); repositorio.guardar(h); });
-        repositorio.listarTipos(id).forEach(t -> { t.darDeBaja(); repositorio.guardar(t); });
+        repositorio.darDeBajaDependientes(id);
         repositorio.guardar(hotel);
         return respuesta(hotel);
     }
@@ -327,5 +326,19 @@ public class ServicioDeHotelesImpl implements ServicioDeHoteles, ServicioDeHotel
         Set<String> resultado = new LinkedHashSet<>();
         valores.stream().filter(Objects::nonNull).map(String::trim).filter(v -> !v.isEmpty()).forEach(resultado::add);
         return resultado;
+    }
+
+    @Override public List<HotelResponse> listarHoteles(boolean incluir, int offset, int limite) {
+        return repositorio.listarHoteles(incluir, offset, com.stayhub.seguridad.Limites.pagina(offset, limite)).stream()
+                .map(h -> HotelMapper.hotel(h, List.of(), List.of())).toList();
+    }
+
+    @Override public List<TipoHabitacionResponse> listarTipos(Long id, boolean incluir, int offset, int limite) {
+        hotel(id);
+        return repositorio.listarTipos(id,incluir,offset,com.stayhub.seguridad.Limites.pagina(offset,limite)).stream().map(HotelMapper::tipo).toList();
+    }
+    @Override public List<HabitacionResponse> listarHabitaciones(Long id, boolean incluir, int offset, int limite) {
+        hotel(id);
+        return repositorio.listarHabitaciones(id,incluir,offset,com.stayhub.seguridad.Limites.pagina(offset,limite)).stream().map(HotelMapper::habitacion).toList();
     }
 }

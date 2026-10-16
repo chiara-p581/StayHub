@@ -1,5 +1,6 @@
 package com.stayhub.usuarios.api;
 
+import com.stayhub.seguridad.Csrf;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
@@ -39,10 +40,14 @@ public class UsuarioResource {
     @Path("/login")
     public UsuarioResponse login(LoginRequest credenciales, @Context HttpServletRequest request) {
         UsuarioResponse usuario = servicio.autenticar(credenciales);
+        HttpSession anterior = request.getSession(false);
+        if (anterior != null) anterior.invalidate();
         HttpSession sesion = request.getSession(true);
         request.changeSessionId();
+        sesion.setMaxInactiveInterval(900);
         sesion.setAttribute("usuarioId", usuario.id());
         sesion.setAttribute("usuarioRol", usuario.rol());
+        Csrf.token(sesion);
         return usuario;
     }
 

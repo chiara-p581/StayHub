@@ -61,10 +61,10 @@ class ServicioDeCanalesExternosImplTest {
 
     @Test
     void rechazaPeriodoInvertido() {
-        CanalExternoException error = assertThrows(CanalExternoException.class,
+        var error = assertThrows(com.stayhub.seguridad.SeguridadException.class,
                 () -> servicio.consultarDisponibilidad(1L,
                         LocalDate.of(2026, 10, 2), LocalDate.of(2026, 10, 1)));
 
-        assertEquals(CodigoErrorCanal.SOLICITUD_INVALIDA, error.getCodigo());
+        assertEquals(400, error.getEstado());
     }
 }

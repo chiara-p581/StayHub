@@ -1,5 +1,6 @@
 package com.stayhub.usuarios.service;
 
+import com.stayhub.seguridad.*;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
@@ -49,6 +50,8 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
 
     @Override
     public UsuarioResponse autenticar(LoginRequest credenciales) {
+        if (credenciales == null) throw new SeguridadException(400, "Credenciales requeridas");
+        Limites.texto(credenciales.email(), 120, true); Limites.texto(credenciales.password(), 1024, true);
         Usuario usuario = repositorio.buscarPorEmail(credenciales.email())
                 .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
                         "Email o contraseña incorrectos"));
@@ -71,6 +74,8 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
 
     @Override
     public UsuarioResponse actualizarPerfil(Long id, ActualizacionUsuarioRequest solicitud) {
+        if (solicitud == null) throw new SeguridadException(400, "Perfil requerido");
+        Limites.email(solicitud.email()); Limites.texto(solicitud.nombre(), 80, true); Limites.texto(solicitud.apellido(), 80, true); Limites.texto(solicitud.password(), 1024, false);
         if (solicitud == null || solicitud.email() == null || solicitud.email().isBlank()
                 || solicitud.nombre() == null || solicitud.nombre().isBlank()
                 || solicitud.apellido() == null || solicitud.apellido().isBlank()
@@ -94,6 +99,8 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
     }
 
     private void validar(RegistroUsuarioRequest s) {
+        if (s == null) throw new SeguridadException(400, "Registro requerido");
+        Limites.email(s.email()); Limites.texto(s.password(), 1024, true); Limites.texto(s.nombre(), 80, true); Limites.texto(s.apellido(), 80, true);
         if (s == null || s.email() == null || s.email().isBlank()
                 || s.password() == null || s.password().length() < 6
                 || s.nombre() == null || s.nombre().isBlank()

@@ -215,8 +215,21 @@ class ServicioDeHotelesImplTest {
                     .filter(h -> h.getNumero().equalsIgnoreCase(numero))
                     .findFirst();
         }
+        @Override public List<Hotel> listarHoteles(boolean incluir, int offset, int limite) {
+            return listarHoteles(incluir).stream().skip(offset).limit(limite).toList();
+        }
+        @Override public void darDeBajaDependientes(Long id) {
+            listarHabitaciones(id).forEach(Habitacion::darDeBaja);
+            listarTipos(id).forEach(TipoHabitacion::darDeBaja);
+        }
         @Override public List<Hotel> listarHoteles(boolean incluirInactivos) {
             return hoteles.values().stream().filter(h -> incluirInactivos || h.isActivo()).toList();
+        }
+        @Override public List<TipoHabitacion> listarTipos(Long id, boolean incluir, int offset, int limite) {
+            return listarTipos(id).stream().filter(t->incluir||t.isActivo()).skip(offset).limit(limite).toList();
+        }
+        @Override public List<Habitacion> listarHabitaciones(Long id, boolean incluir, int offset, int limite) {
+            return listarHabitaciones(id).stream().filter(h->incluir||h.isActiva()).skip(offset).limit(limite).toList();
         }
         @Override public List<TipoHabitacion> listarTipos(Long hotelId) {
             return tipos.values().stream().filter(t -> t.getHotel().getId().equals(hotelId)).toList();

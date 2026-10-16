@@ -17,12 +17,19 @@ import java.util.Properties;
 
 @ApplicationScoped
 public class EmailNotificador implements NotificadorCanal {
+    private static final com.stayhub.seguridad.LimitadorSolicitudes ENVIOS = new com.stayhub.seguridad.LimitadorSolicitudes();
 
     @Inject
     private ConfiguracionMail configuracion;
 
     @Override
     public void enviar(SolicitudNotificacionDTO solicitud) {
+        if (solicitud == null) throw new com.stayhub.seguridad.SeguridadException(400, "Correo requerido");
+        com.stayhub.seguridad.Limites.email(solicitud.destinatario());
+        com.stayhub.seguridad.Limites.texto(solicitud.asunto(), 200, true);
+        com.stayhub.seguridad.Limites.texto(solicitud.mensaje(), 4000, true);
+        if (!ENVIOS.permitir(solicitud.destinatario().toLowerCase(java.util.Locale.ROOT), 5, System.currentTimeMillis()))
+            throw new com.stayhub.seguridad.SeguridadException(429, "Cuota de correo excedida");
         try {
             Properties propiedades = new Properties();
 

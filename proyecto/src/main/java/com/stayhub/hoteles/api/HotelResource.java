@@ -29,8 +29,9 @@ public class HotelResource {
     }
     @GET
     public List<HotelResponse> listar(
-            @QueryParam("incluirInactivos") @DefaultValue("false") boolean incluir) {
-        return servicio.listarHoteles(incluir);
+            @QueryParam("incluirInactivos") @DefaultValue("false") boolean incluir,
+            @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarHoteles(incluir, offset, limite);
     }
 
     @GET
@@ -64,8 +65,9 @@ public class HotelResource {
     @Path("/{hotelId}/tipos-habitacion")
     public List<TipoHabitacionResponse> listarTipos(
             @PathParam("hotelId") String hotelId,
-            @QueryParam("incluirInactivos") @DefaultValue("false") boolean incluirInactivos) {
-        return servicio.listarTipos(parsearId(hotelId, "hotel"), incluirInactivos);
+            @QueryParam("incluirInactivos") @DefaultValue("false") boolean incluirInactivos,
+            @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarTipos(parsearId(hotelId, "hotel"), incluirInactivos, offset, limite);
     }
 
     @GET
@@ -107,8 +109,9 @@ public class HotelResource {
     @Path("/{hotelId}/habitaciones")
     public List<HabitacionResponse> listarHabitaciones(
             @PathParam("hotelId") String hotelId,
-            @QueryParam("incluirInactivas") @DefaultValue("false") boolean incluirInactivas) {
-        return servicio.listarHabitaciones(parsearId(hotelId, "hotel"), incluirInactivas);
+            @QueryParam("incluirInactivas") @DefaultValue("false") boolean incluirInactivas,
+            @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarHabitaciones(parsearId(hotelId, "hotel"), incluirInactivas, offset, limite);
     }
 
     @GET

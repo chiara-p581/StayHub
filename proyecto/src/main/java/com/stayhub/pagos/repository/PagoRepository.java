@@ -13,4 +13,5 @@ public interface PagoRepository {
     boolean existeAprobadoParaReserva(Long reservaId);
 
     List<Pago> listarPorReservas(List<Long> reservaIds);
+    List<Pago> listarPorUsuario(Long id, int offset, int limite);
 }

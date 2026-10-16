@@ -13,10 +13,18 @@ public interface ReservaRepository {
     Reserva guardar(Reserva reserva);
 
     Optional<Reserva> buscarPorId(Long id);
+    Optional<Reserva> buscarPorIdBloqueando(Long id);
 
     Optional<Reserva> buscarPorCanalYReferencia(String canal, String referenciaExterna);
 
     List<Reserva> listarPorHotel(Long hotelId);
 
     List<Reserva> listarPorHuespedEmail(String email);
+
+    List<Reserva> listarPorUsuario(Long id, int offset, int limite);
+    long contarPendientesPorUsuario(Long id);
+    void bloquearUsuario(Long id);
+    List<Reserva> pendientesVencidas(java.time.LocalDateTime antes);
+    List<Reserva> listarLlegadas(Long hotelId, java.time.LocalDate fecha);
+    List<Reserva> listarPorHotel(Long hotelId, int offset, int limite);
 }

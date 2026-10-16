@@ -24,7 +24,11 @@ public interface HotelRepository {
     Optional<Habitacion> buscarHabitacion(Long id);
     Optional<Habitacion> buscarHabitacionPorNumero(Long hotelId, String numero);
     List<Hotel> listarHoteles(boolean incluirInactivos);
+    List<Hotel> listarHoteles(boolean incluirInactivos, int offset, int limite);
+    void darDeBajaDependientes(Long hotelId);
     List<TipoHabitacion> listarTipos(Long hotelId);
+    List<TipoHabitacion> listarTipos(Long hotelId, boolean incluir, int offset, int limite);
     List<Habitacion> listarHabitaciones(Long hotelId);
+    List<Habitacion> listarHabitaciones(Long hotelId, boolean incluir, int offset, int limite);
     long contarHabitacionesActivasPorTipo(Long tipoId);
 }

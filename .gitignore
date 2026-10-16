@@ -8,3 +8,8 @@ mail.properties
 .env
 .env.*
 !.env.example
+# Herramientas locales para generar CSS y probar seguridad de UI
+**/node_modules/
+
+# Certificados, claves, copias y configuración privada del servidor local
+.local-security/

@@ -69,14 +69,16 @@ public class InventarioDiarioRepositoryJpa implements InventarioDiarioRepository
 
     @Override
     public List<InventarioDiario> buscarPorHotelYRango(Long hotelId, LocalDate desde, LocalDate hasta) {
-        return em.createQuery(
+        List<InventarioDiario> resultado = em.createQuery(
                 "SELECT i FROM InventarioDiario i " +
                 "WHERE i.hotelId = :hotelId AND i.fecha >= :desde AND i.fecha < :hasta",
                 InventarioDiario.class)
             .setParameter("hotelId", hotelId)
             .setParameter("desde", desde)
             .setParameter("hasta", hasta)
-            .getResultList();
+            .setMaxResults(5001).getResultList();
+        if (resultado.size() > 5000) throw new com.stayhub.seguridad.SeguridadException(400, "Acotá el período consultado");
+        return resultado;
     }
 
     private TypedQuery<InventarioDiario> consultaPorHotelTipoYFecha(Long hotelId, String tipoHabitacion,
