@@ -29,6 +29,19 @@ public class PagoRepositoryJpa implements PagoRepository {
     }
 
     @Override
+    public Optional<Pago> buscarPorClaveIdempotencia(String clave) {
+        if (clave == null || clave.isBlank()) return Optional.empty();
+        return em.createQuery("SELECT p FROM Pago p WHERE p.claveIdempotencia=:clave", Pago.class)
+                .setParameter("clave", clave).getResultStream().findFirst();
+    }
+
+    @Override
+    public void bloquearReservas(List<Long> reservaIds) {
+        reservaIds.stream().sorted().forEach(id ->
+                em.createNativeQuery("SELECT pg_advisory_xact_lock(?1)").setParameter(1, id).getSingleResult());
+    }
+
+    @Override
     public boolean existeAprobadoParaReserva(Long reservaId) {
         Long cantidad = em.createQuery("SELECT COUNT(p) FROM Pago p WHERE p.estado=:estado " +
                         "AND (p.reservaId=:reservaId OR :reservaId MEMBER OF p.reservaIds)", Long.class)

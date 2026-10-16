@@ -36,10 +36,11 @@ Las fechas usan ISO-8601 (`AAAA-MM-DD`). Los canales iniciales son `BOOKING`, `E
 
 Las consultas y sincronizaciones iniciadas desde la interfaz requieren una sesión
 StayHub con rol `ADMIN`. Los webhooks de reservas OTA aceptan esa sesión administrativa
-o una clave técnica enviada en `X-StayHub-Channel-Key`.
+con una firma HMAC por proveedor enviada en `X-StayHub-Signature`, junto con
+`X-StayHub-Timestamp` y `X-StayHub-Nonce`.
 
 La clave se configura fuera del repositorio mediante la propiedad de sistema
-`stayhub.canales.api-key` o la variable `STAYHUB_CANALES_API_KEY`. No debe incluirse
+`stayhub.canales.<canal>.webhook-secret` o su variable de entorno equivalente. No debe incluirse
 en código, archivos versionados ni URLs.
 
 ## Configuración
@@ -51,7 +52,8 @@ Puede suministrarse como propiedad de sistema de WildFly o variable de entorno:
 | `stayhub.ota.booking.url` | `STAYHUB_OTA_BOOKING_URL` | URL base de Booking |
 | `stayhub.ota.booking.token` | `STAYHUB_OTA_BOOKING_TOKEN` | Bearer token opcional |
 | `stayhub.pms.wsdl` | `STAYHUB_PMS_WSDL` | URL del WSDL del PMS |
-| `stayhub.canales.api-key` | `STAYHUB_CANALES_API_KEY` | Clave técnica para autenticar webhooks OTA |
+| `stayhub.canales.<canal>.webhook-secret` | `STAYHUB_CANALES_<CANAL>_WEBHOOK_SECRET` | Secreto HMAC individual para webhooks OTA |
+| `stayhub.canales.hosts-permitidos` | `STAYHUB_CANALES_HOSTS_PERMITIDOS` | Allowlist exacta de hosts OTA/PMS |
 | `stayhub.canales.timeout.conexion.ms` | `STAYHUB_CANALES_TIMEOUT_CONEXION_MS` | Timeout de conexión REST/SOAP (default 5000 ms) |
 | `stayhub.canales.timeout.lectura.ms` | `STAYHUB_CANALES_TIMEOUT_LECTURA_MS` | Timeout de lectura REST/SOAP (default 15000 ms) |
 

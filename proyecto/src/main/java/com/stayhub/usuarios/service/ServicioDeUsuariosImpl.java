@@ -17,6 +17,8 @@ import jakarta.inject.Inject;
 
 @Stateless
 public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
+    private static final int PASSWORD_MINIMA = 12;
+    private static final int PASSWORD_MAXIMA = 128;
 
     @Inject
     private UsuarioRepository repositorio;
@@ -49,6 +51,11 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
 
     @Override
     public UsuarioResponse autenticar(LoginRequest credenciales) {
+        if (credenciales == null || credenciales.email() == null || credenciales.email().isBlank()
+                || !passwordValidaEnLongitud(credenciales.password())) {
+            throw new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
+                    "Email o contraseña incorrectos");
+        }
         Usuario usuario = repositorio.buscarPorEmail(credenciales.email())
                 .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
                         "Email o contraseña incorrectos"));
@@ -75,7 +82,7 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
                 || solicitud.nombre() == null || solicitud.nombre().isBlank()
                 || solicitud.apellido() == null || solicitud.apellido().isBlank()
                 || (solicitud.password() != null && !solicitud.password().isBlank()
-                    && solicitud.password().length() < 6)) {
+                    && !passwordSegura(solicitud.password()))) {
             throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
                     "Los datos del perfil son incompletos o inválidos");
         }
@@ -95,11 +102,22 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
 
     private void validar(RegistroUsuarioRequest s) {
         if (s == null || s.email() == null || s.email().isBlank()
-                || s.password() == null || s.password().length() < 6
+                || !passwordSegura(s.password())
                 || s.nombre() == null || s.nombre().isBlank()
                 || s.rol() == null) {
             throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
                     "La solicitud de registro está incompleta o contiene valores inválidos");
         }
+    }
+
+    private boolean passwordValidaEnLongitud(String password) {
+        return password != null && password.length() >= PASSWORD_MINIMA && password.length() <= PASSWORD_MAXIMA;
+    }
+
+    private boolean passwordSegura(String password) {
+        if (!passwordValidaEnLongitud(password)) return false;
+        String normalizada = password.toLowerCase();
+        return !normalizada.equals("password1234") && !normalizada.equals("contraseña123")
+                && !normalizada.equals("123456789012") && !normalizada.equals("qwertyuiop12");
     }
 }

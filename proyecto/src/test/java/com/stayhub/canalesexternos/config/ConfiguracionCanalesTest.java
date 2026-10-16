@@ -13,6 +13,21 @@ class ConfiguracionCanalesTest {
     void limpiar() {
         System.clearProperty("stayhub.canales.timeout.conexion.ms");
         System.clearProperty("stayhub.canales.timeout.lectura.ms");
+        System.clearProperty("stayhub.canales.hosts-permitidos");
+        System.clearProperty("stayhub.canales.permitir-http-local");
+    }
+
+    @Test
+    void aceptaSoloHttpsDeHostsExplicitamentePermitidos() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "api.booking.example,pms.example");
+        ConfiguracionCanales configuracion = new ConfiguracionCanales();
+        assertEquals("https://api.booking.example/v1", configuracion.urlPermitida("https://api.booking.example/v1"));
+        assertThrows(CanalExternoException.class,
+                () -> configuracion.urlPermitida("https://169.254.169.254/latest/meta-data"));
+        assertThrows(CanalExternoException.class,
+                () -> configuracion.urlPermitida("https://otro.example/v1"));
+        assertThrows(CanalExternoException.class,
+                () -> configuracion.urlPermitida("http://api.booking.example/v1"));
     }
 
     @Test

@@ -17,6 +17,8 @@ public class OtaRestClientImpl implements OtaRestClient {
         try (Client client = ClientBuilder.newBuilder()
                 .connectTimeout(configuracion.timeoutConexionMs(), TimeUnit.MILLISECONDS)
                 .readTimeout(configuracion.timeoutLecturaMs(), TimeUnit.MILLISECONDS)
+                .property("jersey.config.client.followRedirects", false)
+                .property("resteasy.follow.redirects", false)
                 .build()) {
             Invocation.Builder request = client.target(configuracion.urlOta(canal)).path(ruta).request(MediaType.APPLICATION_JSON_TYPE);
             String token = configuracion.tokenOta(canal);
