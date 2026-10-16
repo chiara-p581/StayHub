@@ -4,8 +4,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Staff Portal</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
+<link href="assets/css/tailwind.css" rel="stylesheet"/>
+
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
@@ -18,6 +18,7 @@
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 </style>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-lg min-h-screen flex flex-col md:flex-row">
 <header class="md:hidden bg-background shadow-sm w-full top-0 sticky z-40 flex justify-between items-center px-lg py-md">
@@ -245,21 +246,6 @@ This page is still a visual mockup: the staff directory and notice board do not 
 </div>
 </nav>
 
-<script src="assets/js/api.js?v=20260913-6"></script>
-<script>
-(function () {
-    if (!Api.requireLogin()) return;
-    var usuario = Api.currentUser();
-    if (usuario.rol !== "ADMIN") {
-        document.getElementById("acceso-denegado").classList.remove("hidden");
-        document.getElementById("panel").classList.add("hidden");
-        return;
-    }
-    document.getElementById("perfil-admin").innerHTML =
-        '<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold">' +
-        usuario.nombre.charAt(0) + usuario.apellido.charAt(0) + '</div>' +
-        '<div><div class="font-title-lg text-body-lg text-primary">' + usuario.nombre + ' ' + usuario.apellido + '</div>' +
-        '<div class="font-label-md text-label-md text-on-surface-variant">' + usuario.rol + '</div></div>';
-})();
-</script>
+<script src="assets/js/api.js?v=seguridad-a-1"></script>
+<script src="assets/js/pages/staff-portal-1.js"></script>
 </body></html>

@@ -1,0 +1,17 @@
+# Plantilla: verificar versión WildFly y nombres de servidor/listener antes de aplicar.
+# Aplicar a cada listener expuesto. No crea certificados ni configura Elytron.
+# El listener HTTPS default se llama https; adaptar si el despliegue usa otro nombre.
+# Ejecutar con jboss-cli.sh --connect --file=seguridad-a-undertow.cli y revisar resultado.
+batch
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=max-post-size,value=65536)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=max-header-size,value=16384)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=max-headers,value=100)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=max-parameters,value=100)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=max-connections,value=200)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=request-parse-timeout,value=10000)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=read-timeout,value=10000)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=write-timeout,value=10000)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=http2-max-concurrent-streams,value=32)
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=http2-max-header-list-size,value=16384)
+run-batch
+# Revisar si el servidor indica reload-required antes de recargar.

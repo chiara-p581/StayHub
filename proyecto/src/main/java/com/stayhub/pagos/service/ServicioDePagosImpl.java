@@ -1,5 +1,6 @@
 package com.stayhub.pagos.service;
 
+import com.stayhub.seguridad.*;
 import com.stayhub.pagos.client.pasarela.PasarelaDePagoClient;
 import com.stayhub.pagos.client.pasarela.ResultadoCobro;
 import com.stayhub.pagos.contrato.ServicioDePagos;
@@ -22,6 +23,8 @@ import jakarta.inject.Inject;
 @Stateless
 public class ServicioDePagosImpl implements ServicioDePagos {
 
+    @Inject private IdentidadActual identidad;
+
     @Inject
     private PagoRepository repositorio;
 
@@ -36,12 +39,14 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
     @Override
     public PagoResponse procesarPago(PagoRequest solicitud) {
+        identidad.exigirHuesped();
         validar(solicitud);
         PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia());
         if (repetido != null) return repetido;
         repositorio.bloquearReservas(List.of(solicitud.reservaId()));
+        var reserva = reservas.consultarParaPago(solicitud.reservaId());
+        if (!"PENDIENTE".equals(reserva.estado())) throw new SeguridadException(409, "La reserva no está pendiente de pago");
         verificarNoPagada(solicitud.reservaId());
-        var reserva = reservas.consultarReserva(solicitud.reservaId());
         if (reserva.precioTotal().compareTo(solicitud.monto()) != 0
                 || !reserva.moneda().equalsIgnoreCase(solicitud.moneda())) {
             throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
@@ -58,10 +63,8 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         if (resultado.aprobado()) {
             pago.aprobar(resultado.referenciaExterna());
             repositorio.guardar(pago);
-            reservas.confirmarReserva(solicitud.reservaId());
-            publicadorEventos.publicarPagoAprobado(new EventoPagoAprobado(
-                    pago.getId(), pago.getReservaId(), pago.getMonto(), pago.getMoneda(),
-                    pago.getReferenciaPasarela(), pago.getFechaPago()));
+            var confirmada = reservas.confirmarReserva(solicitud.reservaId());
+            publicadorEventos.publicarPagoAprobado(EventoPagoAprobado.desde(pago, confirmada));
             return PagoMapper.aResponse(pago);
         }
 
@@ -73,6 +76,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
     @Override
     public PagoResponse procesarLote(PagoLoteRequest solicitud) {
+        identidad.exigirHuesped();
+        if (solicitud != null && solicitud.reservaIds() != null && solicitud.reservaIds().size() > Limites.LOTE)
+            throw new SeguridadException(400, "El lote supera 20 reservas");
         if (solicitud == null || solicitud.reservaIds() == null || solicitud.reservaIds().isEmpty()
                 || solicitud.reservaIds().stream().anyMatch(id -> id == null || id <= 0)
                 || solicitud.reservaIds().stream().distinct().count() != solicitud.reservaIds().size()
@@ -84,8 +90,11 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia());
         if (repetido != null) return repetido;
         repositorio.bloquearReservas(solicitud.reservaIds());
+        // Consultar todas antes de cobrar verifica autorización y estado también para cada ID del lote.
+        var reservasAutorizadas = solicitud.reservaIds().stream().sorted().map(reservas::consultarParaPago).toList();
+        if (reservasAutorizadas.stream().anyMatch(r -> !"PENDIENTE".equals(r.estado()))) throw new SeguridadException(409, "El lote contiene reservas no pendientes");
         solicitud.reservaIds().forEach(this::verificarNoPagada);
-        BigDecimal totalReal = solicitud.reservaIds().stream().map(reservas::consultarReserva)
+        BigDecimal totalReal = reservasAutorizadas.stream()
                 .peek(r -> {
                     if (!r.moneda().equalsIgnoreCase(solicitud.moneda())) {
                         throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
@@ -111,18 +120,22 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
         pago.aprobar(resultado.referenciaExterna());
         repositorio.guardar(pago);
-        solicitud.reservaIds().forEach(reservas::confirmarReserva);
-        solicitud.reservaIds().forEach(reservaId -> publicadorEventos.publicarPagoAprobado(
-                new EventoPagoAprobado(pago.getId(), reservaId, pago.getMonto(), pago.getMoneda(),
-                        pago.getReferenciaPasarela(), pago.getFechaPago())));
+        var confirmadas = solicitud.reservaIds().stream().map(reservas::confirmarReserva).toList();
+        confirmadas.forEach(reserva -> publicadorEventos.publicarPagoAprobado(EventoPagoAprobado.desde(pago, reserva)));
         return PagoMapper.aResponse(pago);
     }
 
     @Override
     public PagoResponse consultarPago(Long id) {
-        Pago pago = repositorio.buscarPorId(id)
-                .orElseThrow(() -> new PagoException(CodigoErrorPago.PAGO_NO_ENCONTRADO,
-                        "No existe un pago con id " + id));
+        if (id == null || id <= 0) throw new SeguridadException(404, "Pago no disponible");
+        identidad.usuarioId();
+        Pago pago = repositorio.buscarPorId(id).orElseThrow(() -> new SeguridadException(404, "Pago no disponible"));
+        try {
+            for (Long reservaId : pago.getReservaIds()) reservas.consultarReserva(reservaId);
+        } catch (SeguridadException ex) {
+            if (ex.getEstado() == 404) throw new SeguridadException(404, "Pago no disponible");
+            throw ex;
+        }
         return PagoMapper.aResponse(pago);
     }
 
@@ -137,7 +150,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
     private PagoResponse buscarRepetido(String clave) {
         String normalizada = normalizarClave(clave);
         if (normalizada == null) return null;
-        return repositorio.buscarPorClaveIdempotencia(normalizada).map(PagoMapper::aResponse).orElse(null);
+        return repositorio.buscarPorClaveIdempotencia(normalizada).map(p -> consultarPago(p.getId())).orElse(null);
     }
 
     private String normalizarClave(String clave) {
@@ -152,7 +165,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
     @Override
     public List<PagoResponse> listarPorReservas(List<Long> reservaIds) {
-        return repositorio.listarPorReservas(reservaIds).stream().map(PagoMapper::aResponse).toList();
+        if (reservaIds == null || reservaIds.size() > 100) throw new SeguridadException(400, "Lista de reservas inválida");
+        reservaIds.forEach(reservas::consultarReserva);
+        return repositorio.listarPorReservas(reservaIds).stream().map(p -> consultarPago(p.getId())).toList();
     }
 
     private void verificarNoPagada(Long reservaId) {
@@ -160,5 +175,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
             throw new PagoException(CodigoErrorPago.RESERVA_YA_PAGADA,
                     "La reserva " + reservaId + " ya tiene un pago aprobado");
         }
+    }
+
+    @Override public List<PagoResponse> listarMios(int offset, int limite) {
+        return repositorio.listarPorUsuario(identidad.usuarioId(), offset, Limites.pagina(offset, limite)).stream().map(p -> consultarPago(p.getId())).toList();
     }
 }

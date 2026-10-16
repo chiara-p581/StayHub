@@ -39,6 +39,8 @@ import java.time.LocalDate;
 @Stateful
 public class CarritoDeReserva {
 
+    @Inject private com.stayhub.seguridad.IdentidadActual identidad;
+    @Inject private com.stayhub.usuarios.contrato.ServicioDeUsuarios usuarios;
     @Inject
     private ServicioDeReservas servicioDeReservas;
 
@@ -68,24 +70,28 @@ public class CarritoDeReserva {
     }
 
     public void seleccionarHotelYHabitacion(Long hotelId, String tipoHabitacion, int cantidadHabitaciones) {
+        com.stayhub.seguridad.Limites.cantidad(cantidadHabitaciones);
+        com.stayhub.seguridad.Limites.texto(tipoHabitacion, 30, true);
+        if (hotelId == null || hotelId <= 0) throw new com.stayhub.seguridad.SeguridadException(400, "Hotel inválido");
         this.hotelId = hotelId;
         this.tipoHabitacion = tipoHabitacion;
         this.cantidadHabitaciones = cantidadHabitaciones;
     }
 
     public void seleccionarFechas(LocalDate checkIn, LocalDate checkOut) {
+        com.stayhub.seguridad.Limites.rango(checkIn, checkOut);
         this.checkIn = checkIn;
         this.checkOut = checkOut;
     }
 
     public void seleccionarHuespedYPrecio(String huespedNombre, String huespedApellido, String huespedEmail,
                                            String huespedTelefono, BigDecimal precioTotal, String moneda) {
-        this.huespedNombre = huespedNombre;
-        this.huespedApellido = huespedApellido;
-        this.huespedEmail = huespedEmail;
+        identidad.exigirHuesped();
+        var usuario = usuarios.buscarPorId(identidad.usuarioId());
+        com.stayhub.seguridad.Limites.texto(huespedTelefono, 30, true);
+        this.huespedNombre = usuario.nombre(); this.huespedApellido = usuario.apellido(); this.huespedEmail = usuario.email();
         this.huespedTelefono = huespedTelefono;
-        this.precioTotal = precioTotal;
-        this.moneda = moneda;
+        calcularPrecioDesdeTarifas();
     }
 
     public CarritoResumenDTO resumen() {

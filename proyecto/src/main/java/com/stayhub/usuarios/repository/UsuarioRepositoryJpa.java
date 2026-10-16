@@ -3,6 +3,7 @@ package com.stayhub.usuarios.repository;
 import com.stayhub.usuarios.model.Usuario;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import java.util.Optional;
@@ -38,5 +39,18 @@ public class UsuarioRepositoryJpa implements UsuarioRepository {
         } catch (NoResultException e) {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Bloquea la fila mientras dura la transacción: si alguien usa el mismo
+     * link dos veces al mismo tiempo, el segundo espera y encuentra el token ya borrado.
+     */
+    @Override
+    public Optional<Usuario> buscarPorResetTokenHash(String hash) {
+        return em.createQuery("select u from Usuario u where u.resetTokenHash = :hash", Usuario.class)
+                .setParameter("hash", hash)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .getResultStream()
+                .findFirst();
     }
 }

@@ -36,6 +36,27 @@ Rama por feature → merge a `development` → merge a `main`. Los Pull Requests
 
 ## Cómo levantar el entorno local
 
+Para `feature/seguridad-a`, consultar primero
+[configuración local de seguridad](docs/CONFIGURACION_LOCAL_SEGURIDAD.md):
+HTTPS usa el puerto 8080 y SOAP requiere permisos explícitos. Las URLs HTTP
+de las instrucciones originales siguientes corresponden al entorno anterior.
+
+Abrir **https://localhost:8080/StayHub/index.html**. HTTP queda en 8081 y
+redirige a HTTPS para navegación. El modo HTTP local queda desactivado.
+Los puertos se guardan en WildFly, fuera de este repositorio: cada persona debe
+configurar su servidor. El script `config/configurar-seguridad-local.py` prepara
+TLS y estos puertos; requiere también PostgreSQL y el datasource configurados.
+Si ya tiene la configuración TLS `StayHubTLS`, puede aplicar solo los puertos:
+
+```sh
+"$WILDFLY_HOME/bin/jboss-cli.sh" --connect --file=config/https-8080.cli
+"$WILDFLY_HOME/bin/jboss-cli.sh" --connect --command=:reload
+```
+
+Ejecutar desde la raíz de StayHub con `WILDFLY_HOME` apuntando a la instalación.
+Los certificados privados y la confianza del certificado son locales a cada
+computadora; no se comparten por Git.
+
 ### 1. Arrancar WildFly con el perfil `full`
 
 El proyecto usa JMS para la sincronización asincrónica con OTAs/PMS, por lo que **hace falta el perfil `standalone-full`**, no el `standalone` por defecto:

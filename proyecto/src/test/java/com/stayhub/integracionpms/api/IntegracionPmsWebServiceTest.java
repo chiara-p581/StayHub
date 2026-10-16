@@ -42,6 +42,7 @@ class IntegracionPmsWebServiceTest {
         inventario = mock(ServicioDeInventarioYTarifas.class);
         setPrivateField(servicio, "reservas", reservas);
         setPrivateField(servicio, "inventario", inventario);
+        setPrivateField(servicio, "identidad", com.stayhub.seguridad.IdentidadFixture.pms(java.util.Set.of(1L)));
     }
 
     @Test
@@ -80,11 +81,8 @@ class IntegracionPmsWebServiceTest {
     @Test
     void listarLlegadasFiltraConfirmadasDelDia() throws Exception {
         LocalDate hoy = LocalDate.of(2026, 11, 9);
-        when(reservas.listarPorHotel(1L)).thenReturn(List.of(
-                reserva(1L, "CONFIRMADA", hoy),
-                reserva(2L, "PENDIENTE", hoy),
-                reserva(3L, "CONFIRMADA", hoy.plusDays(1)),
-                reserva(4L, "CANCELADA", hoy)));
+        when(reservas.listarLlegadas(1L, hoy)).thenReturn(List.of(
+                reserva(1L, "CONFIRMADA", hoy)));
 
         List<ReservaPmsDTO> llegadas = servicio.listarLlegadas(1L, "2026-11-09");
 
@@ -103,13 +101,14 @@ class IntegracionPmsWebServiceTest {
 
     @Test
     void cancelarReservaActuaComoAdminDelHotel() throws Exception {
-        when(reservas.cancelarReserva(7L, IntegracionPmsWebService.ACTOR_PMS, true))
+        when(reservas.consultarReserva(7L)).thenReturn(reserva(7L, "CONFIRMADA", LocalDate.of(2026,11,9)));
+        when(reservas.cancelarReserva(7L))
                 .thenReturn(reserva(7L, "CANCELADA", LocalDate.of(2026, 11, 9)));
 
         ReservaPmsDTO dto = servicio.cancelarReserva(7L);
 
         assertEquals("CANCELADA", dto.getEstado());
-        verify(reservas).cancelarReserva(7L, IntegracionPmsWebService.ACTOR_PMS, true);
+        verify(reservas).cancelarReserva(7L);
     }
 
     @Test
@@ -124,6 +123,18 @@ class IntegracionPmsWebServiceTest {
         assertEquals(1, disp.size());
         assertEquals("DOBLE", disp.get(0).getTipoHabitacion());
         assertEquals(4, disp.get(0).getUnidadesDisponibles());
+    }
+
+    @Test void sinIdentidadPmsNoInvocaReservas() throws Exception {
+        setPrivateField(servicio,"identidad",com.stayhub.seguridad.IdentidadFixture.usuario(1L,"ADMIN"));
+        assertThrows(IntegracionPmsFault.class,()->servicio.consultarReserva(7L)); verifyNoInteractions(reservas);
+    }
+    @Test void noPermiteOtroHotelNiExponeEmail() throws Exception {
+        setPrivateField(servicio,"identidad",com.stayhub.seguridad.IdentidadFixture.pms(java.util.Set.of(2L)));
+        when(reservas.consultarReserva(7L)).thenReturn(reserva(7L,"CONFIRMADA",LocalDate.of(2026,11,9)));
+        assertThrows(IntegracionPmsFault.class,()->servicio.cancelarReserva(7L));verify(reservas,never()).cancelarReserva(anyLong());
+        setPrivateField(servicio,"identidad",com.stayhub.seguridad.IdentidadFixture.pms(java.util.Set.of(1L)));
+        assertNull(servicio.consultarReserva(7L).getHuespedEmail());
     }
 
     private static ReservaResponse reserva(Long id, String estado, LocalDate checkIn) {

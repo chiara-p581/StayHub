@@ -51,7 +51,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
                     "La firma del webhook no es válida o el mensaje ya fue procesado");
             return;
         }
-        if (rol == null) {
+        if (rol == null || sesion.getAttribute("usuarioId") == null) {
             abortar(contexto, Response.Status.UNAUTHORIZED, "NO_AUTENTICADO", "Iniciá sesión para continuar");
             return;
         }
@@ -67,7 +67,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
 
     String normalizarRuta(String ruta) {
         if (ruta == null) return "";
-        String normalizada = ruta.trim().replace('\\', '/');
+        String normalizada = ruta.trim().replace('\\', '/').replaceAll(";[^/]*", "").replaceAll("/{2,}", "/");
         while (normalizada.startsWith("/")) normalizada = normalizada.substring(1);
         if (normalizada.equals("api")) return "";
         if (normalizada.startsWith("api/")) normalizada = normalizada.substring(4);
@@ -78,7 +78,10 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     }
 
     boolean esPublica(String ruta, String metodo) {
-        if ("POST".equals(metodo) && ("usuarios".equals(ruta) || "usuarios/login".equals(ruta))) return true;
+        // Registro, login y recuperación de contraseña: se usan sin sesión iniciada
+        if ("POST".equals(metodo) && ("usuarios".equals(ruta) || "usuarios/login".equals(ruta)
+                || "usuarios/recuperar-password".equals(ruta) || "usuarios/resetear-password".equals(ruta))) return true;
+        if ("GET".equals(metodo) && ruta.equals("seguridad/csrf")) return true;
         if ("GET".equals(metodo) && (ruta.equals("hoteles") || ruta.startsWith("hoteles/"))) return true;
         if ("GET".equals(metodo) && ruta.startsWith("catalogo-canales/")) return true;
         return "GET".equals(metodo) && ruta.startsWith("inventario-tarifas/");

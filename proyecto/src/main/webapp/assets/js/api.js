@@ -33,13 +33,23 @@ const Api = (() => {
         sessionStorage.setItem(USER_KEY, JSON.stringify(usuario));
     }
 
-    function clearSession() {
+    async function clearSession() {
+        await request("usuarios/sesion", { method: "DELETE" });
         sessionStorage.removeItem(USER_KEY);
-        fetch(BASE + "usuarios/sesion", {
-            method: "DELETE",
-            credentials: "same-origin",
-            keepalive: true,
-        }).catch(function () {});
+        saveLocalCart([]);
+        csrfPendiente = null;
+    }
+
+    let csrfPendiente = null;
+    function csrfToken() {
+        if (!csrfPendiente) {
+            csrfPendiente = fetch(BASE + "seguridad/csrf", { credentials: "same-origin", cache: "no-store" })
+                .then(async response => {
+                    if (!response.ok) throw new Error("Could not initialize a secure session.");
+                    return (await response.json()).token;
+                }).catch(error => { csrfPendiente = null; throw error; });
+        }
+        return csrfPendiente;
     }
 
     function currentUser() {
@@ -104,6 +114,7 @@ const Api = (() => {
             }
         }
 
+        if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers["X-CSRF-Token"] = await csrfToken();
         let res;
         try {
             res = await fetch(url, {
@@ -138,6 +149,7 @@ const Api = (() => {
             err.body = data;
             throw err;
         }
+        if (path === "usuarios/login") csrfPendiente = null;
         return data;
     }
 
@@ -159,6 +171,7 @@ const Api = (() => {
 
     function addLocalCartItem(item) {
         var items = localCart();
+        if (items.length >= 10) throw new Error("The cart supports at most 10 bookings.");
         items.push(Object.assign({ itemId: Date.now() + "-" + Math.random().toString(16).slice(2) }, item));
         return saveLocalCart(items);
     }
@@ -222,7 +235,7 @@ const Api = (() => {
         if (esAdminPage) document.body.classList.add("stayhub-admin-layout");
         var header = document.createElement("header");
         header.className = "stayhub-global-header";
-        header.innerHTML = '<div class="stayhub-header-inner">' +
+        header.innerHTML = StayHubDOM.html('<div class="stayhub-header-inner">' +
             '<a class="stayhub-brand" href="index.html"><span class="stayhub-brand-mark">S</span><span class="stayhub-brand-name">StayHub</span>' +
             (usuario && usuario.rol === "ADMIN" ? '<span class="stayhub-admin-badge">Admin</span>' : '') + '</a>' +
             (page === "index.html" ? '<div class="stayhub-channel-shortcuts"><a href="index.html?canal=STAYHUB#hoteles">StayHub</a><a href="index.html?canal=BOOKING#hoteles">Booking</a><a href="index.html?canal=AIRBNB#hoteles">Airbnb</a><a href="index.html?canal=EXPEDIA#hoteles">Expedia</a></div>' : '') +
@@ -232,7 +245,7 @@ const Api = (() => {
             (usuario && usuario.rol === "ADMIN" ? '<a class="stayhub-header-icon" href="admin-dashboard.html" aria-label="Administration" title="Administration"><span class="material-symbols-outlined">space_dashboard</span></a>' : '') +
             (!usuario || usuario.rol !== "ADMIN" ? '<a class="stayhub-header-icon stayhub-cart-link" href="cart.html" aria-label="Cart" title="Cart"><span class="material-symbols-outlined">shopping_bag</span><span id="global-cart-count" class="stayhub-cart-count">0</span></a>' : '') +
             '<a class="stayhub-profile-pill" href="' + (usuario ? 'settings.html' : 'login.html') + '"><span class="stayhub-avatar">' + (usuario ? String(usuario.nombre || "U").charAt(0).toUpperCase() : '<span class="material-symbols-outlined">person</span>') + '</span><span>' + (usuario ? usuario.nombre : 'Sign in') + '</span></a>' +
-            '</nav></div>';
+            '</nav></div>');
         document.body.insertBefore(header, document.body.firstChild);
 
         if (esAdminPage) {
@@ -247,14 +260,14 @@ const Api = (() => {
             ];
             var sidebar = document.createElement("aside");
             sidebar.className = "stayhub-admin-sidebar";
-            sidebar.innerHTML = '<div class="stayhub-sidebar-title"><span>Admin panel</span><small>StayHub management</small></div><nav>' +
+            sidebar.innerHTML = StayHubDOM.html('<div class="stayhub-sidebar-title"><span>Admin panel</span><small>StayHub management</small></div><nav>' +
                 items.map(function (item) {
                     var parts = item[0].split("#");
                     var itemPage = parts[0];
                     var itemHash = parts[1] ? "#" + parts[1] : "";
                     var active = itemPage === page && (itemHash ? location.hash === itemHash : !location.hash);
                     return '<a href="' + item[0] + '" data-page="' + itemPage + '" data-hash="' + itemHash + '"' + (active ? ' class="active" aria-current="page"' : '') + '><span class="material-symbols-outlined">' + item[1] + '</span><span>' + item[2] + '</span></a>';
-                }).join("") + '</nav><a class="stayhub-sidebar-profile" href="settings.html"><span class="stayhub-avatar">' + String(usuario.nombre || "A").charAt(0).toUpperCase() + '</span><span><strong>' + usuario.nombre + '</strong><small>View profile</small></span></a>';
+                }).join("") + '</nav><a class="stayhub-sidebar-profile" href="settings.html"><span class="stayhub-avatar">' + String(usuario.nombre || "A").charAt(0).toUpperCase() + '</span><span><strong>' + StayHubDOM.text(usuario.nombre) + '</strong><small>View profile</small></span></a>');
             document.body.insertBefore(sidebar, header.nextSibling);
             function updateAdminNavigation() {
                 sidebar.querySelectorAll("nav a").forEach(function (link) {
@@ -278,11 +291,11 @@ const Api = (() => {
         updateCartBadge();
         document.addEventListener("stayhub:cart-changed", updateCartBadge);
 
-        var authPages = ["login.html", "register.html", "recover-password.html"];
+        var authPages = ["login.html", "register.html", "recover-password.html", "reset-password.html"];
         if (!esAdminPage && authPages.indexOf(page) === -1 && !document.querySelector(".stayhub-global-footer")) {
             var footer = document.createElement("footer");
             footer.className = "stayhub-global-footer";
-            footer.innerHTML = '<div class="stayhub-footer-inner"><div class="stayhub-footer-brand"><span class="stayhub-brand-mark">S</span><div><strong>StayHub</strong><p>Your next stay, all in one place.</p></div></div><nav aria-label="StayHub information"><a href="about-us.html">About us</a><a href="help-faq.html">Frequently asked questions</a></nav><p class="stayhub-footer-note">Academic project · Application Development II</p></div>';
+            footer.innerHTML = StayHubDOM.html('<div class="stayhub-footer-inner"><div class="stayhub-footer-brand"><span class="stayhub-brand-mark">S</span><div><strong>StayHub</strong><p>Your next stay, all in one place.</p></div></div><nav aria-label="StayHub information"><a href="about-us.html">About us</a><a href="help-faq.html">Frequently asked questions</a></nav><p class="stayhub-footer-note">Academic project · Application Development II</p></div>');
             document.body.appendChild(footer);
         }
     }
@@ -304,6 +317,8 @@ const Api = (() => {
         applyTheme,
 
         // ---- usuarios ----
+        solicitarRecuperacionPassword: (email) => request("usuarios/recuperar-password", { method: "POST", body: { email } }),
+        resetearPassword: (dto) => request("usuarios/resetear-password", { method: "POST", body: dto }),
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
         loginUsuario: (dto) => request("usuarios/login", { method: "POST", body: dto }),
         consultarUsuario: (id) => request(`usuarios/${id}`, { auth: true }),

@@ -56,6 +56,12 @@ public class PagoRepositoryJpa implements PagoRepository {
         return em.createQuery("SELECT DISTINCT p FROM Pago p LEFT JOIN p.reservaIds r "
                         + "WHERE p.reservaId IN :ids OR r IN :ids ORDER BY p.fechaPago DESC", Pago.class)
                 .setParameter("ids", reservaIds)
-                .getResultList();
+                .setMaxResults(100).getResultList();
+    }
+
+    @Override public List<Pago> listarPorUsuario(Long id, int offset, int limite) {
+        com.stayhub.seguridad.Limites.pagina(offset, limite);
+        return em.createQuery("SELECT p FROM Pago p WHERE EXISTS (SELECT r.id FROM Reserva r WHERE r.usuarioId=:id AND (r.id=p.reservaId OR r.id MEMBER OF p.reservaIds)) ORDER BY p.id DESC", Pago.class)
+                .setParameter("id",id).setFirstResult(offset).setMaxResults(limite).getResultList();
     }
 }

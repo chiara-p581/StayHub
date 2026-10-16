@@ -23,7 +23,7 @@ final class IntegracionPmsMapper {
         ReservaPmsDTO dto = new ReservaPmsDTO();
         dto.setId(r.id());
         dto.setCanal(r.canal());
-        dto.setReferenciaExterna(r.referenciaExterna());
+        // Dato omitido del contrato público por minimización.
         dto.setHotelId(r.hotelId());
         dto.setTipoHabitacion(r.tipoHabitacion());
         dto.setCantidadHabitaciones(r.cantidadHabitaciones());
@@ -31,8 +31,8 @@ final class IntegracionPmsMapper {
         dto.setCheckOut(texto(r.checkOut()));
         dto.setHuespedNombre(r.huespedNombre());
         dto.setHuespedApellido(r.huespedApellido());
-        dto.setHuespedEmail(r.huespedEmail());
-        dto.setPrecioTotal(r.precioTotal());
+        // Dato omitido del contrato público por minimización.
+        // Dato omitido del contrato público por minimización.
         dto.setMoneda(r.moneda());
         dto.setEstado(r.estado());
         return dto;
