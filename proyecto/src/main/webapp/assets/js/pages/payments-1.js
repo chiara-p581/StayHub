@@ -81,7 +81,10 @@
 
         var btn = document.getElementById("btn-pagar");
         btn.disabled = true;
-        Api.procesarPago({ reservaId: reservaId, monto: monto, moneda: moneda })
+        var claveIdempotencia = crypto.randomUUID ? crypto.randomUUID() :
+            "pago-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+        Api.procesarPago({ reservaId: reservaId, monto: monto, moneda: moneda,
+            claveIdempotencia: claveIdempotencia })
             .then(function (pago) {
                 var ok = document.getElementById("pago-ok");
                 ok.textContent = "Payment #" + pago.id + " recorded with status " + ({PENDIENTE:'PENDING',APROBADO:'APPROVED',APROBADA:'APPROVED',RECHAZADO:'REJECTED',RECHAZADA:'REJECTED'}[pago.estado]||pago.estado) + ".";

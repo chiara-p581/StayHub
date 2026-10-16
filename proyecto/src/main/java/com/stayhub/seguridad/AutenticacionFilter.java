@@ -10,15 +10,20 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Provider
 @Priority(Priorities.AUTHENTICATION)
 public class AutenticacionFilter implements ContainerRequestFilter {
 
-    private static final String HEADER_CANAL = "X-StayHub-Channel-Key";
+    private static final int MAX_CUERPO_WEBHOOK = 1_048_576;
+    private static final Pattern RUTA_WEBHOOK = Pattern.compile("canales-externos/otas/([^/]+)/reservas(?:/[^/]+)?");
+    private final AutenticacionWebhookOta autenticacionWebhook = new AutenticacionWebhookOta();
+    private final LimitadorLogin limitadorLogin = new LimitadorLogin();
 
     @Context
     HttpServletRequest request;
@@ -28,12 +33,24 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         String ruta = normalizarRuta(contexto.getUriInfo().getPath());
         String metodo = contexto.getMethod();
 
-        if ("OPTIONS".equals(metodo) || esPublica(ruta, metodo)) return;
+        if ("OPTIONS".equals(metodo)) return;
+        if ("POST".equals(metodo) && "usuarios/login".equals(ruta)
+                && !limitadorLogin.permitir(request.getRemoteAddr())) {
+            abortar(contexto, Response.Status.TOO_MANY_REQUESTS, "DEMASIADOS_INTENTOS",
+                    "Too many login attempts. Please try again in 10 minutes.");
+            return;
+        }
+        if (esPublica(ruta, metodo)) return;
 
         HttpSession sesion = request.getSession(false);
         String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
 
-        if (esWebhookOta(ruta) && ("ADMIN".equals(rol) || claveCanalValida(contexto))) return;
+        if (esWebhookOta(ruta)) {
+            if (firmaWebhookValida(contexto, ruta, metodo)) return;
+            abortar(contexto, Response.Status.UNAUTHORIZED, "FIRMA_OTA_INVALIDA",
+                    "La firma del webhook no es válida o el mensaje ya fue procesado");
+            return;
+        }
         if (rol == null || sesion.getAttribute("usuarioId") == null) {
             abortar(contexto, Response.Status.UNAUTHORIZED, "NO_AUTENTICADO", "Iniciá sesión para continuar");
             return;
@@ -89,12 +106,18 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         return ruta.matches("canales-externos/otas/[^/]+/reservas(?:/[^/]+)?");
     }
 
-    private boolean claveCanalValida(ContainerRequestContext contexto) {
-        String esperada = System.getProperty("stayhub.canales.api-key");
-        if (esperada == null || esperada.isBlank()) esperada = System.getenv("STAYHUB_CANALES_API_KEY");
-        String recibida = contexto.getHeaderString(HEADER_CANAL);
-        return esperada != null && recibida != null && MessageDigest.isEqual(
-                esperada.getBytes(StandardCharsets.UTF_8), recibida.getBytes(StandardCharsets.UTF_8));
+    private boolean firmaWebhookValida(ContainerRequestContext contexto, String ruta, String metodo) {
+        Matcher matcher = RUTA_WEBHOOK.matcher(ruta);
+        if (!matcher.matches()) return false;
+        try {
+            byte[] cuerpo = contexto.getEntityStream().readNBytes(MAX_CUERPO_WEBHOOK + 1);
+            contexto.setEntityStream(new ByteArrayInputStream(cuerpo));
+            if (cuerpo.length > MAX_CUERPO_WEBHOOK) return false;
+            return autenticacionWebhook.validar(matcher.group(1), metodo, ruta, cuerpo,
+                    contexto.getHeaderString("X-StayHub-Timestamp"),
+                    contexto.getHeaderString("X-StayHub-Nonce"),
+                    contexto.getHeaderString("X-StayHub-Signature"));
+        } catch (IOException ex) { return false; }
     }
 
     private void abortar(ContainerRequestContext contexto, Response.Status estado, String codigo, String mensaje) {

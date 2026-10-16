@@ -38,6 +38,9 @@ public class Pago {
     @Column(name = "fecha_pago", nullable = false)
     private LocalDateTime fechaPago;
 
+    @Column(name = "clave_idempotencia", unique = true, length = 80)
+    private String claveIdempotencia;
+
     @Version
     private Long version;
 
@@ -46,16 +49,21 @@ public class Pago {
     }
 
     public Pago(Long reservaId, BigDecimal monto, String moneda) {
-        this(List.of(reservaId), monto, moneda);
+        this(List.of(reservaId), monto, moneda, null);
     }
 
     public Pago(List<Long> reservaIds, BigDecimal monto, String moneda) {
+        this(reservaIds, monto, moneda, null);
+    }
+
+    public Pago(List<Long> reservaIds, BigDecimal monto, String moneda, String claveIdempotencia) {
         this.reservaId = reservaIds.get(0);
         this.reservaIds.addAll(reservaIds);
         this.monto = monto;
         this.moneda = moneda;
         this.estado = EstadoPago.PENDIENTE;
         this.fechaPago = LocalDateTime.now();
+        this.claveIdempotencia = claveIdempotencia;
     }
 
     public void aprobar(String referenciaPasarela) {
@@ -75,4 +83,5 @@ public class Pago {
     public EstadoPago getEstado() { return estado; }
     public String getReferenciaPasarela() { return referenciaPasarela; }
     public LocalDateTime getFechaPago() { return fechaPago; }
+    public String getClaveIdempotencia() { return claveIdempotencia; }
 }

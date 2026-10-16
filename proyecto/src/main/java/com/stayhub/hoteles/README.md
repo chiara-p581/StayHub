@@ -130,7 +130,7 @@ El proyecto comparte una única unidad de persistencia con el resto de los compo
 - Unidad JPA: `StayHubPU`.
 - Datasource JNDI esperado en WildFly: `java:/PostgresDS`.
 - Motor: PostgreSQL.
-- Esquema: Hibernate lo actualiza con `hibernate.hbm2ddl.auto=update`.
+- Esquema: se modifica mediante migraciones versionadas; Hibernate solo lo valida con `hibernate.hbm2ddl.auto=validate`.
 
 Antes de desplegar, el driver JDBC de PostgreSQL debe estar instalado en WildFly y el datasource
 `PostgresDS` debe apuntar a una base existente con credenciales válidas. No hace falta crear las tablas

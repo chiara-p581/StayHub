@@ -22,6 +22,8 @@ import java.time.LocalDateTime;
 
 @Stateless
 public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
+    private static final int PASSWORD_MINIMA = 12;
+    private static final int PASSWORD_MAXIMA = 128;
 
     @Inject
     private UsuarioRepository repositorio;
@@ -57,8 +59,13 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
 
     @Override
     public UsuarioResponse autenticar(LoginRequest credenciales) {
-        if (credenciales == null) throw new SeguridadException(400, "Credenciales requeridas");
-        Limites.texto(credenciales.email(), 120, true); Limites.texto(credenciales.password(), 1024, true);
+        if (credenciales == null || credenciales.email() == null || credenciales.email().isBlank()
+                || !passwordValidaEnLongitud(credenciales.password())) {
+            throw new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
+                    "Email o contraseña incorrectos");
+        }
+        Limites.texto(credenciales.email(), 120, true);
+        Limites.texto(credenciales.password(), PASSWORD_MAXIMA, true);
         Usuario usuario = repositorio.buscarPorEmail(credenciales.email())
                 .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
                         "Email o contraseña incorrectos"));
@@ -87,7 +94,7 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
                 || solicitud.nombre() == null || solicitud.nombre().isBlank()
                 || solicitud.apellido() == null || solicitud.apellido().isBlank()
                 || (solicitud.password() != null && !solicitud.password().isBlank()
-                    && solicitud.password().length() < 6)) {
+                    && !passwordSegura(solicitud.password()))) {
             throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
                     "Los datos del perfil son incompletos o inválidos");
         }
@@ -136,7 +143,7 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
     @Override
     public void resetearPassword(String token, String nuevaPassword) {
         if (token == null || !token.matches("[A-Za-z0-9_-]{43}")
-                || nuevaPassword == null || nuevaPassword.length() < 6 || nuevaPassword.length() > 200) {
+                || !passwordSegura(nuevaPassword)) {
             throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA, "Token o contraseña inválidos");
         }
 
@@ -160,11 +167,21 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
         if (s == null) throw new SeguridadException(400, "Registro requerido");
         Limites.email(s.email()); Limites.texto(s.password(), 1024, true); Limites.texto(s.nombre(), 80, true); Limites.texto(s.apellido(), 80, true);
         if (s == null || s.email() == null || s.email().isBlank()
-                || s.password() == null || s.password().length() < 6
+                || !passwordSegura(s.password())
                 || s.nombre() == null || s.nombre().isBlank()
                 || s.rol() == null) {
             throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
                     "La solicitud de registro está incompleta o contiene valores inválidos");
         }
+    }
+    private boolean passwordValidaEnLongitud(String password) {
+        return password != null && password.length() >= PASSWORD_MINIMA && password.length() <= PASSWORD_MAXIMA;
+    }
+
+    private boolean passwordSegura(String password) {
+        if (!passwordValidaEnLongitud(password)) return false;
+        String normalizada = password.toLowerCase();
+        return !normalizada.equals("password1234") && !normalizada.equals("contraseña123")
+                && !normalizada.equals("123456789012") && !normalizada.equals("qwertyuiop12");
     }
 }

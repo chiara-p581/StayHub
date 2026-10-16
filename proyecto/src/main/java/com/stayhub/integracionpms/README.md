@@ -93,4 +93,4 @@ porque ese filtro es de JAX-RS; lo consume otro sistema, no un usuario con sesi�
 ## Mejora posible
 
 Autenticar al PMS con WS-Security (UsernameToken en el `soap:Header`) o con una
-clave técnica, igual que los webhooks de OTAs usan `X-StayHub-Channel-Key`.
+credencial técnica; los webhooks OTA usan firma HMAC por canal, timestamp y nonce anti-replay.

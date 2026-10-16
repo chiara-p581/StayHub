@@ -21,9 +21,9 @@
                 Api.setSession(usuario);
 
                 var params = new URLSearchParams(location.search);
-                var next = params.get("next");
+                var next = destinoLocalSeguro(params.get("next"));
                 if (next) {
-                    location.href = decodeURIComponent(next);
+                    location.assign(next);
                 } else if (usuario.rol === "ADMIN") {
                     location.href = "admin-dashboard.html";
                 } else {
@@ -41,4 +41,15 @@
                 submitBtn.textContent = "Sign in";
             });
     });
+
+    function destinoLocalSeguro(valor) {
+        if (!valor || valor.indexOf("\\") !== -1 || valor.startsWith("//")) return null;
+        try {
+            var destino = new URL(valor, location.origin + location.pathname);
+            if (destino.origin !== location.origin || !destino.pathname.endsWith(".html")) return null;
+            return destino.pathname + destino.search + destino.hash;
+        } catch (e) {
+            return null;
+        }
+    }
 })();

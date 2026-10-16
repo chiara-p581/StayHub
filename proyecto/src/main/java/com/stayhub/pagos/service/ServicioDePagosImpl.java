@@ -41,6 +41,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
     public PagoResponse procesarPago(PagoRequest solicitud) {
         identidad.exigirHuesped();
         validar(solicitud);
+        PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia());
+        if (repetido != null) return repetido;
+        repositorio.bloquearReservas(List.of(solicitud.reservaId()));
         var reserva = reservas.consultarParaPago(solicitud.reservaId());
         if (!"PENDIENTE".equals(reserva.estado())) throw new SeguridadException(409, "La reserva no está pendiente de pago");
         verificarNoPagada(solicitud.reservaId());
@@ -50,7 +53,8 @@ public class ServicioDePagosImpl implements ServicioDePagos {
                     "El monto o la moneda no coinciden con la reserva");
         }
 
-        Pago pago = new Pago(solicitud.reservaId(), solicitud.monto(), solicitud.moneda());
+        Pago pago = new Pago(List.of(solicitud.reservaId()), solicitud.monto(), solicitud.moneda(),
+                normalizarClave(solicitud.claveIdempotencia()));
         repositorio.guardar(pago);
 
         ResultadoCobro resultado = pasarela.cobrar(solicitud.monto(), solicitud.moneda(),
@@ -83,6 +87,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
             throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
                     "El checkout debe incluir reservas únicas, monto y moneda válidos");
         }
+        PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia());
+        if (repetido != null) return repetido;
+        repositorio.bloquearReservas(solicitud.reservaIds());
         // Consultar todas antes de cobrar verifica autorización y estado también para cada ID del lote.
         var reservasAutorizadas = solicitud.reservaIds().stream().sorted().map(reservas::consultarParaPago).toList();
         if (reservasAutorizadas.stream().anyMatch(r -> !"PENDIENTE".equals(r.estado()))) throw new SeguridadException(409, "El lote contiene reservas no pendientes");
@@ -99,7 +106,8 @@ public class ServicioDePagosImpl implements ServicioDePagos {
                     "El total del checkout no coincide con las reservas");
         }
 
-        Pago pago = new Pago(solicitud.reservaIds(), solicitud.monto(), solicitud.moneda());
+        Pago pago = new Pago(solicitud.reservaIds(), solicitud.monto(), solicitud.moneda(),
+                normalizarClave(solicitud.claveIdempotencia()));
         repositorio.guardar(pago);
         ResultadoCobro resultado = pasarela.cobrar(solicitud.monto(), solicitud.moneda(),
                 "checkout-" + pago.getId());
@@ -137,6 +145,22 @@ public class ServicioDePagosImpl implements ServicioDePagos {
             throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
                     "La solicitud de pago está incompleta o contiene valores inválidos");
         }
+    }
+
+    private PagoResponse buscarRepetido(String clave) {
+        String normalizada = normalizarClave(clave);
+        if (normalizada == null) return null;
+        return repositorio.buscarPorClaveIdempotencia(normalizada).map(p -> consultarPago(p.getId())).orElse(null);
+    }
+
+    private String normalizarClave(String clave) {
+        if (clave == null || clave.isBlank()) return null;
+        String valor = clave.trim();
+        if (!valor.matches("[A-Za-z0-9._:-]{16,80}")) {
+            throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
+                    "La clave de idempotencia debe tener entre 16 y 80 caracteres seguros");
+        }
+        return valor;
     }
 
     @Override
