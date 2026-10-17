@@ -18,9 +18,8 @@ import java.time.OffsetDateTime;
  * especificación EJB justamente para este caso (falla del sistema al
  * confirmar la transacción). Este mapper la desenvuelve: si la causa es un
  * conflicto de concurrencia, responde 409 igual que OptimisticLockExceptionMapper;
- * para cualquier otra causa, se mantiene el mismo criterio (500 con el
- * mensaje original) que ya tenía el proyecto antes de este mapper, para no
- * cambiar el comportamiento de errores no relacionados con este caso.
+ * para cualquier otra causa devuelve un error genérico, sin exponer detalles
+ * internos en la respuesta HTTP.
  */
 @Provider
 public class EJBTransactionRolledbackExceptionMapper implements ExceptionMapper<EJBTransactionRolledbackException> {
@@ -33,8 +32,9 @@ public class EJBTransactionRolledbackExceptionMapper implements ExceptionMapper<
                             OffsetDateTime.now()))
                     .type(MediaType.APPLICATION_JSON).build();
         }
-        String mensaje = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
-        return Response.status(500).entity(mensaje).build();
+        return Response.status(500).type(MediaType.APPLICATION_JSON)
+                .entity(new ErrorDTO("ERROR_INTERNO", "An unexpected error occurred.", OffsetDateTime.now()))
+                .build();
     }
 
     private boolean esConflictoDeConcurrencia(Throwable causa) {

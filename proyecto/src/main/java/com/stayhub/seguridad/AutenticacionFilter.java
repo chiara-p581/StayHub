@@ -36,6 +36,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         if ("OPTIONS".equals(metodo)) return;
         if ("POST".equals(metodo) && "usuarios/login".equals(ruta)
                 && !limitadorLogin.permitir(request.getRemoteAddr())) {
+            AuditoriaSeguridad.registrar(request, "LOGIN_BLOQUEADO", "RECHAZADO", ruta, "LIMITE_10_MINUTOS");
             abortar(contexto, Response.Status.TOO_MANY_REQUESTS, "DEMASIADOS_INTENTOS",
                     "Too many login attempts. Please try again in 10 minutes.");
             return;
@@ -46,7 +47,10 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
 
         if (esWebhookOta(ruta)) {
-            if (firmaWebhookValida(contexto, ruta, metodo)) return;
+            if (firmaWebhookValida(contexto, ruta, metodo)) {
+                AuditoriaSeguridad.registrar(request, "WEBHOOK_OTA_AUTENTICADO", "EXITO", ruta, "FIRMA_VALIDA");
+                return;
+            }
             abortar(contexto, Response.Status.UNAUTHORIZED, "FIRMA_OTA_INVALIDA",
                     "La firma del webhook no es válida o el mensaje ya fue procesado");
             return;
@@ -121,6 +125,8 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     }
 
     private void abortar(ContainerRequestContext contexto, Response.Status estado, String codigo, String mensaje) {
+        AuditoriaSeguridad.registrar(request, "AUTORIZACION_RECHAZADA", "RECHAZADO",
+                normalizarRuta(contexto.getUriInfo().getPath()), codigo);
         contexto.abortWith(Response.status(estado)
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .entity(Map.of("codigo", codigo, "mensaje", mensaje))
