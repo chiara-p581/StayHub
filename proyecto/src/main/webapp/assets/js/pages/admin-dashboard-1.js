@@ -29,7 +29,7 @@
     pintarPerfil();
 
     function fmtMoney(n) {
-        return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2 });
+        return Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function cargarHoteles() {
@@ -81,13 +81,13 @@
                 acciones += '<button data-id="' + r.id + '" class="btn-cancelar text-label-md font-label-md text-error hover:underline">Cancel</button>';
             }
             tr.innerHTML =
-                StayHubDOM.html('<td class="py-sm pr-md">' + StayHubDOM.text(r.id) + '</td>' +
-                '<td class="py-sm pr-md">' + StayHubDOM.text(r.huespedNombre) + ' ' + StayHubDOM.text(r.huespedApellido) + '</td>' +
-                '<td class="py-sm pr-md">' + StayHubDOM.text(r.checkIn) + '</td>' +
-                '<td class="py-sm pr-md">' + StayHubDOM.text(r.checkOut) + '</td>' +
-                '<td class="py-sm pr-md ' + estadoColor + ' font-semibold">' + ({PENDIENTE:'PENDING',CONFIRMADA:'CONFIRMED',CANCELADA:'CANCELLED',RECHAZADA:'REJECTED'}[r.estado]||r.estado) + '</td>' +
-                '<td class="py-sm pr-md">' + fmtMoney(r.precioTotal) + ' ' + StayHubDOM.text(r.moneda) + '</td>' +
-                '<td class="py-sm pr-md whitespace-nowrap">' + acciones + '</td>');
+                StayHubDOM.html('<td class="cell-id">' + StayHubDOM.text(r.id) + '</td>' +
+                '<td class="cell-guest">' + StayHubDOM.text(r.huespedNombre) + ' ' + StayHubDOM.text(r.huespedApellido) + '</td>' +
+                '<td class="cell-date">' + StayHubDOM.text(r.checkIn) + '</td>' +
+                '<td class="cell-date">' + StayHubDOM.text(r.checkOut) + '</td>' +
+                '<td class="cell-status ' + estadoColor + ' font-semibold">' + ({PENDIENTE:'PENDING',CONFIRMADA:'CONFIRMED',CANCELADA:'CANCELLED',RECHAZADA:'REJECTED'}[r.estado]||r.estado) + '</td>' +
+                '<td class="cell-price">' + StayHubDOM.text(r.moneda || 'ARS') + ' ' + fmtMoney(r.precioTotal) + '</td>' +
+                '<td class="cell-actions">' + acciones + '</td>');
             body.appendChild(tr);
         });
 

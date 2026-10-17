@@ -8,17 +8,43 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
+<link href="assets/css/theme.css?v=20261017-dashboard-1" rel="stylesheet"/>
 <style>
 .shadow-ambient { box-shadow: 0 4px 24px rgba(37, 52, 79, 0.08); }
 .border-subtle { border-color: rgba(213, 184, 147, 0.3); }
 .card-bg-subtle { background-color: rgba(213, 184, 147, 0.1); }
+.dashboard-kpis { display:grid; grid-template-columns:repeat(3,minmax(8.5rem,.8fr)) minmax(17rem,1.55fr); gap:1.5rem; }
+.dashboard-kpi { min-width:0; min-height:8.2rem; display:flex; flex-direction:column; justify-content:center; }
+.dashboard-kpi-value { display:block; color:#0b2347; font-family:"Libre Caslon Text",serif; font-size:3rem; font-weight:400; line-height:1; font-variant-numeric:tabular-nums lining-nums; }
+.dashboard-kpi-money { font-size:clamp(1.65rem,2.65vw,3rem); letter-spacing:-.035em; white-space:nowrap; }
+.dashboard-table-wrap { overflow-x:auto; padding-bottom:.25rem; }
+.dashboard-table { width:100%; min-width:43rem; border-collapse:collapse; table-layout:auto; }
+.dashboard-table th,.dashboard-table td { padding:.7rem .75rem .7rem 0; vertical-align:middle; }
+.dashboard-table th:last-child,.dashboard-table td:last-child { padding-right:0; }
+.dashboard-table td { line-height:1.35; }
+.dashboard-table .cell-id { width:3rem; font-variant-numeric:tabular-nums; }
+.dashboard-table .cell-guest { min-width:9.5rem; }
+.dashboard-table .cell-date { min-width:7.1rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.dashboard-table .cell-status { min-width:6.8rem; white-space:nowrap; }
+.dashboard-table .cell-price { min-width:8.2rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.dashboard-table .cell-actions { min-width:7.5rem; white-space:nowrap; }
+html[data-theme="dark"] main.bg-background,
+html[data-theme="dark"] #desktop-header { background-color:#111827 !important; color:#e5e7eb !important; }
+html[data-theme="dark"] #desktop-header { border-color:#29384d !important; }
+html[data-theme="dark"] .dashboard-kpi,
+html[data-theme="dark"] .dashboard-panel-card { background:#182235 !important; border-color:#3b4c65 !important; color:#e8eef7 !important; }
+html[data-theme="dark"] .dashboard-kpi-value { color:#f5f7fb !important; }
+html[data-theme="dark"] .dashboard-table tbody tr { border-color:#334155 !important; }
+html[data-theme="dark"] .dashboard-table tbody tr:hover { background:#223049 !important; }
+html[data-theme="dark"] .card-bg-subtle { background:#273247 !important; }
+@media (max-width:1199px) { .dashboard-kpis { grid-template-columns:repeat(3,minmax(8rem,1fr)); } .dashboard-kpi-money-card { grid-column:1/-1; } }
+@media (max-width:639px) { .dashboard-kpis { grid-template-columns:1fr; gap:1rem; } .dashboard-kpi-money-card { grid-column:auto; } .dashboard-kpi { min-height:7rem; } .dashboard-kpi-value { font-size:2.5rem; } .dashboard-kpi-money { font-size:clamp(1.55rem,8vw,2.25rem); } }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e4e2e4; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #c5c6ce; }
 </style>
-<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js?v=20261017-1"></script>
 </head>
 <body class="bg-background text-on-background h-full font-body-md antialiased overflow-hidden flex flex-col md:flex-row">
 <!-- TopAppBar (Mobile Only) -->
@@ -88,42 +114,42 @@
 
 <div id="panel">
 <!-- KPI Grid (calculado con datos reales de GET /api/reservas?hotelId=) -->
-<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[0.8fr_0.8fr_0.8fr_1.6fr] gap-gutter">
-<div class="min-w-0 bg-surface rounded-xl p-lg shadow-ambient border-t-[2px] border-[#D5B893]">
+<div class="dashboard-kpis">
+<div class="dashboard-kpi bg-surface rounded-xl p-lg shadow-ambient border-t-[2px] border-[#D5B893]">
 <h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Total bookings</h3>
-<span id="kpi-total" class="font-display-lg text-display-lg text-primary">-</span>
+<span id="kpi-total" class="dashboard-kpi-value">-</span>
 </div>
-<div class="min-w-0 bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
+<div class="dashboard-kpi bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
 <h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Confirmed</h3>
-<span id="kpi-confirmadas" class="font-display-lg text-display-lg text-primary">-</span>
+<span id="kpi-confirmadas" class="dashboard-kpi-value">-</span>
 </div>
-<div class="min-w-0 bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
+<div class="dashboard-kpi bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
 <h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Pendings</h3>
-<span id="kpi-pendientes" class="font-display-lg text-display-lg text-primary">-</span>
+<span id="kpi-pendientes" class="dashboard-kpi-value">-</span>
 </div>
-<div class="min-w-0 overflow-hidden bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
+<div class="dashboard-kpi dashboard-kpi-money-card bg-surface rounded-xl p-lg shadow-ambient border border-subtle">
 <h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Confirmed booking value</h3>
-<span id="kpi-ingresos" class="block max-w-full whitespace-nowrap font-display-lg text-[2.5rem] sm:text-display-lg text-primary">-</span>
+<span id="kpi-ingresos" class="dashboard-kpi-value dashboard-kpi-money">-</span>
 </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
 <!-- Tabla de reservas -->
-<div id="reservas-table" class="scroll-mt-24 md:col-span-8 bg-surface rounded-xl shadow-ambient p-lg border border-subtle">
+<div id="reservas-table" class="dashboard-panel-card min-w-0 scroll-mt-24 md:col-span-8 bg-surface rounded-xl shadow-ambient p-lg border border-subtle">
 <div class="flex justify-between items-center mb-lg">
 <h2 class="font-title-lg text-title-lg text-on-surface">Bookings</h2>
 </div>
-<div class="overflow-x-auto">
-<table class="w-full text-left">
+<div class="dashboard-table-wrap">
+<table class="dashboard-table text-left">
 <thead>
 <tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant">
-<th class="py-sm pr-md">ID</th>
-<th class="py-sm pr-md">Guest</th>
-<th class="py-sm pr-md">Check-in</th>
-<th class="py-sm pr-md">Checkout</th>
-<th class="py-sm pr-md">Status</th>
-<th class="py-sm pr-md">Price</th>
-<th class="py-sm pr-md">Actions</th>
+<th class="cell-id">ID</th>
+<th class="cell-guest">Guest</th>
+<th class="cell-date">Check-in</th>
+<th class="cell-date">Checkout</th>
+<th class="cell-status">Status</th>
+<th class="cell-price">Price</th>
+<th class="cell-actions">Actions</th>
 </tr>
 </thead>
 <tbody id="reservas-body" class="font-body-md text-body-md text-on-surface"></tbody>
@@ -132,7 +158,7 @@
 </div>
 </div>
 <!-- Upcoming arrivals (derivado de las reservas reales) -->
-<div class="md:col-span-4 bg-surface rounded-xl shadow-ambient p-lg border border-subtle flex flex-col">
+<div class="dashboard-panel-card min-w-0 md:col-span-4 bg-surface rounded-xl shadow-ambient p-lg border border-subtle flex flex-col">
 <div class="flex justify-between items-center mb-lg">
 <h2 class="font-title-lg text-title-lg text-on-surface">Upcoming arrivals</h2>
 </div>
@@ -164,5 +190,5 @@
 </nav>
 
 <script src="assets/js/api.js?v=seguridad-a-1"></script>
-<script src="assets/js/pages/admin-dashboard-1.js"></script>
+<script src="assets/js/pages/admin-dashboard-1.js?v=20261017-1"></script>
 </body></html>

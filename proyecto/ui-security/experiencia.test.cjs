@@ -186,7 +186,7 @@ test('panel admin calcula solo confirmadas y mantiene monedas separadas', async 
     assert.equal(d.getElementById('kpi-total').textContent, '4');
     assert.equal(d.getElementById('kpi-confirmadas').textContent, '2');
     assert.equal(d.getElementById('kpi-pendientes').textContent, '1');
-    assert.equal(d.getElementById('kpi-ingresos').textContent, 'ARS $100.00 · USD $50.00');
+    assert.equal(d.getElementById('kpi-ingresos').textContent, 'ARS 100.00 · USD 50.00');
     assert.equal(d.getElementById('reservas-body').rows.length, 4);
     assert.equal(d.getElementById('reservas-body').rows[0].cells.length, 7);
     dom.window.close();
@@ -278,4 +278,15 @@ test('cambiar hotel borra el tipo anterior y no acepta respuestas atrasadas', as
     assert.equal(d.getElementById('carga-tipo').value,'QA');
     assert.equal(d.getElementById('btn-cargar').disabled,false);
     dom.window.close();
+});
+
+test('las pantallas administrativas comparten estilos legibles en modo oscuro', () => {
+    const theme = fs.readFileSync(path.join(web, 'assets/css/theme.css'), 'utf8');
+    for (const selector of ['.bg-background', '.card', '.field', '.nav', '.btn-secondary', 'table tbody']) {
+        assert.match(theme, new RegExp('html\\[data-theme="dark"\\][^\\n]*' + selector.replace('.', '\\.')));
+    }
+    for (const pageName of ['hotel-management', 'inventory', 'alerts']) {
+        const html = fs.readFileSync(path.join(web, pageName + '.html'), 'utf8');
+        assert.match(html, /theme\.css\?v=20261017-admin-dark-1/);
+    }
 });
