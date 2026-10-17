@@ -16,6 +16,7 @@ import jakarta.inject.Inject;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.logging.Logger;
 
 /**
  * Carrito de armado de una reserva: mantiene en la MEMORIA de esta instancia
@@ -38,6 +39,7 @@ import java.time.LocalDate;
  */
 @Stateful
 public class CarritoDeReserva {
+    private static final Logger LOG = Logger.getLogger(CarritoDeReserva.class.getName());
 
     @Inject private com.stayhub.seguridad.IdentidadActual identidad;
     @Inject private com.stayhub.usuarios.contrato.ServicioDeUsuarios usuarios;
@@ -61,12 +63,12 @@ public class CarritoDeReserva {
 
     @PostConstruct
     private void iniciar() {
-        System.out.println("[CarritoDeReserva] nueva conversación iniciada (instancia " + this.hashCode() + ")");
+        LOG.fine("Nueva conversación de carrito iniciada");
     }
 
     @PreDestroy
     private void finalizar() {
-        System.out.println("[CarritoDeReserva] conversación finalizada (instancia " + this.hashCode() + ")");
+        LOG.fine("Conversación de carrito finalizada");
     }
 
     public void seleccionarHotelYHabitacion(Long hotelId, String tipoHabitacion, int cantidadHabitaciones) {

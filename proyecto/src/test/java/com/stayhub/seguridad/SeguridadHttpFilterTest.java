@@ -27,9 +27,18 @@ class SeguridadHttpFilterTest {
     }
     @Test void httpNoAccedeAContenidoProtegido() throws Exception {
         when(req.isSecure()).thenReturn(false);filtro.doFilter(req,res,chain);verify(res).setStatus(426);verifyNoInteractions(chain);
+        assertTrue(body.toString().contains("correlationId"));
     }
     @Test void solicitudSeguraIncluyeCabeceras() throws Exception {
         filtro.doFilter(req,res,chain);verify(chain).doFilter(req,res);verify(res).setHeader(eq("Content-Security-Policy"),contains("script-src 'self'"));verify(res).setHeader("Strict-Transport-Security","max-age=31536000; includeSubDomains");
+        verify(res).setHeader(eq(AuditoriaSeguridad.HEADER_CORRELACION), matches("[0-9a-f-]{36}"));
+        verify(req).setAttribute(eq(AuditoriaSeguridad.ATRIBUTO_CORRELACION), matches("[0-9a-f-]{36}"));
+    }
+    @Test void conservaCorrelationIdValidoDelCliente() throws Exception {
+        when(req.getHeader(AuditoriaSeguridad.HEADER_CORRELACION)).thenReturn("pedido-seguro-123");
+        filtro.doFilter(req,res,chain);
+        verify(res).setHeader(AuditoriaSeguridad.HEADER_CORRELACION,"pedido-seguro-123");
+        verify(req).setAttribute(AuditoriaSeguridad.ATRIBUTO_CORRELACION,"pedido-seguro-123");
     }
     @Test void mutacionSinCsrfNoEjecutaServicio() throws Exception {
         when(req.getMethod()).thenReturn("POST");filtro.doFilter(req,res,chain);verify(res).setStatus(403);verifyNoInteractions(chain);

@@ -22,8 +22,9 @@ public class SeguridadHttpFilter implements Filter {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
+        AuditoriaSeguridad.preparar(request, response);
         cabeceras(response, request.isSecure());
-        String ruta;
+        String ruta = "/";
         boolean adquirido = false;
         try {
             try {
@@ -79,12 +80,22 @@ public class SeguridadHttpFilter implements Filter {
                 request = new SolicitudConCuerpo(request, bytes);
             }
             chain.doFilter(request, response);
+            AuditoriaSeguridad.auditarHttp(request, ruta, response.getStatus());
         } catch (SeguridadException ex) {
+            AuditoriaSeguridad.registrar(request, "SOLICITUD_RECHAZADA", "RECHAZADO", ruta,
+                    "HTTP_" + ex.getEstado());
             if (!response.isCommitted()) {
                 response.setStatus(ex.getEstado()); response.setContentType("application/json;charset=UTF-8");
                 if (ex.getEstado() == 429) response.setHeader("Retry-After", "60");
-                response.getWriter().write("{\"codigo\":\"SOLICITUD_RECHAZADA\",\"mensaje\":\"" + ex.getMessage() + "\"}");
+                response.getWriter().write(AuditoriaSeguridad.respuesta("SOLICITUD_RECHAZADA",
+                        ex.getMessage(), AuditoriaSeguridad.correlationId(request)));
             }
+        } catch (RuntimeException ex) {
+            AuditoriaSeguridad.error(request, ex);
+            if (response.isCommitted()) throw ex;
+            response.setStatus(500); response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(AuditoriaSeguridad.respuesta("ERROR_INTERNO",
+                    "An unexpected error occurred.", AuditoriaSeguridad.correlationId(request)));
         } finally {
             if (adquirido) concurrentes.release();
         }
