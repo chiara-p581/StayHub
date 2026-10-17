@@ -361,7 +361,9 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         if (id == null || id <= 0) throw new SeguridadException(404, "Reserva no disponible");
         return repositorio.buscarPorIdBloqueando(id).orElseThrow(() -> new SeguridadException(404, "Reserva no disponible"));
     }
-    @Override public ReservaResponse consultarParaPago(Long id) {
+    @Override
+    @PermitAll
+    public ReservaResponse consultarParaPago(Long id) {
         identidad.exigirHuesped();
         Reserva reserva = buscarBloqueando(id);
         identidad.autorizarReserva(reserva);
@@ -445,14 +447,20 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             throw new SeguridadException(400, "El total de la reserva supera los límites permitidos");
         return tarifa;
     }
-    @Override public List<ReservaResponse> listarMias(int offset, int limite) {
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarMias(int offset, int limite) {
         return repositorio.listarPorUsuario(identidad.usuarioId(), offset, Limites.pagina(offset, limite)).stream().map(ReservaMapper::aResponse).toList();
     }
-    @Override public List<ReservaResponse> listarPorHotel(Long hotelId, int offset, int limite) {
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarPorHotel(Long hotelId, int offset, int limite) {
         identidad.autorizarListado(hotelId);
         return repositorio.listarPorHotel(hotelId, offset, Limites.pagina(offset, limite)).stream().map(ReservaMapper::aResponse).toList();
     }
-    @Override public List<ReservaResponse> listarLlegadas(Long hotelId, java.time.LocalDate fecha) {
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarLlegadas(Long hotelId, java.time.LocalDate fecha) {
         identidad.autorizarHotel(hotelId);
         return repositorio.listarLlegadas(hotelId, fecha).stream().map(ReservaMapper::aResponse).toList();
     }

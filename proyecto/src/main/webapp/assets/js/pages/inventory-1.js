@@ -13,7 +13,9 @@
 
     var hotelSelect = document.getElementById("carga-hotel");
     var tipoSelect = document.getElementById("carga-tipo");
-    var tiposPorHotel = {};
+    var consultaTipos = 0;
+    var consultaDatos = 0;
+    var tiposCargadosPara = null;
 
     function cargarHoteles() {
         return Api.listarHoteles(false).then(function (hoteles) {
@@ -29,15 +31,23 @@
     }
 
     function refrescarTipos(hotelId) {
+        var consulta = ++consultaTipos;
+        tiposCargadosPara = null;
+        tipoSelect.innerHTML = StayHubDOM.html('<option value="">Loading room types…</option>');
+        tipoSelect.disabled = true;
+        document.getElementById('btn-cargar').disabled = true;
         return Api.listarTiposHabitacion(hotelId).then(function (tipos) {
-            tiposPorHotel[hotelId] = tipos;
+            if (consulta !== consultaTipos) return;
+            tiposCargadosPara = String(hotelId);
             tipoSelect.innerHTML = StayHubDOM.html(tipos.length
                 ? tipos.map(function (t) { return '<option value="' + StayHubDOM.text(t.codigo) + '">' + StayHubDOM.text(t.codigo) + ' - ' + StayHubDOM.text(t.nombre) + '</option>'; }).join("")
                 : '<option value="">This hotel has no room types loaded</option>');
-        });
+            tipoSelect.disabled = !tipos.length;
+            document.getElementById('btn-cargar').disabled = !tipos.length;
+        }).catch(function(err) { if (consulta === consultaTipos) mostrarError(errorBanner, err); });
     }
 
-    hotelSelect.addEventListener("change", function () { refrescarTipos(this.value); });
+    hotelSelect.addEventListener("change", function () { ++consultaDatos; refrescarTipos(this.value); document.getElementById("disponibilidad-body").textContent=""; document.getElementById("tarifas-body").textContent=""; });
 
     document.getElementById("btn-cargar").addEventListener("click", function () {
         var cargaError = document.getElementById("carga-error");
@@ -45,6 +55,7 @@
         ocultarError(cargaError);
         cargaOk.classList.add("hidden");
 
+        if (tiposCargadosPara !== String(hotelSelect.value)) return;
         var dto = {
             hotelId: Number(hotelSelect.value),
             tipoHabitacion: tipoSelect.value,
@@ -57,12 +68,15 @@
         if (!dto.tipoHabitacion) { mostrarError(cargaError, new Error("This hotel has no room types.")); return; }
         if (!dto.desde || !dto.hasta) { mostrarError(cargaError, new Error("Complete the date range.")); return; }
 
+        var btn = this;
+        btn.disabled = true;
         Api.cargarInventario(dto)
             .then(function (resp) {
                 cargaOk.textContent = "Loaded: " + resp.diasCargados + " day(s) for " + resp.tipoHabitacion + ".";
                 cargaOk.classList.remove("hidden");
             })
-            .catch(function (err) { mostrarError(cargaError, err); });
+            .catch(function (err) { mostrarError(cargaError, err); })
+            .finally(function() { btn.disabled = tiposCargadosPara !== String(hotelSelect.value) || !tipoSelect.value; });
     });
 
     document.getElementById("btn-consultar").addEventListener("click", function () {
@@ -72,8 +86,12 @@
         var hasta = document.getElementById("consulta-hasta").value;
         if (!hotelId || !desde || !hasta) { mostrarError(errorBanner, new Error("Choose a hotel and date range.")); return; }
 
+        var consulta = ++consultaDatos;
+        document.getElementById("disponibilidad-body").textContent = "";
+        document.getElementById("tarifas-body").textContent = "";
         Api.consultarDisponibilidad(hotelId, desde, hasta)
             .then(function (lista) {
+                if (consulta !== consultaDatos) return;
                 var body = document.getElementById("disponibilidad-body");
                 body.innerHTML = StayHubDOM.html(lista.map(function (d) {
                     return '<tr class="border-b border-surface-container-high"><td class="py-xs pr-md">' + StayHubDOM.text(d.tipoHabitacion) + '</td><td class="py-xs pr-md">' + StayHubDOM.text(d.desde) + '</td><td class="py-xs pr-md">' + StayHubDOM.text(d.hasta) + '</td><td class="py-xs pr-md">' + StayHubDOM.text(d.unidadesDisponibles) + '</td></tr>';
@@ -84,6 +102,7 @@
 
         Api.consultarTarifas(hotelId, desde, hasta)
             .then(function (lista) {
+                if (consulta !== consultaDatos) return;
                 var body = document.getElementById("tarifas-body");
                 body.innerHTML = StayHubDOM.html(lista.map(function (t) {
                     return '<tr class="border-b border-surface-container-high"><td class="py-xs pr-md">' + StayHubDOM.text(t.tipoHabitacion) + '</td><td class="py-xs pr-md">' + StayHubDOM.text(t.desde) + '</td><td class="py-xs pr-md">' + StayHubDOM.text(t.hasta) + '</td><td class="py-xs pr-md">' + StayHubDOM.text(t.importe) + ' ' + StayHubDOM.text(t.moneda) + '</td></tr>';

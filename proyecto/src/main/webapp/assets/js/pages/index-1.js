@@ -74,6 +74,7 @@
             var coincideCanal = canalActivo === "TODOS" || ofertas.some(function (o) { return o.hotelId === h.id && o.canal === canalActivo; });
             return coincideTexto && coincideCanal;
         });
+        subtitulo.textContent = filtrados.length + " propiedad" + (filtrados.length === 1 ? "" : "es") + " disponible" + (filtrados.length === 1 ? "" : "s") + ".";
         pintarGrid(filtrados);
     }
 
@@ -110,7 +111,6 @@
             var hoteles = resultado[0] || [];
             ofertas = resultado[1] || [];
             todosLosHoteles = hoteles;
-            subtitulo.textContent = hoteles.length + " propiedad" + (hoteles.length === 1 ? "" : "es") + " disponible" + (hoteles.length === 1 ? "" : "s") + ".";
             buscar();
         })
         .catch(function (err) { mostrarError(errorBanner, err); })

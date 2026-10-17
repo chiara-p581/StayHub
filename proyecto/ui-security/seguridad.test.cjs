@@ -45,3 +45,34 @@ test('recuperar y resetear funcionan sin login y envían CSRF desde las páginas
   assert.equal(w.Api.currentUser(),null);assert.deepEqual(errors,[]);dom.window.close();
  }
 });
+
+test('el saneador conserva filas y celdas de tablas y elimina ataques',()=>{
+ const dom=browser(),w=dom.window;
+ const table=w.document.createElement('table'),tbody=w.document.createElement('tbody');table.append(tbody);
+ tbody.innerHTML=w.StayHubDOM.html('<tr><td>STANDARD</td><td>4</td><td><img src=x onerror="alert(1)"></td></tr>');
+ assert.equal(tbody.rows.length,1);assert.equal(tbody.rows[0].cells.length,3);assert.equal(tbody.rows[0].cells[0].textContent,'STANDARD');assert.equal(tbody.querySelector('[onerror]'),null);
+ const row=w.document.createElement('tr');row.innerHTML=w.StayHubDOM.html('<td>301</td><td><button onclick="alert(1)">Edit</button></td>');
+ assert.equal(row.cells.length,2);assert.ok(row.querySelector('button'));assert.equal(row.querySelector('[onclick]'),null);
+ dom.window.close();
+});
+
+test('crear y modificar tipos invalidan el listado y el detalle de hotel cacheados',async()=>{
+ const dom=browser(),w=dom.window;let version=1;
+ w.fetch=async(url,options)=>({ok:true,status:200,headers:{get:()=> 'application/json'},json:async()=>({token:'csrf'}),text:async()=>JSON.stringify(url.startsWith('api/hoteles')?{version}:null)});
+ w.eval(fs.readFileSync(path.join(web,'assets/js/api.js'),'utf8')+'\nwindow.testApi=Api;');
+ const api=w.testApi;api.setSession({id:1,rol:'HUESPED'});
+ assert.equal((await api.listarHoteles()).version,1);assert.equal((await api.consultarHotel(2)).version,1);
+ version=2;await api.crearHotel({});assert.equal((await api.listarHoteles()).version,2);
+ await api.consultarHotel(2);version=3;await api.crearTipoHabitacion(2,{});
+ assert.equal((await api.consultarHotel(2)).version,3);
+ dom.window.close();
+});
+
+test('administracion consulta datos frescos aunque exista cache previo de huesped',async()=>{
+ const dom=browser(),w=dom.window;let version=1;
+ w.fetch=async()=>({ok:true,status:200,headers:{get:()=> 'application/json'},text:async()=>JSON.stringify({version})});
+ w.eval(fs.readFileSync(path.join(web,'assets/js/api.js'),'utf8')+'\nwindow.testApi=Api;');
+ const api=w.testApi;await api.listarHoteles();version=2;api.setSession({id:2,rol:'ADMIN'});
+ assert.equal((await api.listarHoteles()).version,2);version=3;assert.equal((await api.listarHoteles()).version,3);
+ dom.window.close();
+});

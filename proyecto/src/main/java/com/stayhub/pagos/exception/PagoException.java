@@ -1,5 +1,6 @@
 package com.stayhub.pagos.exception;
 
+@jakarta.ejb.ApplicationException(rollback = true)
 public class PagoException extends RuntimeException {
     private final CodigoErrorPago codigo;
 

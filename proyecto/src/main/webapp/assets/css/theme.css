@@ -70,6 +70,8 @@ body.stayhub-unified { padding-top: 76px !important; display:block !important; o
 
 html[data-theme="dark"] { color-scheme:dark; background:#111827; }
 html[data-theme="dark"] body { background:#111827 !important; color:#e5e7eb !important; }
+html[data-theme="dark"] .bg-background { background-color:#111827 !important; color:#e5e7eb !important; }
+html[data-theme="dark"] .text-on-background { color:#e5e7eb !important; }
 html[data-theme="dark"] .stayhub-global-header,
 html[data-theme="dark"] .stayhub-admin-sidebar,
 html[data-theme="dark"] .bg-white,
@@ -103,6 +105,35 @@ html[data-theme="dark"] #search-checkin,
 html[data-theme="dark"] #search-checkout,
 html[data-theme="dark"] #search-guests { background:transparent !important; box-shadow:none !important; border-color:transparent !important; }
 html[data-theme="dark"] #search-location::placeholder { color:#94a3b8 !important; }
+
+/* Shared administration surfaces. These pages also contain small component
+   styles of their own, so the theme selectors intentionally carry more
+   specificity than the light-mode defaults. */
+html[data-theme="dark"] .card { background:#182235 !important; color:#e8eef7 !important; border-color:#3b4c65 !important; box-shadow:0 8px 24px rgba(0,0,0,.2) !important; }
+html[data-theme="dark"] .field { color:#cbd5e1 !important; }
+html[data-theme="dark"] .field input,
+html[data-theme="dark"] .field textarea,
+html[data-theme="dark"] .field select { background:#111827 !important; color:#f3f4f6 !important; border-color:#52627a !important; }
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder { color:#8190a7 !important; opacity:1; }
+html[data-theme="dark"] .hint { color:#94a3b8 !important; }
+html[data-theme="dark"] .nav,
+html[data-theme="dark"] .mobile-nav { color:#aeb9c9 !important; }
+html[data-theme="dark"] .nav:hover { background:#243149 !important; color:#f8fafc !important; }
+html[data-theme="dark"] .nav.bg-secondary-container { background:#203858 !important; color:#fff !important; }
+html[data-theme="dark"] .btn-primary { background:#9fcaaf !important; color:#123724 !important; border-color:#9fcaaf !important; }
+html[data-theme="dark"] .btn-primary:hover { background:#b5dbc3 !important; }
+html[data-theme="dark"] .btn-secondary { background:#243149 !important; color:#edf4ff !important; border-color:#7892b5 !important; }
+html[data-theme="dark"] .btn-secondary:hover { background:#2d3c56 !important; }
+html[data-theme="dark"] .btn-danger { background:#30202a !important; color:#ffb4ab !important; border-color:#ff8f85 !important; }
+html[data-theme="dark"] .icon-btn { color:#dbe5f3 !important; }
+html[data-theme="dark"] table tbody { color:#e5e7eb !important; }
+html[data-theme="dark"] table tbody tr { border-color:#334155 !important; }
+html[data-theme="dark"] .bg-secondary-fixed { background:#29415a !important; color:#eaf4ff !important; }
+html[data-theme="dark"] .text-on-secondary-fixed,
+html[data-theme="dark"] .text-on-secondary-fixed-variant { color:#e3edf8 !important; }
+html[data-theme="dark"] .bg-error-container { background:#552a31 !important; color:#ffd9d6 !important; }
+html[data-theme="dark"] .text-on-error-container { color:#ffd9d6 !important; }
 
 /* Acciones principales: deben distinguirse del fondo en ambos temas. */
 .stayhub-primary-action { background:#182944 !important; color:#fff !important; border:1px solid #182944 !important; box-shadow:0 8px 20px rgba(24,41,68,.22); }

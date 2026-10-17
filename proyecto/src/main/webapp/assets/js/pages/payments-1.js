@@ -97,6 +97,7 @@
 
     document.getElementById("btn-consultar-pago").addEventListener("click", function () {
         ocultarError(errorBanner);
+        document.getElementById("consulta-resultado").classList.add("hidden");
         var id = document.getElementById("consulta-pago-id").value;
         if (!id) { mostrarError(errorBanner, new Error("Enter a payment number.")); return; }
         Api.consultarPago(id)
@@ -104,7 +105,7 @@
                 var resultado = document.getElementById("consulta-resultado");
                 resultado.classList.remove("hidden");
                 resultado.innerHTML =
-                    StayHubDOM.html("Payment #" + StayHubDOM.text(pago.id) + " — booking #" + StayHubDOM.text(pago.reservaId) + " — " + fmtMoney(pago.monto, pago.moneda) +
+                    StayHubDOM.html("Payment #" + StayHubDOM.text(pago.id) + " — bookings " + (pago.reservaIds || [pago.reservaId]).map(function(id) { return "#" + StayHubDOM.text(id); }).join(", ") + " — " + fmtMoney(pago.monto, pago.moneda) +
                     " — status " + ({PENDIENTE:'PENDING',APROBADO:'APPROVED',APROBADA:'APPROVED',RECHAZADO:'REJECTED',RECHAZADA:'REJECTED'}[pago.estado]||pago.estado) + " — " + (pago.fechaPago || ""));
             })
             .catch(function (err) { mostrarError(errorBanner, err); });

@@ -139,7 +139,11 @@ const Api = (() => {
         const data = raw ? (isJson ? safeJson(raw) : raw) : null;
 
         if (!res.ok) {
-            if (res.status === 401) sessionStorage.removeItem(USER_KEY);
+            if (res.status === 401) {
+                sessionStorage.removeItem(USER_KEY);
+                csrfPendiente = null;
+                if (auth) requireLogin();
+            }
             const msg =
                 (data && (data.mensaje || data.message || data.error)) ||
                 (typeof data === "string" && data) ||
@@ -192,11 +196,13 @@ const Api = (() => {
 
     function invalidateCache(prefix = "") {
         Object.keys(localStorage).forEach(function (key) {
-            if (key.startsWith(CACHE_PREFIX + prefix)) localStorage.removeItem(key);
+            if (key.startsWith(CACHE_PREFIX + buildUrl(prefix))) localStorage.removeItem(key);
         });
     }
 
     function cachedRequest(path, params, ttlMs) {
+        // La administración necesita leer el resultado persistido de cada cambio.
+        if (currentUser() && currentUser().rol === "ADMIN") return request(path, { params });
         const key = cacheKey(path, params);
         let cached = null;
         try { cached = JSON.parse(localStorage.getItem(key)); } catch (e) { localStorage.removeItem(key); }
@@ -335,24 +341,24 @@ const Api = (() => {
             cachedRequest(`hoteles/${hotelId}/tipos-habitacion`, { incluirInactivos }, 300000),
         crearTipoHabitacion: (hotelId, dto) =>
             request(`hoteles/${hotelId}/tipos-habitacion`, { method: "POST", body: dto, auth: true })
-                .then(r => (invalidateCache(`hoteles/${hotelId}/tipos-habitacion`), r)),
+                .then(r => (invalidateCache("hoteles"), r)),
         modificarTipoHabitacion: (hotelId, tipoId, dto) =>
             request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "PUT", body: dto, auth: true })
-                .then(r => (invalidateCache(`hoteles/${hotelId}/tipos-habitacion`), r)),
+                .then(r => (invalidateCache("hoteles"), r)),
         eliminarTipoHabitacion: (hotelId, tipoId) =>
             request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "DELETE", auth: true })
-                .then(r => (invalidateCache(`hoteles/${hotelId}/tipos-habitacion`), r)),
+                .then(r => (invalidateCache("hoteles"), r)),
         listarHabitaciones: (hotelId, incluirInactivas = false) =>
             cachedRequest(`hoteles/${hotelId}/habitaciones`, { incluirInactivas }, 300000),
         crearHabitacion: (hotelId, dto) =>
             request(`hoteles/${hotelId}/habitaciones`, { method: "POST", body: dto, auth: true })
-                .then(r => (invalidateCache(`hoteles/${hotelId}/habitaciones`), r)),
+                .then(r => (invalidateCache("hoteles"), r)),
         modificarHabitacion: (hotelId, habitacionId, dto) =>
             request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "PUT", body: dto, auth: true })
-                .then(r => (invalidateCache(`hoteles/${hotelId}/habitaciones`), r)),
+                .then(r => (invalidateCache("hoteles"), r)),
         eliminarHabitacion: (hotelId, habitacionId) =>
             request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "DELETE", auth: true })
-                .then(r => (invalidateCache(`hoteles/${hotelId}/habitaciones`), r)),
+                .then(r => (invalidateCache("hoteles"), r)),
 
         // ---- carrito de reserva (EJB @Stateful, sesión HTTP) ----
         carritoSeleccionarHotel: (dto) =>

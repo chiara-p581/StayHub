@@ -84,7 +84,7 @@ public class ConfiguracionMail {
     public String baseUrl() {
         return valor(
                 "stayhub.web.base-url",
-                "http://localhost:8080/StayHub"
+                "https://localhost:8080/StayHub"
         ).replaceAll("/+$", "");
     }
 }

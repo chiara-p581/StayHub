@@ -1,5 +1,6 @@
 package com.stayhub.servicioDeOverbooking.exception;
 
+@jakarta.ejb.ApplicationException(rollback = true)
 public class OverbookingException extends RuntimeException {
     private final CodigoErrorOverbooking codigo;
 
