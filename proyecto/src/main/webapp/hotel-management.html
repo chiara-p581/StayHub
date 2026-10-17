@@ -45,7 +45,7 @@
         <div class="flex justify-between items-center mb-lg"><h2 id="hotel-form-title" class="font-title-lg text-title-lg text-primary">New hotel</h2><button type="button" data-cerrar="hotel-form" class="icon-btn"><span class="material-symbols-outlined">close</span></button></div>
         <input id="hotel-id" type="hidden"/>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
-          <label class="field">First name<input id="hotel-nombre" required/></label>
+          <label class="field">Hotel name<input id="hotel-nombre" required/></label>
           <label class="field">Address<input id="hotel-direccion" required/></label>
           <label class="field">Ciudad<input id="hotel-ciudad" required/></label>
           <label class="field">Country<input id="hotel-pais" required/></label>
@@ -62,7 +62,7 @@
         <div class="card">
           <div class="flex items-center justify-between mb-md"><div><h3 class="font-title-lg text-title-lg text-primary">Room types</h3><p class="text-on-surface-variant text-sm">Categories and maximum capacity.</p></div><button id="btn-nuevo-tipo" class="btn-secondary"><span class="material-symbols-outlined">add</span>Add</button></div>
           <form id="tipo-form" class="hidden bg-surface-container-low rounded-lg p-md mb-md grid grid-cols-1 md:grid-cols-2 gap-sm">
-            <input id="tipo-id" type="hidden"/><label class="field">Code<input id="tipo-codigo" required/></label><label class="field">First name<input id="tipo-nombre" required/></label><label class="field">Capacity<input id="tipo-capacidad" type="number" min="1" required/></label><label class="field">Features<input id="tipo-caracteristicas" placeholder="balcony, accessible"/></label><label class="field md:col-span-2">Description<textarea id="tipo-descripcion" rows="2"></textarea></label><div class="md:col-span-2 flex justify-end gap-sm"><button type="button" data-cerrar="tipo-form" class="btn-secondary">Cancel</button><button class="btn-primary">Save room type</button></div>
+            <input id="tipo-id" type="hidden"/><label class="field">Code<input id="tipo-codigo" required/></label><label class="field">Room type name<input id="tipo-nombre" required/></label><label class="field">Capacity<input id="tipo-capacidad" type="number" min="1" required/></label><label class="field">Features<input id="tipo-caracteristicas" placeholder="balcony, accessible"/></label><label class="field md:col-span-2">Description<textarea id="tipo-descripcion" rows="2"></textarea></label><div class="md:col-span-2 flex justify-end gap-sm"><button type="button" data-cerrar="tipo-form" class="btn-secondary">Cancel</button><button class="btn-primary">Save room type</button></div>
           </form>
           <div id="tipos-lista" class="grid grid-cols-1 md:grid-cols-2 gap-sm"></div><p id="tipos-vacio" class="hidden text-on-surface-variant py-md">There are no active room types.</p>
         </div>

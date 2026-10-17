@@ -17,6 +17,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     @Inject Instance<ServicioDeReservasPort> reservas;
     @Inject Instance<ServicioDeInventarioYTarifasPort> inventarioYTarifas;
     @Inject PublicadorSincronizacion publicadorSincronizacion;
+    @Inject com.stayhub.canalesexternos.config.ConfiguracionCanales configuracion;
 
     @Override
     public List<DisponibilidadDTO> consultarDisponibilidad(Long hotelId, LocalDate desde, LocalDate hasta) {
@@ -49,6 +50,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     public ResultadoSincronizacionDTO sincronizarOta(Long hotelId, Canal canal, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
         if (canal == null) invalida("El canal es obligatorio");
+        configuracion.urlOta(canal); // Rechazar configuración faltante antes de encolar.
         String solicitudId = publicadorSincronizacion.publicarOta(hotelId, canal, desde, hasta);
         return ResultadoSincronizacionDTO.encolado(solicitudId, canal.name());
     }
@@ -56,6 +58,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     @Override
     public ResultadoSincronizacionDTO sincronizarPms(Long hotelId, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
+        configuracion.wsdlPms();
         String solicitudId = publicadorSincronizacion.publicarPms(hotelId, desde, hasta);
         return ResultadoSincronizacionDTO.encolado(solicitudId, "PMS");
     }

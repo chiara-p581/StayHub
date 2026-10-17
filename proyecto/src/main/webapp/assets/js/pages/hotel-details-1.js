@@ -9,6 +9,7 @@
     var reservaOk = document.getElementById("reserva-ok");
     var hotel = null;
     var tarifaValida = false;
+    var consultaTarifa = 0;
 
     var usuarioActual = Api.currentUser();
     if (usuarioActual && usuarioActual.rol === "ADMIN") document.getElementById("brand-admin").classList.remove("hidden");
@@ -92,6 +93,7 @@
     }
 
     function calcularTarifaEstimada() {
+        var consulta = ++consultaTarifa;
         var checkIn = document.getElementById("check-in").value;
         var checkOut = document.getElementById("check-out").value;
         var tipo = document.getElementById("tipo-habitacion").value;
@@ -113,10 +115,12 @@
             return;
         }
 
+        hint.textContent = "Checking availability and price…";
         Promise.all([
             Api.consultarTarifas(hotelId, checkIn, checkOut),
             Api.consultarDisponibilidad(hotelId, checkIn, checkOut)
         ]).then(function (resultado) {
+                if (consulta !== consultaTarifa) return;
                 var tarifas = resultado[0] || [];
                 var disponibilidad = resultado[1] || [];
                 var delType = tarifas.filter(function (t) { return t.tipoHabitacion === tipo; });
@@ -139,6 +143,7 @@
                 hint.textContent = "Available: " + cupo.unidadesDisponibles + " unit(s). Price calculated for the entire stay.";
             })
             .catch(function () {
+                if (consulta !== consultaTarifa) return;
                 hint.textContent = "We could not retrieve the rate. Please try again.";
             });
     }
@@ -199,13 +204,19 @@
         btn.disabled = true;
         btn.textContent = "Agregando...";
 
-        Api.addLocalCartItem({
-            hotelId: Number(hotelId), hotelNombre: hotel.nombre, tipoHabitacion: tipoHabitacion,
-            canal: canalSeleccionado,
-            cantidadHabitaciones: cantidadHabitaciones, checkIn: checkIn, checkOut: checkOut,
-            huespedNombre: usuario.nombre, huespedApellido: usuario.apellido, huespedEmail: usuario.email,
-            huespedTelefono: telefono, precioTotal: precioTotal, moneda: moneda
-        });
-        location.href = "cart.html";
+        try {
+            Api.addLocalCartItem({
+                hotelId: Number(hotelId), hotelNombre: hotel.nombre, tipoHabitacion: tipoHabitacion,
+                canal: canalSeleccionado,
+                cantidadHabitaciones: cantidadHabitaciones, checkIn: checkIn, checkOut: checkOut,
+                huespedNombre: usuario.nombre, huespedApellido: usuario.apellido, huespedEmail: usuario.email,
+                huespedTelefono: telefono, precioTotal: precioTotal, moneda: moneda
+            });
+            location.href = "cart.html";
+        } catch (err) {
+            mostrarError(reservaError, err);
+            btn.disabled = false;
+            btn.textContent = "Add to cart";
+        }
     });
 })();

@@ -43,20 +43,27 @@
         });
     }
 
+    var consultaReservas = 0;
     function cargarReservas(hotelId) {
-        return Api.listarReservasPorHotel(hotelId).then(pintarTodo);
+        var consulta = ++consultaReservas;
+        return Api.listarReservasPorHotel(hotelId).then(function(reservas) {
+            if (consulta === consultaReservas) pintarTodo(reservas);
+        });
     }
 
     function pintarTodo(reservas) {
         var confirmadas = reservas.filter(function (r) { return r.estado === "CONFIRMADA"; });
         var pendientes = reservas.filter(function (r) { return r.estado === "PENDIENTE"; });
-        var noCanceladas = reservas.filter(function (r) { return r.estado !== "CANCELADA"; });
-        var ingresos = noCanceladas.reduce(function (acc, r) { return acc + Number(r.precioTotal || 0); }, 0);
+        var ingresos = {};
+        confirmadas.forEach(function(r) {
+            var moneda = r.moneda || 'ARS';
+            ingresos[moneda] = (ingresos[moneda] || 0) + Number(r.precioTotal || 0);
+        });
 
         document.getElementById("kpi-total").textContent = reservas.length;
         document.getElementById("kpi-confirmadas").textContent = confirmadas.length;
         document.getElementById("kpi-pendientes").textContent = pendientes.length;
-        document.getElementById("kpi-ingresos").textContent = fmtMoney(ingresos);
+        document.getElementById("kpi-ingresos").textContent = Object.keys(ingresos).map(function(moneda) { return moneda + " " + fmtMoney(ingresos[moneda]); }).join(" · ") || "ARS " + fmtMoney(0);
 
         var body = document.getElementById("reservas-body");
         body.innerHTML = StayHubDOM.html("");
@@ -98,7 +105,7 @@
         // Upcoming arrivals: check-in dentro de los próximos 3 días, no canceladas
         var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
         var limite = new Date(hoy); limite.setDate(limite.getDate() + 3);
-        var llegadas = noCanceladas.filter(function (r) {
+        var llegadas = confirmadas.filter(function (r) {
             var d = new Date(r.checkIn + "T00:00:00");
             return d >= hoy && d <= limite;
         }).sort(function (a, b) { return a.checkIn.localeCompare(b.checkIn); });

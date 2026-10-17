@@ -37,14 +37,16 @@
         var tr = document.createElement("tr");
         tr.className = "border-b border-outline-variant/10";
         var hora = new Date(resultado.fecha).toLocaleTimeString("en-US");
-        var estadoTxt = resultado.exitoso
+        var estadoTxt = resultado.solicitudId
+            ? '<span class="text-on-surface-variant">Queued</span>'
+            : resultado.exitoso
             ? '<span class="inline-flex items-center gap-xs text-secondary font-medium"><span class="material-symbols-outlined text-[16px]">check_circle</span>OK</span>'
             : '<span class="inline-flex items-center gap-xs text-error font-medium"><span class="material-symbols-outlined text-[16px]">cancel</span>Error</span>';
         tr.innerHTML =
             StayHubDOM.html('<td class="p-lg text-on-surface-variant whitespace-nowrap">' + hora + '</td>' +
             '<td class="p-lg font-medium text-primary">' + destino + '</td>' +
             '<td class="p-lg">' + estadoTxt + '</td>' +
-            '<td class="p-lg">' + StayHubDOM.text(resultado.cantidad) + '</td>' +
+            '<td class="p-lg">' + StayHubDOM.text(resultado.elementosProcesados == null ? 0 : resultado.elementosProcesados) + '</td>' +
             '<td class="p-lg text-on-surface-variant max-w-md">' + StayHubDOM.text(resultado.mensaje) + '</td>');
         tbody.prepend(tr);
     }
@@ -68,7 +70,7 @@
         Api.sincronizarOta(canal, rango.hotelId, rango.desde, rango.hasta)
             .then(function (resultado) {
                 document.getElementById("estado-" + canal).textContent =
-                    (resultado.exitoso ? "OK · " : "Error · ") + resultado.mensaje;
+                    (resultado.solicitudId ? "Queued · " : resultado.exitoso ? "OK · " : "Error · ") + resultado.mensaje;
                 agregarLog(CANAL_LABEL[canal], resultado);
             })
             .catch(function (err) { mostrarError(errorBanner, err); })

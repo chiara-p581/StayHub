@@ -1,5 +1,6 @@
 package com.stayhub.notificaciones.exception;
 
+@jakarta.ejb.ApplicationException(rollback = true)
 public class NotificacionException extends RuntimeException {
     private final CodigoErrorNotificacion codigo;
 

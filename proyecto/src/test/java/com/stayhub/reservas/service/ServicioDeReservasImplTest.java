@@ -36,6 +36,26 @@ class ServicioDeReservasImplTest {
         Reserva r=new Reserva("DIRECTA",null,1L,"DOBLE",1,desde,hasta,new Huesped("Real","Cuenta","real@mail.com","123"),new BigDecimal("150000"),"ARS");
         r.asignarPropietario(owner);r.iniciarHold("hold-1");when(repo.buscarPorId(7L)).thenReturn(Optional.of(r));when(repo.buscarPorIdBloqueando(7L)).thenReturn(Optional.of(r));return r;
     }
+    @Test void operacionesDeReservasTienenPermisoExplicitoDelContenedor() throws Exception {
+        // Con permisos mezclados WildFly puede denegar métodos sin anotación antes
+        // de que se ejecuten los controles de sesión y propiedad del servicio.
+        for (var contrato : List.of(ServicioDeReservas.class, com.stayhub.canalesexternos.contrato.interno.ServicioDeReservasPort.class)) {
+            for (var metodo : contrato.getMethods()) {
+                assertNotNull(ServicioDeReservasImpl.class.getMethod(metodo.getName(), metodo.getParameterTypes())
+                        .getAnnotation(jakarta.annotation.security.PermitAll.class), metodo.toString());
+            }
+        }
+    }
+    @Test void listadoPropioExigeSesion() throws Exception {
+        campo(servicio,"identidad",usuario(null,"HUESPED"));
+        assertThrows(SeguridadException.class,()->servicio.listarMias(0,100));
+        verify(repo,never()).listarPorUsuario(any(),anyInt(),anyInt());
+    }
+    @Test void listadoPropioSeFiltraPorUsuarioDeSesion() {
+        when(repo.listarPorUsuario(1L,0,100)).thenReturn(List.of());
+        assertTrue(servicio.listarMias(0,100).isEmpty());
+        verify(repo).listarPorUsuario(1L,0,100);
+    }
     @Test void correoCoincidenteNoDaAccesoAReservaDeOtroId() {
         reserva(2);var error=assertThrows(SeguridadException.class,()->servicio.consultarReserva(7L));assertEquals(404,error.getEstado());
     }

@@ -60,7 +60,9 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
     @Override
     public UsuarioResponse autenticar(LoginRequest credenciales) {
         if (credenciales == null || credenciales.email() == null || credenciales.email().isBlank()
-                || !passwordValidaEnLongitud(credenciales.password())) {
+                // El mínimo de creación no invalida contraseñas de cuentas previas.
+                || credenciales.password() == null || credenciales.password().isEmpty()
+                || credenciales.password().length() > PASSWORD_MAXIMA) {
             throw new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
                     "Email o contraseña incorrectos");
         }
