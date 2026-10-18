@@ -383,7 +383,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080/StayHub"
+      "value": "https://localhost:8080/StayHub"
     },
     {
       "key": "reservaId",
