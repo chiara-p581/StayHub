@@ -15,7 +15,7 @@ http://localhost:8080/StayHub/api
 | `StayHub-ServicioDeReservas.postman_collection.json` | ServicioDeReservas (incluye Carrito de reserva y la seguridad por dueño) |
 | `Stayhub pagos.postman collection.json` | ServicioDePagos |
 | `Stayhub usuarios.postman.collection.json` | ServicioDeUsuarios |
-| `StayHub-IntegracionPmsSOAP.postman_collection.json` | Servicio SOAP expuesto al PMS legado (base `http://localhost:8080/StayHub/soap/integracion-pms`, no usa `/api`) |
+| `StayHub-IntegracionPmsSOAP.postman_collection.json` | Servicio SOAP expuesto al PMS legado (base `https://localhost:8080/StayHub/soap/integracion-pms`, no usa `/api`) |
 
 ## Configuración necesaria para probar Canales Externos (sincronización OTA/PMS)
 
@@ -40,7 +40,33 @@ Antes de correr las requests de `/canales-externos/otas/.../sincronizaciones` y 
 ## Servicio SOAP para el PMS legado
 
 La colección `StayHub-IntegracionPmsSOAP` manda sobres SOAP 1.1 (`POST`, `Content-Type: text/xml`) a
-`http://localhost:8080/StayHub/soap/integracion-pms`. No necesita login: lo consume otro sistema.
+`https://localhost:8080/StayHub/soap/integracion-pms`. **No usa login de usuario, pero sí exige
+TLS mutuo**: el PMS entrante se identifica con un certificado de cliente, no con sesión ni token.
+
+### Requisito previo: certificado de cliente del PMS
+
+`/soap/*` corre siempre sobre HTTPS y, además, exige que quien llama presente un certificado cuya
+huella SHA-256 coincida con `stayhub.pms.certificado-sha256` y cuyos hoteles estén en
+`stayhub.pms.hoteles` (ver `SeguridadHttpFilter.autenticarPms`). Sin esto, el request cae con
+`401`/`403` antes de llegar al WSDL.
+
+1. Generar (una sola vez por entorno) el certificado y vincularlo a los hoteles autorizados:
+   ```sh
+   python3 config/configurar-seguridad-local.py \
+     --wildfly-home /ruta/a/wildfly \
+     --openssl /ruta/a/openssl \
+     --hoteles-pms 1
+   ```
+   Esto crea `.local-security/certificados/pms.p12` (certificado de cliente) y `ca.pem` (CA local),
+   y carga en WildFly la huella y la lista de hoteles autorizados. Después hace falta `:reload`.
+2. En Postman: **Settings → Certificates → Add Certificate**, host `localhost:8080`, archivo
+   `.local-security/certificados/pms.p12` (contraseña en `.local-security/secretos.json`,
+   clave `tls_store_password`).
+3. Como el certificado del servidor es de una CA local y no pública, también hay que decirle a
+   Postman que confíe en `.local-security/certificados/ca.pem`, o desactivar
+   "SSL certificate verification" en Settings (solo para este entorno local de desarrollo).
+
+Con el certificado configurado:
 
 1. Correr `00 - Ver WSDL` para confirmar que el servicio quedó publicado.
 2. Crear una reserva con la colección de ServicioDeReservas y poner su id en la variable `reservaId`.
