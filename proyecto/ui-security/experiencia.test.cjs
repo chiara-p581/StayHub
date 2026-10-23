@@ -287,6 +287,6 @@ test('las pantallas administrativas comparten estilos legibles en modo oscuro', 
     }
     for (const pageName of ['hotel-management', 'inventory', 'alerts']) {
         const html = fs.readFileSync(path.join(web, pageName + '.html'), 'utf8');
-        assert.match(html, /theme\.css\?v=20261017-admin-dark-1/);
+        assert.match(html, /theme\.css\?v=20261023-design2/);
     }
 });
