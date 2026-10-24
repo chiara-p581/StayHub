@@ -8,14 +8,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 @ApplicationScoped
 public class ConfiguracionCanales {
-    private static final long TIMEOUT_CONEXION_PREDETERMINADO_MS = 5_000;
-    private static final long TIMEOUT_LECTURA_PREDETERMINADO_MS = 15_000;
+    private static final long TIMEOUT_CONEXION_PREDETERMINADO_MS = 3_000;
+    private static final long TIMEOUT_LECTURA_PREDETERMINADO_MS = 10_000;
 
     public String urlOta(Canal canal) { return urlPermitida(requerida("stayhub.ota." + canal.name().toLowerCase() + ".url")); }
     public String tokenOta(Canal canal) { return opcional("stayhub.ota." + canal.name().toLowerCase() + ".token"); }
     public String wsdlPms() { return urlPermitida(requerida("stayhub.pms.wsdl")); }
-    public long timeoutConexionMs() { return enteroPositivo("stayhub.canales.timeout.conexion.ms", TIMEOUT_CONEXION_PREDETERMINADO_MS); }
-    public long timeoutLecturaMs() { return enteroPositivo("stayhub.canales.timeout.lectura.ms", TIMEOUT_LECTURA_PREDETERMINADO_MS); }
+    public long timeoutConexionMs() { return enteroAcotado("stayhub.canales.timeout.conexion.ms", TIMEOUT_CONEXION_PREDETERMINADO_MS, 3_000); }
+    public long timeoutLecturaMs() { return enteroAcotado("stayhub.canales.timeout.lectura.ms", TIMEOUT_LECTURA_PREDETERMINADO_MS, 10_000); }
     private String requerida(String clave) {
         String valor = opcional(clave);
         if (valor == null || valor.isBlank()) throw new CanalExternoException(
@@ -27,16 +27,16 @@ public class ConfiguracionCanales {
         return valor != null ? valor : System.getenv(clave.toUpperCase().replace('.', '_'));
     }
 
-    private long enteroPositivo(String clave, long predeterminado) {
+    private long enteroAcotado(String clave, long predeterminado, long maximo) {
         String valor = opcional(clave);
         if (valor == null || valor.isBlank()) return predeterminado;
         try {
             long numero = Long.parseLong(valor);
-            if (numero < 1) throw new NumberFormatException();
+            if (numero < 1 || numero > maximo) throw new NumberFormatException();
             return numero;
         } catch (NumberFormatException ex) {
             throw new CanalExternoException(CodigoErrorCanal.SOLICITUD_INVALIDA,
-                    "La configuración " + clave + " debe ser un entero positivo", ex);
+                    "La configuración " + clave + " debe estar entre 1 y " + maximo + " ms", ex);
         }
     }
 

@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 public final class AuditoriaSeguridad {
     public static final String HEADER_CORRELACION = "X-Correlation-ID";
     public static final String ATRIBUTO_CORRELACION = AuditoriaSeguridad.class.getName() + ".correlationId";
+    private static final String ATRIBUTO_AUDITADA = AuditoriaSeguridad.class.getName() + ".auditada";
     private static final Pattern ID_VALIDO = Pattern.compile("[A-Za-z0-9._-]{8,64}");
     private static final Pattern VALOR_SEGURO = Pattern.compile("[A-Za-z0-9áéíóúÁÉÍÓÚñÑ._:/@ -]{0,160}");
     private static final Logger AUDIT = Logger.getLogger("stayhub.security.audit");
@@ -57,6 +58,12 @@ public final class AuditoriaSeguridad {
                 "detalle", detalle));
     }
 
+    public static void registrarUnaVez(HttpServletRequest request, String accion, String resultado,
+                                       String recurso, String detalle) {
+        if (request != null && request.getAttribute(ATRIBUTO_AUDITADA) != null) return;
+        registrar(request, accion, resultado, recurso, detalle);
+        if (request != null) request.setAttribute(ATRIBUTO_AUDITADA, Boolean.TRUE);
+    }
     public static void error(HttpServletRequest request, Throwable error) {
         String tipo = error == null ? "desconocido" : error.getClass().getName();
         String ubicacion = "sin-ubicacion";
@@ -84,7 +91,7 @@ public final class AuditoriaSeguridad {
             accion = s != null && "ADMIN".equals(s.getAttribute("usuarioRol"))
                     ? "OPERACION_ADMINISTRATIVA" : "OPERACION_MUTABLE";
         }
-        registrar(request, accion, estado < 400 ? "EXITO" : "RECHAZADO", ruta, "HTTP_" + estado);
+        registrarUnaVez(request, accion, estado < 400 ? "EXITO" : "RECHAZADO", ruta, "HTTP_" + estado);
     }
 
     public static String respuesta(String codigo, String mensaje, String correlationId) {

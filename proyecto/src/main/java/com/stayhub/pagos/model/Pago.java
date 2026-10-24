@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "pago")
+@Table(name = "pago", uniqueConstraints = @UniqueConstraint(name = "uk_pago_usuario_idempotencia", columnNames = {"usuario_id", "clave_idempotencia"}))
 public class Pago {
 
     @Id
@@ -16,6 +16,9 @@ public class Pago {
 
     @Column(name = "reserva_id", nullable = false)
     private Long reservaId;
+
+    @Column(name = "usuario_id", nullable = false)
+    private Long usuarioId;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "pago_reserva", joinColumns = @JoinColumn(name = "pago_id"))
@@ -38,7 +41,7 @@ public class Pago {
     @Column(name = "fecha_pago", nullable = false)
     private LocalDateTime fechaPago;
 
-    @Column(name = "clave_idempotencia", unique = true, length = 80)
+    @Column(name = "clave_idempotencia", length = 80)
     private String claveIdempotencia;
 
     @Version
@@ -49,14 +52,19 @@ public class Pago {
     }
 
     public Pago(Long reservaId, BigDecimal monto, String moneda) {
-        this(List.of(reservaId), monto, moneda, null);
+        this(null, List.of(reservaId), monto, moneda, null);
     }
 
     public Pago(List<Long> reservaIds, BigDecimal monto, String moneda) {
-        this(reservaIds, monto, moneda, null);
+        this(null, reservaIds, monto, moneda, null);
     }
 
     public Pago(List<Long> reservaIds, BigDecimal monto, String moneda, String claveIdempotencia) {
+        this(null, reservaIds, monto, moneda, claveIdempotencia);
+    }
+
+    public Pago(Long usuarioId, List<Long> reservaIds, BigDecimal monto, String moneda, String claveIdempotencia) {
+        this.usuarioId = usuarioId;
         this.reservaId = reservaIds.get(0);
         this.reservaIds.addAll(reservaIds);
         this.monto = monto;
@@ -77,6 +85,7 @@ public class Pago {
 
     public Long getId() { return id; }
     public Long getReservaId() { return reservaId; }
+    public Long getUsuarioId() { return usuarioId; }
     public List<Long> getReservaIds() { return List.copyOf(reservaIds); }
     public BigDecimal getMonto() { return monto; }
     public String getMoneda() { return moneda; }

@@ -29,10 +29,10 @@ public class PagoRepositoryJpa implements PagoRepository {
     }
 
     @Override
-    public Optional<Pago> buscarPorClaveIdempotencia(String clave) {
-        if (clave == null || clave.isBlank()) return Optional.empty();
-        return em.createQuery("SELECT p FROM Pago p WHERE p.claveIdempotencia=:clave", Pago.class)
-                .setParameter("clave", clave).getResultStream().findFirst();
+    public Optional<Pago> buscarPorClaveIdempotencia(Long usuarioId, String clave) {
+        if (usuarioId == null || clave == null || clave.isBlank()) return Optional.empty();
+        return em.createQuery("SELECT p FROM Pago p WHERE p.usuarioId=:usuarioId AND p.claveIdempotencia=:clave", Pago.class)
+                .setParameter("usuarioId", usuarioId).setParameter("clave", clave).getResultStream().findFirst();
     }
 
     @Override

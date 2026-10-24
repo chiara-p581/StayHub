@@ -23,7 +23,6 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     private static final int MAX_CUERPO_WEBHOOK = 1_048_576;
     private static final Pattern RUTA_WEBHOOK = Pattern.compile("canales-externos/otas/([^/]+)/reservas(?:/[^/]+)?");
     private final AutenticacionWebhookOta autenticacionWebhook = new AutenticacionWebhookOta();
-    private final LimitadorLogin limitadorLogin = new LimitadorLogin();
 
     @Context
     HttpServletRequest request;
@@ -34,13 +33,6 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         String metodo = contexto.getMethod();
 
         if ("OPTIONS".equals(metodo)) return;
-        if ("POST".equals(metodo) && "usuarios/login".equals(ruta)
-                && !limitadorLogin.permitir(request.getRemoteAddr())) {
-            AuditoriaSeguridad.registrar(request, "LOGIN_BLOQUEADO", "RECHAZADO", ruta, "LIMITE_10_MINUTOS");
-            abortar(contexto, Response.Status.TOO_MANY_REQUESTS, "DEMASIADOS_INTENTOS",
-                    "Too many login attempts. Please try again in 10 minutes.");
-            return;
-        }
         if (esPublica(ruta, metodo)) return;
 
         HttpSession sesion = request.getSession(false);

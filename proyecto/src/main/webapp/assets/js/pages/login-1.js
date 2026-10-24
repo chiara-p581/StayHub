@@ -43,13 +43,18 @@
     });
 
     function destinoLocalSeguro(valor) {
-        if (!valor || valor.indexOf("\\") !== -1 || valor.startsWith("//")) return null;
+        var permitidos = new Set([
+            "index.html", "settings.html", "cart.html", "checkout.html",
+            "reservation-details.html", "admin-dashboard.html", "hotel-management.html",
+            "inventory-rates.html", "channels-sync.html", "alerts.html", "payment.html"
+        ]);
+        if (!valor || valor.indexOf("\\") !== -1 || valor.indexOf("%") !== -1
+                || valor.startsWith("/") || valor.indexOf(":") !== -1) return null;
         try {
             var destino = new URL(valor, location.origin + location.pathname);
-            if (destino.origin !== location.origin || !destino.pathname.endsWith(".html")) return null;
-            return destino.pathname + destino.search + destino.hash;
-        } catch (e) {
-            return null;
-        }
+            var archivo = destino.pathname.substring(destino.pathname.lastIndexOf("/") + 1);
+            if (destino.origin !== location.origin || !permitidos.has(archivo)) return null;
+            return archivo + destino.search + destino.hash;
+        } catch (e) { return null; }
     }
 })();

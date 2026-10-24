@@ -10,7 +10,7 @@ public interface PagoRepository {
 
     Optional<Pago> buscarPorId(Long id);
 
-    Optional<Pago> buscarPorClaveIdempotencia(String clave);
+    Optional<Pago> buscarPorClaveIdempotencia(Long usuarioId, String clave);
 
     void bloquearReservas(List<Long> reservaIds);
 

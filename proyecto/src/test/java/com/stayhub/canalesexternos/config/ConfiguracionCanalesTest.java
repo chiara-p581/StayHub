@@ -33,8 +33,8 @@ class ConfiguracionCanalesTest {
     @Test
     void usaTimeoutsPredeterminadosSeguros() {
         ConfiguracionCanales configuracion = new ConfiguracionCanales();
-        assertEquals(5_000, configuracion.timeoutConexionMs());
-        assertEquals(15_000, configuracion.timeoutLecturaMs());
+        assertEquals(3_000, configuracion.timeoutConexionMs());
+        assertEquals(10_000, configuracion.timeoutLecturaMs());
     }
 
     @Test
@@ -46,4 +46,12 @@ class ConfiguracionCanalesTest {
                 configuracion::timeoutConexionMs);
         assertEquals(CodigoErrorCanal.SOLICITUD_INVALIDA, error.getCodigo());
     }
-}
+
+    @Test
+    void rechazaTimeoutsMayoresAlContrato() {
+        System.setProperty("stayhub.canales.timeout.conexion.ms", "3001");
+        System.setProperty("stayhub.canales.timeout.lectura.ms", "10001");
+        ConfiguracionCanales configuracion = new ConfiguracionCanales();
+        assertThrows(CanalExternoException.class, configuracion::timeoutConexionMs);
+        assertThrows(CanalExternoException.class, configuracion::timeoutLecturaMs);
+    }}

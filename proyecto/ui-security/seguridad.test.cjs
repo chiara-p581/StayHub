@@ -76,3 +76,17 @@ test('administracion consulta datos frescos aunque exista cache previo de huespe
  assert.equal((await api.listarHoteles()).version,2);version=3;assert.equal((await api.listarHoteles()).version,3);
  dom.window.close();
 });
+
+test('las páginas no cargan contenido visual remoto',()=>{
+ for(const f of files(web).filter(p=>p.endsWith('.html'))){
+  const html=fs.readFileSync(f,'utf8'),dom=new JSDOM(html);
+  for(const e of dom.window.document.querySelectorAll('[src],[href],[style]')){
+   for(const atributo of ['src','href','style']){
+    const valor=e.getAttribute(atributo)||'';
+    assert.ok(!/https?:\/\//i.test(valor),`${f}: ${atributo} remoto ${valor}`);
+   }
+  }
+  assert.ok(dom.window.document.querySelector('link[href="assets/css/fonts.css"]'),`${f}: falta fonts.css local`);
+  dom.window.close();
+ }
+});
