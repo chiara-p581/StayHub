@@ -231,6 +231,64 @@ const Api = (() => {
         }
     }
 
+    function initMotion() {
+        var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduceMotion || !("IntersectionObserver" in window)) {
+            document.documentElement.classList.add("stayhub-motion-disabled");
+            return;
+        }
+
+        document.documentElement.classList.add("stayhub-motion");
+        var selector = [
+            "main > div",
+            ".stayhub-section-heading",
+            ".stayhub-filter-bar",
+            ".stayhub-hotel-card",
+            ".card",
+            ".dashboard-panel-card",
+            "main form",
+            "main table",
+            "main aside",
+            ".stayhub-global-footer > div"
+        ].join(",");
+        var registered = new WeakSet();
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.08, rootMargin: "0px 0px -7% 0px" });
+
+        function register(root) {
+            var candidates = [];
+            if (root.nodeType === 1 && root.matches(selector)) candidates.push(root);
+            if (root.querySelectorAll) candidates = candidates.concat(Array.from(root.querySelectorAll(selector)));
+            candidates.forEach(function (element) {
+                if (registered.has(element) || element.closest(".stayhub-home-hero")) return;
+                registered.add(element);
+                var siblings = element.parentElement ? Array.from(element.parentElement.children) : [];
+                var index = Math.max(0, siblings.indexOf(element));
+                element.style.setProperty("--reveal-delay", Math.min(index % 6, 5) * 65 + "ms");
+                element.setAttribute("data-reveal", "");
+                observer.observe(element);
+            });
+        }
+
+        register(document.body);
+        var mutations = new MutationObserver(function (records) {
+            records.forEach(function (record) {
+                record.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) register(node);
+                });
+            });
+        });
+        mutations.observe(document.body, { childList: true, subtree: true });
+        window.addEventListener("pagehide", function () {
+            observer.disconnect();
+            mutations.disconnect();
+        }, { once: true });
+    }
     function initShell() {
         if (!document.body || document.querySelector(".stayhub-global-header")) return;
         var page = location.pathname.split("/").pop() || "index.html";
@@ -304,6 +362,7 @@ const Api = (() => {
             footer.innerHTML = StayHubDOM.html('<div class="stayhub-footer-inner"><div class="stayhub-footer-brand"><span class="stayhub-brand-mark">S</span><div><strong>StayHub</strong><p>Your next stay, all in one place.</p></div></div><nav aria-label="StayHub information"><a href="about-us.html">About us</a><a href="help-faq.html">Frequently asked questions</a></nav><p class="stayhub-footer-note">Academic project · Application Development II</p></div>');
             document.body.appendChild(footer);
         }
+        initMotion();
     }
 
     return {

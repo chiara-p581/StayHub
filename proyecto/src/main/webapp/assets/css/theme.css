@@ -215,3 +215,179 @@ html[data-theme="dark"] .stayhub-global-footer { background:#0b1422; border-colo
 /* Los formularios de acceso deben poder desplazarse en pantallas bajas. */
 body.stayhub-auth-page { overflow-y:auto !important; align-items:flex-start !important; padding-bottom:32px !important; }
 body.stayhub-auth-page main { margin-top:24px; margin-bottom:24px; }
+
+/* ============================================================
+   StayHub 2026 visual refresh
+   A modern editorial layer built on the existing brand palette.
+   ============================================================ */
+:root {
+    --sh-ink:#0f1f39;
+    --sh-ink-soft:#253b5a;
+    --sh-sky:#cae2ff;
+    --sh-mist:#f3f6f9;
+    --sh-paper:#fff;
+    --sh-text:#182235;
+    --sh-muted:#667085;
+    --sh-line:rgba(15,31,57,.11);
+    --sh-radius-sm:14px;
+    --sh-radius:22px;
+    --sh-radius-lg:32px;
+    --sh-shadow-sm:0 10px 30px rgba(15,31,57,.07);
+    --sh-shadow:0 22px 60px rgba(15,31,57,.11);
+}
+html { scroll-behavior:smooth; }
+body { background:linear-gradient(180deg,#f9fafc 0,#f4f7fa 100%); letter-spacing:-.01em; }
+body::selection { background:var(--sh-sky); color:var(--sh-ink); }
+a,button,input,select,textarea { transition:color .2s ease,background-color .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease; }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid rgba(76,124,181,.35); outline-offset:3px; }
+
+/* Refined global navigation */
+.stayhub-global-header { height:80px; background:rgba(249,250,252,.84); border-bottom:1px solid rgba(15,31,57,.08); box-shadow:none; backdrop-filter:blur(22px) saturate(150%); }
+body.stayhub-unified { padding-top:80px !important; }
+.stayhub-header-inner { width:min(100% - 48px,1380px); gap:28px; }
+.stayhub-brand { gap:12px; font-size:1.5rem; letter-spacing:-.035em; }
+.stayhub-brand-mark { width:42px; height:42px; border-radius:14px; background:linear-gradient(145deg,#0f1f39,#334d72); box-shadow:0 8px 24px rgba(15,31,57,.2); }
+.stayhub-header-nav { gap:8px; }
+.stayhub-channel-shortcuts { padding:5px; border:1px solid var(--sh-line); border-radius:999px; background:rgba(255,255,255,.65); }
+.stayhub-channel-shortcuts a { padding:8px 14px; color:#59677b; }
+.stayhub-channel-shortcuts a:hover { background:#fff; box-shadow:0 4px 14px rgba(15,31,57,.08); }
+.stayhub-header-icon { width:44px; height:44px; border-radius:14px; }
+.stayhub-header-icon:hover { background:#fff; box-shadow:var(--sh-shadow-sm); transform:translateY(-2px); }
+.stayhub-profile-pill { min-height:46px; padding:4px 14px 4px 5px; border:1px solid var(--sh-line); border-radius:999px; margin-left:4px; background:rgba(255,255,255,.7); }
+.stayhub-avatar { width:36px; height:36px; flex-basis:36px; background:linear-gradient(145deg,#d9eaff,#c2d9f3); }
+
+/* Home hero */
+.stayhub-home-hero { min-height:clamp(620px,78vh,820px); isolation:isolate; }
+.stayhub-home-hero::after { content:""; position:absolute; z-index:1; inset:auto -8% -35% auto; width:52vw; height:52vw; border-radius:50%; background:radial-gradient(circle,rgba(202,226,255,.18),transparent 68%); pointer-events:none; }
+.stayhub-home-hero img { filter:saturate(.82) contrast(1.02); }
+.stayhub-hero-overlay { background:linear-gradient(90deg,rgba(8,21,40,.88) 0%,rgba(15,31,57,.69) 44%,rgba(15,31,57,.2) 78%,rgba(15,31,57,.08) 100%),linear-gradient(0deg,rgba(15,31,57,.22),transparent 45%); }
+.stayhub-hero-content { width:min(100% - 64px,1380px); padding-top:40px; padding-bottom:56px; }
+.stayhub-hero-kicker { display:flex; align-items:center; gap:10px; color:#e4effc; font:700 .72rem/1 Manrope,Arial,sans-serif; letter-spacing:.15em; text-transform:uppercase; }
+.stayhub-hero-kicker span { width:34px; height:1px; background:#bcd8f5; }
+.stayhub-hero-title { max-width:780px; font-size:clamp(3.5rem,7vw,7rem) !important; line-height:.98 !important; letter-spacing:-.055em !important; text-wrap:balance; text-shadow:0 3px 26px rgba(0,0,0,.18); }
+.stayhub-hero-copy { max-width:620px; font-size:clamp(1rem,1.55vw,1.3rem) !important; line-height:1.65 !important; font-weight:400 !important; }
+
+/* Floating search experience */
+.stayhub-search-shell { border:1px solid rgba(255,255,255,.62); border-radius:24px; background:rgba(255,255,255,.94) !important; backdrop-filter:blur(20px); }
+.stayhub-search-field { position:relative; min-height:72px; }
+.stayhub-search-field + .stayhub-search-field::before { content:""; position:absolute; left:0; top:15px; bottom:15px; width:1px; background:var(--sh-line); }
+.stayhub-search-field > .material-symbols-outlined { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:#eef4fa; color:#385477; font-size:20px; }
+.stayhub-search-field label { margin-bottom:3px; color:#667085; font-size:.65rem; letter-spacing:.1em; }
+.stayhub-search-field input { min-width:0; color:var(--sh-text); font-weight:650; }
+.stayhub-search-button { width:54px; height:54px; flex:0 0 54px; border-radius:17px; box-shadow:0 10px 22px rgba(15,31,57,.23); }
+.stayhub-search-button:hover { background:#294467 !important; transform:translateY(-2px) scale(1.02); box-shadow:0 14px 28px rgba(15,31,57,.3); }
+
+/* Property discovery */
+.stayhub-properties { width:min(100% - 48px,1380px); padding-top:88px !important; padding-bottom:104px !important; }
+.stayhub-eyebrow { margin-bottom:8px; color:#5a7697; font:700 .7rem/1 Manrope,Arial,sans-serif; letter-spacing:.16em; text-transform:uppercase; }
+.stayhub-section-heading h2 { font-size:clamp(2rem,3.5vw,3.2rem) !important; line-height:1.08 !important; letter-spacing:-.04em; }
+.stayhub-filter-bar { padding:8px; width:max-content; max-width:100%; border:1px solid var(--sh-line); border-radius:18px; background:rgba(255,255,255,.74); box-shadow:0 8px 30px rgba(15,31,57,.045); }
+.canal-chip { min-height:40px; padding-inline:16px !important; border:0 !important; border-radius:12px !important; color:#59677b; font-weight:650; }
+.canal-chip:hover { background:#edf3f9; color:var(--sh-ink); }
+.canal-chip.bg-primary { background:var(--sh-ink) !important; box-shadow:0 6px 16px rgba(15,31,57,.18); }
+.stayhub-filter-note { padding-inline:10px 8px; }
+#hoteles-grid { gap:28px !important; }
+.stayhub-hotel-card { min-height:430px; border:1px solid rgba(15,31,57,.09); border-radius:26px; background:#fff; box-shadow:0 14px 42px rgba(15,31,57,.08); }
+.stayhub-hotel-card:hover { transform:translateY(-7px); box-shadow:0 28px 64px rgba(15,31,57,.15); }
+.stayhub-hotel-image { position:relative; height:250px; margin:8px; border-radius:20px; }
+.stayhub-hotel-image::after { content:""; position:absolute; inset:55% 0 0; background:linear-gradient(transparent,rgba(15,31,57,.18)); pointer-events:none; }
+.stayhub-hotel-favorite { position:absolute; z-index:2; top:14px; right:14px; width:40px; height:40px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.9); color:#53657c; box-shadow:0 6px 20px rgba(15,31,57,.15); font-size:20px; font-variation-settings:'FILL' 0; }
+.stayhub-hotel-card:hover .stayhub-hotel-favorite { color:#a33f50; font-variation-settings:'FILL' 1; }
+.stayhub-hotel-body { padding:18px 22px 22px !important; }
+.stayhub-hotel-body h3 { font-size:1.35rem !important; letter-spacing:-.025em; }
+.stayhub-hotel-badges span { background:#eff4f8 !important; color:#47617f; }
+.stayhub-hotel-link { align-self:flex-start; padding-bottom:3px; border-bottom:1px solid rgba(15,31,57,.28); letter-spacing:.02em; text-transform:none !important; }
+.stayhub-hotel-link:hover { gap:8px; border-color:var(--sh-ink); }
+
+/* Consistent modern surfaces across application pages */
+body.stayhub-unified main:not(.stayhub-home-hero) { position:relative; }
+.card,.dashboard-panel-card,main form,.bg-white.rounded-xl,.bg-white.rounded-2xl { border-radius:var(--sh-radius) !important; border-color:var(--sh-line) !important; box-shadow:var(--sh-shadow-sm); }
+input:not([type="checkbox"]):not([type="radio"]),select,textarea { min-height:46px; border-radius:12px !important; border-color:rgba(15,31,57,.16) !important; box-shadow:0 1px 2px rgba(15,31,57,.03); }
+input:hover,select:hover,textarea:hover { border-color:rgba(15,31,57,.28) !important; }
+input:focus,select:focus,textarea:focus { border-color:#6b8db5 !important; box-shadow:0 0 0 4px rgba(92,132,180,.12) !important; }
+.stayhub-primary-action,.btn-primary { border-radius:14px !important; box-shadow:0 9px 22px rgba(15,31,57,.18); }
+.stayhub-secondary-action,.btn-secondary,.btn-danger { border-radius:14px !important; }
+.stayhub-admin-sidebar { top:80px; width:264px; padding:26px 16px 18px; background:rgba(239,243,247,.96); border-right:1px solid rgba(15,31,57,.08); }
+.stayhub-admin-layout > main,.stayhub-admin-layout > .flex > main { width:calc(100% - 264px) !important; margin-left:264px !important; }
+.stayhub-admin-sidebar nav { gap:7px; }
+.stayhub-admin-sidebar nav a { min-height:48px; border-radius:14px; padding:0 14px; }
+.stayhub-admin-sidebar nav a.active { background:linear-gradient(135deg,#0f1f39,#294467); box-shadow:0 10px 24px rgba(15,31,57,.19); }
+.stayhub-global-footer { background:linear-gradient(145deg,#0d1b31,#172c49); }
+.stayhub-footer-inner { min-height:190px; }
+
+@media (max-width:900px) {
+    .stayhub-home-hero { min-height:760px; }
+    .stayhub-hero-overlay { background:linear-gradient(90deg,rgba(8,21,40,.89),rgba(15,31,57,.48)); }
+    .stayhub-hero-content { width:calc(100% - 36px); padding-top:42px; }
+    .stayhub-search-shell { max-width:620px; border-radius:24px; padding:10px !important; }
+    .stayhub-search-field { min-height:66px; border-bottom:1px solid var(--sh-line); }
+    .stayhub-search-field + .stayhub-search-field::before { display:none; }
+    .stayhub-search-field:nth-last-child(1) { border-bottom:0; }
+    .stayhub-search-button { margin-left:auto; }
+    .stayhub-properties { width:calc(100% - 32px); }
+    .stayhub-filter-bar { width:100%; overflow-x:auto; flex-wrap:nowrap !important; }
+    .canal-chip { flex:0 0 auto; }
+    .stayhub-filter-note { display:none; }
+}
+@media (max-width:600px) {
+    body.stayhub-unified { padding-top:68px !important; }
+    .stayhub-global-header { height:68px; }
+    .stayhub-header-inner { width:calc(100% - 24px); }
+    .stayhub-brand-mark { width:38px; height:38px; }
+    .stayhub-header-icon { width:38px; height:38px; }
+    .stayhub-header-nav .stayhub-header-icon:nth-of-type(2) { display:none; }
+    .stayhub-home-hero { min-height:750px; }
+    .stayhub-hero-content { width:calc(100% - 24px); padding-top:30px; padding-bottom:36px; gap:16px !important; }
+    .stayhub-hero-title { font-size:clamp(2.85rem,14vw,4.4rem) !important; }
+    .stayhub-hero-copy { font-size:1rem !important; }
+    .stayhub-search-shell { margin-top:16px !important; }
+    .stayhub-search-field { padding-inline:12px !important; }
+    .stayhub-properties { padding-top:64px !important; padding-bottom:72px !important; }
+    #hoteles-grid { gap:20px !important; }
+    .stayhub-hotel-card { min-height:400px; }
+    .stayhub-hotel-image { height:225px; }
+}
+@media (prefers-reduced-motion:reduce) {
+    *,*::before,*::after { scroll-behavior:auto !important; transition-duration:.01ms !important; animation-duration:.01ms !important; }
+}
+/* Motion system: compositor-friendly, one-shot reveals. */
+@keyframes stayhub-header-in {
+    from { opacity:0; transform:translateY(-12px); }
+    to { opacity:1; transform:translateY(0); }
+}
+@keyframes stayhub-hero-in {
+    from { opacity:0; transform:translateY(28px); }
+    to { opacity:1; transform:translateY(0); }
+}
+@keyframes stayhub-search-in {
+    from { opacity:0; transform:translateY(34px) scale(.985); }
+    to { opacity:1; transform:translateY(0) scale(1); }
+}
+.stayhub-motion .stayhub-global-header { animation:stayhub-header-in .55s cubic-bezier(.22,1,.36,1) both; }
+.stayhub-motion .stayhub-hero-kicker { animation:stayhub-hero-in .65s .08s cubic-bezier(.22,1,.36,1) both; }
+.stayhub-motion .stayhub-hero-title { animation:stayhub-hero-in .8s .15s cubic-bezier(.22,1,.36,1) both; }
+.stayhub-motion .stayhub-hero-copy { animation:stayhub-hero-in .8s .25s cubic-bezier(.22,1,.36,1) both; }
+.stayhub-motion .stayhub-search-shell { animation:stayhub-search-in .9s .34s cubic-bezier(.22,1,.36,1) both; }
+.stayhub-motion [data-reveal] {
+    opacity:0;
+    transform:translate3d(0,26px,0);
+    transition:opacity .68s cubic-bezier(.22,1,.36,1) var(--reveal-delay,0ms),transform .68s cubic-bezier(.22,1,.36,1) var(--reveal-delay,0ms);
+    will-change:opacity,transform;
+}
+.stayhub-motion [data-reveal].is-visible {
+    opacity:1;
+    transform:translate3d(0,0,0);
+    will-change:auto;
+}
+.stayhub-motion .stayhub-hotel-card[data-reveal] { transform:translate3d(0,32px,0) scale(.985); }
+.stayhub-motion .stayhub-hotel-card[data-reveal].is-visible { transform:translate3d(0,0,0) scale(1); }
+.stayhub-motion .stayhub-hotel-card[data-reveal].is-visible:hover { transform:translate3d(0,-7px,0) scale(1); }
+
+@media (prefers-reduced-motion:reduce) {
+    .stayhub-motion .stayhub-global-header,
+    .stayhub-motion .stayhub-hero-kicker,
+    .stayhub-motion .stayhub-hero-title,
+    .stayhub-motion .stayhub-hero-copy,
+    .stayhub-motion .stayhub-search-shell { animation:none !important; }
+    .stayhub-motion [data-reveal] { opacity:1 !important; transform:none !important; transition:none !important; }
+}

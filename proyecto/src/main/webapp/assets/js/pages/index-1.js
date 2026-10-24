@@ -31,22 +31,22 @@
         var foto = fotos[Math.abs(Number(hotel.id) || 0) % fotos.length];
         var fechas = '&checkIn=' + encodeURIComponent(document.getElementById('search-checkin').value || '') + '&checkOut=' + encodeURIComponent(document.getElementById('search-checkout').value || '') + '&huespedes=' + encodeURIComponent(document.getElementById('search-guests').value || '2');
         var div = document.createElement("div");
-        div.className = "group cursor-pointer rounded-xl overflow-hidden relative h-72 hero-shadow bg-surface-container-lowest border border-outline-variant/20 flex flex-col";
+        div.className = "stayhub-hotel-card group cursor-pointer overflow-hidden relative hero-shadow bg-surface-container-lowest flex flex-col";
         var fuentes = ofertas.filter(function (o) { return o.hotelId === hotel.id; });
         var badges = fuentes.map(function (o) { return '<span class="px-2 py-1 rounded-full bg-surface-container-high text-[11px] font-semibold">' + escapeHtml(o.canal === 'STAYHUB' ? 'Directo' : o.canal) + ' · ' + Number(o.puntuacion).toFixed(1) + '</span>'; }).join('');
         div.innerHTML =
-            StayHubDOM.html('<div class="h-40 bg-primary-container overflow-hidden"><img src="assets/images/' + foto + '" alt="' + escapeHtml(hotel.nombre) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/></div>' +
-            '<div class="p-lg flex-1 flex flex-col justify-between">' +
+            StayHubDOM.html('<div class="stayhub-hotel-image bg-primary-container overflow-hidden"><img src="assets/images/' + foto + '" alt="' + escapeHtml(hotel.nombre) + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/><span class="stayhub-hotel-favorite material-symbols-outlined">favorite</span></div>' +
+            '<div class="stayhub-hotel-body p-lg flex-1 flex flex-col justify-between">' +
                 '<div>' +
                     '<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">' + escapeHtml(hotel.nombre) + '</h3>' +
                     '<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">' +
                         '<span class="material-symbols-outlined" style="font-size:16px;">location_on</span>' +
                         escapeHtml(hotel.ciudad) + ', ' + escapeHtml(hotel.pais) +
                     '</p>' +
-                    '<div class="flex flex-wrap gap-xs mt-sm">' + badges + '</div>' +
+                    '<div class="stayhub-hotel-badges flex flex-wrap gap-xs mt-sm">' + badges + '</div>' +
                 '</div>' +
-                '<a href="hotel-details.html?hotelId=' + StayHubDOM.text(hotel.id) + '&canal=' + (canalActivo === 'TODOS' ? 'STAYHUB' : canalActivo) + fechas + '" class="mt-md inline-flex items-center gap-xs font-label-md text-label-md text-primary uppercase tracking-wider hover:text-primary-container transition-colors">' +
-                    'Ver hotel <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>' +
+                '<a href="hotel-details.html?hotelId=' + StayHubDOM.text(hotel.id) + '&canal=' + (canalActivo === 'TODOS' ? 'STAYHUB' : canalActivo) + fechas + '" class="stayhub-hotel-link mt-md inline-flex items-center gap-xs font-label-md text-label-md text-primary transition-colors">' +
+                    'Explore stay <span class="material-symbols-outlined" style="font-size:18px;">arrow_outward</span>' +
                 '</a>' +
             '</div>');
         return div;

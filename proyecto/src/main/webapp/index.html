@@ -8,10 +8,8 @@
 
 
 
-<link href="assets/css/theme.css?v=20260913-6" rel="stylesheet"/>
-<style>
-.hero-shadow { box-shadow: 0 4px 60px rgba(37, 52, 79, 0.08); }
-</style>
+<link href="assets/css/theme.css?v=20261023-design2" rel="stylesheet"/>
+<style>.hero-shadow { box-shadow: 0 24px 80px rgba(15,31,57,.14); }</style>
 <script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="font-body-md text-body-md antialiased flex flex-col min-h-screen">
@@ -39,39 +37,40 @@
 </header>
 <main class="flex-grow">
 <!-- Hero Section -->
-<section class="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
+<section class="stayhub-home-hero relative w-full flex items-center overflow-hidden">
 <div class="absolute inset-0 z-0">
 <div class="bg-cover bg-center w-full h-full" role="img" aria-label="Boutique resort among vineyards and mountains" style="background-image: url('assets/images/stayhub-resort-hero.png')"></div>
-<div class="absolute inset-0 bg-primary/40 backdrop-blur-[2px]"></div>
+<div class="stayhub-hero-overlay absolute inset-0"></div>
 </div>
-<div class="relative z-10 w-full max-w-container-max mx-auto px-md flex flex-col items-center text-center gap-lg">
-<h1 class="font-display-lg text-display-lg text-on-primary">Discover Your Next Escape</h1>
-<p class="font-title-lg text-title-lg text-on-primary/90 max-w-2xl">Curated stays in the world's most captivating destinations.</p>
+<div class="stayhub-hero-content relative z-10 w-full max-w-container-max mx-auto px-md flex flex-col items-start text-left gap-lg">
+<div class="stayhub-hero-kicker"><span></span> Thoughtful stays, simply booked</div>
+<h1 class="stayhub-hero-title font-display-lg text-display-lg text-on-primary">A better way to<br/>find your place.</h1>
+<p class="stayhub-hero-copy font-title-lg text-title-lg text-on-primary/90 max-w-2xl">Distinctive hotels, clear availability and a seamless booking experience—all in one calm, considered space.</p>
 <!-- Search Bar -->
-<div class="mt-xl w-full max-w-4xl bg-surface rounded-full p-sm hero-shadow flex flex-col md:flex-row items-center gap-sm md:gap-0 border border-outline-variant/50">
-<div class="flex-1 flex items-center gap-sm px-lg py-sm border-b md:border-b-0 md:border-r border-outline-variant/30 w-full">
+<div class="stayhub-search-shell mt-xl w-full max-w-5xl bg-surface p-sm hero-shadow flex flex-col md:flex-row items-center gap-sm md:gap-0">
+<div class="stayhub-search-field flex-1 flex items-center gap-sm px-lg py-sm w-full">
 <span class="material-symbols-outlined text-outline">location_on</span>
 <div class="flex flex-col text-left">
 <label class="font-label-md text-label-md text-on-surface-variant uppercase">Where to?</label>
 <input id="search-destino" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline/50 w-full" placeholder="City, country, or hotel" type="text"/>
 </div>
 </div>
-<div class="flex-1 flex items-center gap-sm px-lg py-sm border-b md:border-b-0 md:border-r border-outline-variant/30 w-full">
+<div class="stayhub-search-field flex-1 flex items-center gap-sm px-lg py-sm w-full">
 <span class="material-symbols-outlined text-outline">calendar_today</span>
 <div class="flex flex-col text-left">
 <label class="font-label-md text-label-md text-on-surface-variant uppercase">Dates</label>
 <div class="flex gap-xs"><input id="search-checkin" aria-label="Check-in" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/><input id="search-checkout" aria-label="Check-out" class="bg-transparent border-none p-0 focus:ring-0 text-sm w-full" type="date"/></div>
 </div>
 </div>
-<div class="flex-1 flex items-center justify-between px-lg py-sm w-full">
+<div class="stayhub-search-field flex-1 flex items-center justify-between px-lg py-sm w-full">
 <div class="flex items-center gap-sm">
 <span class="material-symbols-outlined text-outline">group</span>
 <div class="flex flex-col text-left">
-<label class="font-label-md text-label-md text-on-surface-variant uppercase">Guestes</label>
+<label class="font-label-md text-label-md text-on-surface-variant uppercase">Guests</label>
 <input id="search-guests" class="bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface w-full" min="1" max="8" value="2" type="number"/>
 </div>
 </div>
-<button id="btn-buscar" class="bg-primary hover:bg-primary-container text-on-primary rounded-full p-md transition-colors flex items-center justify-center">
+<button id="btn-buscar" class="stayhub-search-button bg-primary text-on-primary transition-colors flex items-center justify-center" aria-label="Search hotels">
 <span class="material-symbols-outlined">search</span>
 </button>
 </div>
@@ -79,22 +78,23 @@
 </div>
 </section>
 <!-- Hoteles (datos reales de GET /api/hoteles) -->
-<section id="hoteles" class="max-w-container-max mx-auto px-md py-xxl">
-<div class="flex items-end justify-between mb-xl">
+<section id="hoteles" class="stayhub-properties max-w-container-max mx-auto px-md py-xxl">
+<div class="stayhub-section-heading flex items-end justify-between mb-xl">
 <div>
-<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Available hotels</h2>
+<p class="stayhub-eyebrow">StayHub collection</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Places worth staying</h2>
 <p id="hoteles-subtitulo" class="font-body-lg text-body-lg text-on-surface-variant">Explore our properties.</p>
 </div>
 </div>
 <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
-<div class="mb-lg flex flex-wrap items-center gap-sm" id="canales-filtro" aria-label="Filtrar por canal">
+<div class="stayhub-filter-bar mb-lg flex flex-wrap items-center gap-sm" id="canales-filtro" aria-label="Filter by channel">
 <button data-canal="TODOS" class="canal-chip px-md py-sm rounded-full border border-outline-variant bg-primary text-on-primary">Todos</button>
 <button data-canal="STAYHUB" class="canal-chip px-md py-sm rounded-full border border-outline-variant">StayHub</button>
 <button data-canal="BOOKING" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Booking</button>
 <button data-canal="AIRBNB" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Airbnb</button>
 <button data-canal="EXPEDIA" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Expedia</button>
 <button data-canal="DESPEGAR" class="canal-chip px-md py-sm rounded-full border border-outline-variant">Despegar</button>
-<span class="text-sm text-on-surface-variant ml-sm">Simulated external sources for testing.</span>
+<span class="stayhub-filter-note text-sm text-on-surface-variant ml-sm">Compare direct and partner availability.</span>
 </div>
 <div id="hoteles-loading" class="font-body-lg text-body-lg text-on-surface-variant">Loading hotels...</div>
 <div id="hoteles-grid" class="grid grid-cols-1 md:grid-cols-3 gap-gutter"></div>
@@ -116,6 +116,6 @@
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=seguridad-a-1"></script>
+<script src="assets/js/api.js?v=20261023-motion2"></script>
 <script src="assets/js/pages/index-1.js"></script>
 </body></html>
