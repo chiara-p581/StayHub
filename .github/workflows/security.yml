@@ -1,0 +1,41 @@
+name: Security supply chain
+
+on:
+  push:
+    branches: [development, main]
+  pull_request:
+    branches: [development, main]
+  schedule:
+    - cron: "23 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-sbom:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: proyecto
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Compile, test and generate CycloneDX SBOM
+        run: mvn --batch-mode --no-transfer-progress verify
+      - name: OWASP dependency audit
+        run: mvn --batch-mode --no-transfer-progress org.owasp:dependency-check-maven:check
+      - name: Upload SBOM and audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            proyecto/target/bom.json
+            proyecto/target/bom.xml
+            proyecto/target/dependency-check-report.*
+          if-no-files-found: warn
+          retention-days: 14

@@ -118,7 +118,7 @@ ds = '/subsystem=datasources/data-source=StayHubDS'
 for k, v in {'max-pool-size': 20, 'min-pool-size': 0, 'blocking-timeout-wait-millis': 5000, 'query-timeout': 15, 'set-tx-query-timeout': 'true'}.items():
     cmds += [f'{ds}:write-attribute(name={k},value={v})']
 cmds += ['run-batch']
-for k, v in [('connectTimeout', '10'), ('socketTimeout', '30')]:
+for k, v in [('connectTimeout', '3'), ('socketTimeout', '10')]:
     cmds += [f'if (outcome != success) of {ds}/connection-properties={k}:read-resource', f' {ds}/connection-properties={k}:add(value={q(v)})', 'end-if']
 cli = a.wildfly_home / 'bin/jboss-cli.sh'
 
@@ -139,6 +139,7 @@ def aplicar(comandos, etiqueta):
 aplicar(cmds, 'TLS, listeners, identidad PMS y pool PostgreSQL')
 aplicar((root / 'config/notificaciones-reintentos.cli').read_text().splitlines(), 'Cola de errores y reintentos de notificaciones')
 aplicar((root / 'config/seguridad-a-jms.cli').read_text().splitlines(), 'Límites de direcciones JMS')
+aplicar((root / 'config/seguridad-a-logging.cli').read_text().splitlines(), 'Auditoría y errores de seguridad')
 os.chmod(a.wildfly_home / 'standalone/configuration/standalone-full.xml', 0o600)
 print('Copia anterior:', backup.relative_to(root))
 print('Certificados locales:', certs.relative_to(root))

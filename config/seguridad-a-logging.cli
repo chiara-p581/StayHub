@@ -1,0 +1,19 @@
+# Logs de seguridad separados, rotados y sin stack traces/PII en el mensaje de aplicación.
+if (outcome != success) of /subsystem=logging/size-rotating-file-handler=STAYHUB_AUDIT:read-resource
+ /subsystem=logging/size-rotating-file-handler=STAYHUB_AUDIT:add(file={relative-to=jboss.server.log.dir,path=stayhub-security-audit.log},rotate-size=10m,max-backup-index=14,append=true,autoflush=true,named-formatter=PATTERN)
+end-if
+if (outcome != success) of /subsystem=logging/size-rotating-file-handler=STAYHUB_ERROR:read-resource
+ /subsystem=logging/size-rotating-file-handler=STAYHUB_ERROR:add(file={relative-to=jboss.server.log.dir,path=stayhub-security-error.log},rotate-size=10m,max-backup-index=14,append=true,autoflush=true,named-formatter=PATTERN)
+end-if
+if (outcome != success) of /subsystem=logging/logger=stayhub.security.audit:read-resource
+ /subsystem=logging/logger=stayhub.security.audit:add(level=INFO,use-parent-handlers=false,handlers=[STAYHUB_AUDIT])
+else
+ /subsystem=logging/logger=stayhub.security.audit:write-attribute(name=handlers,value=[STAYHUB_AUDIT])
+ /subsystem=logging/logger=stayhub.security.audit:write-attribute(name=use-parent-handlers,value=false)
+end-if
+if (outcome != success) of /subsystem=logging/logger=stayhub.error:read-resource
+ /subsystem=logging/logger=stayhub.error:add(level=ERROR,use-parent-handlers=false,handlers=[STAYHUB_ERROR])
+else
+ /subsystem=logging/logger=stayhub.error:write-attribute(name=handlers,value=[STAYHUB_ERROR])
+ /subsystem=logging/logger=stayhub.error:write-attribute(name=use-parent-handlers,value=false)
+end-if
