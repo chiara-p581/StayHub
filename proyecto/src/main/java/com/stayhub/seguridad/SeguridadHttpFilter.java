@@ -58,7 +58,7 @@ public class SeguridadHttpFilter implements Filter {
             }
             if (soap) autenticarPms(request);
             boolean mutacion = Set.of("POST", "PUT", "PATCH", "DELETE").contains(request.getMethod());
-            if (api && mutacion && !webhookValido(request, ruta)) {
+            if (api && mutacion && !esWebhookOta(ruta)) {
                 validarOrigen(request);
                 if (!Csrf.valido(request.getSession(false), request.getHeader("X-CSRF-Token")))
                     throw new SeguridadException(403, "Token CSRF ausente o inválido");
@@ -73,7 +73,6 @@ public class SeguridadHttpFilter implements Filter {
                     if (soap) CuerpoSeguro.xml(bytes);
                     else if ("application/json".equalsIgnoreCase(tipo)) {
                         CuerpoSeguro.json(bytes);
-                        if (ruta.equals("/api/usuarios/login")) cuotaCuenta(bytes);
                     }
                     else throw new SeguridadException(415, "Se requiere application/json");
                 }
@@ -86,7 +85,7 @@ public class SeguridadHttpFilter implements Filter {
                     "HTTP_" + ex.getEstado());
             if (!response.isCommitted()) {
                 response.setStatus(ex.getEstado()); response.setContentType("application/json;charset=UTF-8");
-                if (ex.getEstado() == 429) response.setHeader("Retry-After", "60");
+                if (ex.getEstado() == 429) response.setHeader("Retry-After", "900");
                 response.getWriter().write(AuditoriaSeguridad.respuesta("SOLICITUD_RECHAZADA",
                         ex.getMessage(), AuditoriaSeguridad.correlationId(request)));
             }
@@ -100,22 +99,13 @@ public class SeguridadHttpFilter implements Filter {
             if (adquirido) concurrentes.release();
         }
     }
-    private void cuotaCuenta(byte[] bytes) {
-        try (var reader = jakarta.json.Json.createReader(new java.io.ByteArrayInputStream(bytes))) {
-            var json = reader.readObject();
-            String email = json.getString("email", "").strip().toLowerCase(Locale.ROOT);
-            String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(email.getBytes(StandardCharsets.UTF_8)));
-            if (!limitador.permitir("cuenta:" + hash, 10, System.currentTimeMillis())) throw new SeguridadException(429, "Demasiados intentos de acceso");
-        } catch (SeguridadException ex) { throw ex; }
-        catch (Exception ex) { throw new SeguridadException(400, "Credenciales inválidas"); }
-    }
     private void cuotas(HttpServletRequest request, String ruta) {
         long ahora = System.currentTimeMillis(); String ip = request.getRemoteAddr();
         if (!limitador.permitir("global:" + ip, 180, ahora)) throw new SeguridadException(429, "Demasiadas solicitudes");
         String grupo = ruta.contains("login") ? "login" : ruta.equals("/api/usuarios") ? "registro" :
                 ruta.contains("notificaciones") || ruta.contains("overbooking") ? "notificaciones" :
                 ruta.contains("sincronizaciones") ? "sincronizacion" : "operacion";
-        int limite = switch (grupo) { case "login" -> 10; case "registro" -> 5; case "notificaciones", "sincronizacion" -> 10; default -> 60; };
+        int limite = switch (grupo) { case "login" -> 60; case "registro" -> 5; case "notificaciones", "sincronizacion" -> 10; default -> 60; };
         if (!limitador.permitir(grupo + ":ip:" + ip, limite, ahora)) throw new SeguridadException(429, "Demasiadas solicitudes");
         HttpSession sesion = request.getSession(false);
         Object id = sesion == null ? null : sesion.getAttribute("usuarioId");
@@ -131,11 +121,9 @@ public class SeguridadHttpFilter implements Filter {
                     || !req.getScheme().equals(uri.getScheme()) || puerto != req.getServerPort()) throw new IllegalArgumentException();
         } catch (IllegalArgumentException ex) { throw new SeguridadException(403, "Origen no autorizado"); }
     }
-    private static boolean webhookValido(HttpServletRequest req, String ruta) {
-        if (!ruta.matches("/api/canales-externos/otas/[^/]+/reservas(?:/[^/]+)?")) return false;
-        String esperada = config("stayhub.canales.api-key"), recibida = req.getHeader("X-StayHub-Channel-Key");
-        return esperada != null && !esperada.isBlank() && recibida != null && recibida.length() < 512
-                && MessageDigest.isEqual(esperada.getBytes(StandardCharsets.UTF_8), recibida.getBytes(StandardCharsets.UTF_8));
+    private static boolean esWebhookOta(String ruta) {
+        // Sólo evita CSRF: AutenticacionFilter valida HMAC, timestamp y nonce por canal.
+        return ruta.matches("/api/canales-externos/otas/[^/]+/reservas(?:/[^/]+)?");
     }
     private static void autenticarPms(HttpServletRequest request) {
         // Atributo establecido por TLS del contenedor. Nunca se confía en un header de certificado.
@@ -158,7 +146,7 @@ public class SeguridadHttpFilter implements Filter {
         res.setHeader("X-Content-Type-Options", "nosniff"); res.setHeader("X-Frame-Options", "DENY");
         res.setHeader("Referrer-Policy", "no-referrer");
         res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
-        res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://lh3.googleusercontent.com data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" + (tls ? "; upgrade-insecure-requests" : ""));
+        res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" + (tls ? "; upgrade-insecure-requests" : ""));
         if (tls) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     }
 }

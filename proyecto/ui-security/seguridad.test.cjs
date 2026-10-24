@@ -8,7 +8,7 @@ test('todas las páginas usan scripts locales, sin handlers HTML ni código inli
  for(const f of files(web).filter(p=>p.endsWith('.html'))){const dom=new JSDOM(fs.readFileSync(f,'utf8'));for(const script of dom.window.document.querySelectorAll('script')){assert.equal(script.textContent.trim(),'');assert.ok(!/^https?:/.test(script.getAttribute('src')));assert.ok(fs.existsSync(path.join(web,script.getAttribute('src').split('?')[0])));}for(const e of dom.window.document.querySelectorAll('*'))for(const a of e.attributes)assert.ok(!/^on/i.test(a.name),`${f}: ${a.name}`);dom.window.close();}
 });
 test('cada escritura innerHTML pasa por el saneador antes de tocar DOM',()=>{
- for(const p of files(path.join(web,'assets/js')).filter(p=>p.endsWith('.js')&&!p.includes('/vendor/'))){walk(parse(fs.readFileSync(p,'utf8')),n=>{if(n.type==='AssignmentExpression'&&n.left.type==='MemberExpression'&&n.left.property.name==='innerHTML'){assert.equal(n.operator,'=');assert.equal(n.right.type,'CallExpression',p);assert.equal(n.right.callee.object?.name,'StayHubDOM',p);assert.equal(n.right.callee.property?.name,'html',p);}});}
+ for(const p of files(path.join(web,'assets/js')).filter(p=>p.endsWith('.js')&&!p.includes(path.sep+'vendor'+path.sep))){walk(parse(fs.readFileSync(p,'utf8')),n=>{if(n.type==='AssignmentExpression'&&n.left.type==='MemberExpression'&&n.left.property.name==='innerHTML'){assert.equal(n.operator,'=');assert.equal(n.right.type,'CallExpression',p);assert.equal(n.right.callee.object?.name,'StayHubDOM',p);assert.equal(n.right.callee.property?.name,'html',p);}});}
 });
 test('payloads de nombre, atributo, SVG y URL no crean código ejecutable',()=>{
  const dom=browser(),w=dom.window;const attacks=['<img src=x onerror="alert(1)">','<svg onload="alert(1)"></svg>','<a href="javascript:alert(1)">x</a>','<script>alert(1)</script>','<iframe srcdoc="<script>alert(1)</script>"></iframe>','<math><mtext><table><mglyph><style><!--</style><img title="--><img src=x onerror=alert(1)>">'];
@@ -75,4 +75,18 @@ test('administracion consulta datos frescos aunque exista cache previo de huespe
  const api=w.testApi;await api.listarHoteles();version=2;api.setSession({id:2,rol:'ADMIN'});
  assert.equal((await api.listarHoteles()).version,2);version=3;assert.equal((await api.listarHoteles()).version,3);
  dom.window.close();
+});
+
+test('las páginas no cargan contenido visual remoto',()=>{
+ for(const f of files(web).filter(p=>p.endsWith('.html'))){
+  const html=fs.readFileSync(f,'utf8'),dom=new JSDOM(html);
+  for(const e of dom.window.document.querySelectorAll('[src],[href],[style]')){
+   for(const atributo of ['src','href','style']){
+    const valor=e.getAttribute(atributo)||'';
+    assert.ok(!/https?:\/\//i.test(valor),`${f}: ${atributo} remoto ${valor}`);
+   }
+  }
+  assert.ok(dom.window.document.querySelector('link[href="assets/css/fonts.css"]'),`${f}: falta fonts.css local`);
+  dom.window.close();
+ }
 });

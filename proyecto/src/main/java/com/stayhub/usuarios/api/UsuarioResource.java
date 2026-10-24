@@ -1,6 +1,8 @@
 package com.stayhub.usuarios.api;
 
 import com.stayhub.seguridad.Csrf;
+import com.stayhub.seguridad.ProteccionLogin;
+import com.stayhub.usuarios.exception.UsuarioException;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.dto.LoginRequest;
@@ -28,6 +30,9 @@ public class UsuarioResource {
     @Inject
     private ServicioDeUsuarios servicio;
 
+    @Inject
+    private ProteccionLogin proteccionLogin;
+
     @POST
     public Response registrar(RegistroUsuarioRequest solicitud) {
         RegistroUsuarioRequest registroPublico = solicitud == null ? null : new RegistroUsuarioRequest(
@@ -42,7 +47,17 @@ public class UsuarioResource {
     @POST
     @Path("/login")
     public UsuarioResponse login(LoginRequest credenciales, @Context HttpServletRequest request) {
-        UsuarioResponse usuario = servicio.autenticar(credenciales);
+        String email = credenciales == null ? null : credenciales.email();
+        String ip = request.getRemoteAddr();
+        proteccionLogin.verificar(email, ip);
+        UsuarioResponse usuario;
+        try {
+            usuario = servicio.autenticar(credenciales);
+        } catch (UsuarioException ex) {
+            proteccionLogin.registrarFallo(email, ip);
+            throw ex;
+        }
+        proteccionLogin.registrarExito(email, ip);
         HttpSession anterior = request.getSession(false);
         if (anterior != null) anterior.invalidate();
         HttpSession sesion = request.getSession(true);

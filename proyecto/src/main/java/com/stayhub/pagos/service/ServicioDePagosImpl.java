@@ -40,6 +40,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
     @Override
     public PagoResponse procesarPago(PagoRequest solicitud) {
         identidad.exigirHuesped();
+        Long usuarioId = identidad.usuarioId();
         validar(solicitud);
         PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia());
         if (repetido != null) return repetido;
@@ -53,7 +54,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
                     "El monto o la moneda no coinciden con la reserva");
         }
 
-        Pago pago = new Pago(List.of(solicitud.reservaId()), solicitud.monto(), solicitud.moneda(),
+        Pago pago = new Pago(usuarioId, List.of(solicitud.reservaId()), solicitud.monto(), solicitud.moneda(),
                 normalizarClave(solicitud.claveIdempotencia()));
         repositorio.guardar(pago);
 
@@ -77,6 +78,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
     @Override
     public PagoResponse procesarLote(PagoLoteRequest solicitud) {
         identidad.exigirHuesped();
+        Long usuarioId = identidad.usuarioId();
         if (solicitud != null && solicitud.reservaIds() != null && solicitud.reservaIds().size() > Limites.LOTE)
             throw new SeguridadException(400, "El lote supera 20 reservas");
         if (solicitud == null || solicitud.reservaIds() == null || solicitud.reservaIds().isEmpty()
@@ -106,7 +108,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
                     "El total del checkout no coincide con las reservas");
         }
 
-        Pago pago = new Pago(solicitud.reservaIds(), solicitud.monto(), solicitud.moneda(),
+        Pago pago = new Pago(usuarioId, solicitud.reservaIds(), solicitud.monto(), solicitud.moneda(),
                 normalizarClave(solicitud.claveIdempotencia()));
         repositorio.guardar(pago);
         ResultadoCobro resultado = pasarela.cobrar(solicitud.monto(), solicitud.moneda(),
@@ -150,7 +152,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
     private PagoResponse buscarRepetido(String clave) {
         String normalizada = normalizarClave(clave);
         if (normalizada == null) return null;
-        return repositorio.buscarPorClaveIdempotencia(normalizada).map(p -> consultarPago(p.getId())).orElse(null);
+        return repositorio.buscarPorClaveIdempotencia(identidad.usuarioId(), normalizada).map(p -> consultarPago(p.getId())).orElse(null);
     }
 
     private String normalizarClave(String clave) {

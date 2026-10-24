@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit;
 /** Límites de negocio; también se aplican a llamadas internas y mensajes JMS. */
 public final class Limites {
     public static final int RESULTADOS = 100;
-    public static final int NOCHES = 366;
+    public static final int NOCHES = 31;
     public static final int HABITACIONES = 10;
     public static final int LOTE = 20;
     private Limites() {}
@@ -14,7 +14,7 @@ public final class Limites {
         if (desde == null || hasta == null || !hasta.isAfter(desde)
                 || ChronoUnit.DAYS.between(desde, hasta) > NOCHES
                 || hasta.isAfter(LocalDate.now().plusYears(2)))
-            throw new SeguridadException(400, "El período debe contener entre 1 y 366 noches, dentro de los próximos dos años");
+            throw new SeguridadException(400, "El período debe contener entre 1 y 31 noches, dentro de los próximos dos años");
     }
     public static void texto(String texto, int maximo, boolean requerido) {
         if ((requerido && (texto == null || texto.isBlank())) || (texto != null && texto.length() > maximo))

@@ -11,7 +11,7 @@ public class SeguridadExceptionMapper implements ExceptionMapper<SeguridadExcept
     @Context HttpServletRequest request;
 
     public Response toResponse(SeguridadException ex) {
-        AuditoriaSeguridad.registrar(request, "SOLICITUD_RECHAZADA", "RECHAZADO",
+        AuditoriaSeguridad.registrarUnaVez(request, "SOLICITUD_RECHAZADA", "RECHAZADO",
                 request == null ? "desconocido" : request.getRequestURI(), "HTTP_" + ex.getEstado());
         return Response.status(ex.getEstado()).type(MediaType.APPLICATION_JSON)
                 .entity(Map.of("codigo", "SOLICITUD_RECHAZADA", "mensaje", ex.getMessage(),

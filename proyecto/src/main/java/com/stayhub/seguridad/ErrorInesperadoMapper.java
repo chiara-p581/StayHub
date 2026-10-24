@@ -20,7 +20,7 @@ public class ErrorInesperadoMapper implements ExceptionMapper<Throwable> {
         int estado = error instanceof WebApplicationException web ? web.getResponse().getStatus() : 500;
         boolean interno = estado >= 500;
         if (interno) AuditoriaSeguridad.error(request, error);
-        else AuditoriaSeguridad.registrar(request, "SOLICITUD_RECHAZADA", "RECHAZADO",
+        else AuditoriaSeguridad.registrarUnaVez(request, "SOLICITUD_RECHAZADA", "RECHAZADO",
                 request == null ? "desconocido" : request.getRequestURI(), "HTTP_" + estado);
         String id = AuditoriaSeguridad.correlationId(request);
         return Response.status(estado)

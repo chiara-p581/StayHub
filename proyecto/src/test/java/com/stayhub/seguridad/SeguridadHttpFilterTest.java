@@ -71,6 +71,13 @@ class SeguridadHttpFilterTest {
         filtro.doFilter(req,res,chain);verify(res).setStatus(413);verifyNoInteractions(chain);verify(req,never()).getInputStream();
     }
     @Test void fuerzaBrutaDevuelve429() throws Exception {
-        when(req.getRequestURI()).thenReturn("/api/usuarios/login");for(int i=0;i<11;i++)filtro.doFilter(req,res,chain);verify(res).setStatus(429);verify(res).setHeader("Retry-After","60");
+        when(req.getRequestURI()).thenReturn("/api/usuarios/login");for(int i=0;i<61;i++)filtro.doFilter(req,res,chain);verify(res).setStatus(429);verify(res).setHeader("Retry-After","900");
     }
-}
+
+    @Test void webhookHmacNoRequiereCsrfNiClaveGlobal() throws Exception {
+        when(req.getRequestURI()).thenReturn("/api/canales-externos/otas/BOOKING/reservas");
+        when(req.getMethod()).thenReturn("POST");cuerpo("{}");
+        filtro.doFilter(req,res,chain);
+        verify(chain).doFilter(any(HttpServletRequest.class),eq(res));
+        verify(res,never()).setStatus(403);
+    }}
