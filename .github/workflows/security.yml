@@ -30,7 +30,7 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress org.owasp:dependency-check-maven:check
       - name: Upload SBOM and audit reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: security-reports
           path: |
