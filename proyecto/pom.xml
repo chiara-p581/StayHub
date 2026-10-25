@@ -88,7 +88,9 @@
                   <failBuildOnCVSS>8</failBuildOnCVSS>
                   <!-- OSS Index exige autenticación y hacía fallar CI con 401.
                        Dependency-Check conserva sus analizadores locales/NVD. -->
-                  <ossIndexAnalyzerEnabled>false</ossIndexAnalyzerEnabled>
+                  <!-- Nombre compatible con Dependency-Check 12.x; en 13.x
+                       continúa disponible como alias oficial. -->
+                  <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
                   <formats>
                       <format>HTML</format>
                       <format>JSON</format>
