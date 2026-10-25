@@ -77,6 +77,14 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
                     "Email o contraseña incorrectos");
         }
 
+        // Las cuentas creadas con el costo anterior se actualizan de forma
+        // transparente después de una autenticación válida.
+        if (passwordHasher.requiereActualizacion(usuario.getPasswordHash())) {
+            usuario.actualizarPerfil(usuario.getEmail(), usuario.getNombre(), usuario.getApellido(),
+                    passwordHasher.hash(credenciales.password()));
+            repositorio.guardar(usuario);
+        }
+
         return UsuarioMapper.aResponse(usuario);
     }
 

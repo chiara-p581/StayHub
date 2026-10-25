@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.net.URI;
 import java.util.Locale;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ public final class PlantillaEmail {
         if (textoBoton != null && urlBoton != null) {
             html.append("<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:0 0 24px;\"><tr>")
                 .append("<td style=\"background:").append(COLOR_MARCA).append(";border-radius:8px;\">")
-                .append("<a href=\"").append(esc(urlBoton)).append("\" style=\"display:inline-block;padding:14px 28px;")
+                .append("<a href=\"").append(esc(urlSegura(urlBoton))).append("\" style=\"display:inline-block;padding:14px 28px;")
                 .append("font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;\">")
                 .append(esc(textoBoton)).append("</a></td></tr></table>");
         }
@@ -112,6 +113,15 @@ public final class PlantillaEmail {
 
     public static boolean esHtml(String texto) {
         return texto != null && texto.stripLeading().startsWith("<");
+    }
+
+    static String urlSegura(String valor) {
+        try {
+            URI uri = URI.create(valor);
+            if (("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))
+                    && uri.getHost() != null && uri.getUserInfo() == null) return uri.toASCIIString();
+        } catch (IllegalArgumentException ignored) { }
+        return "#";
     }
 
     /** Versión en texto plano del HTML, para clientes de correo que no muestran HTML. */

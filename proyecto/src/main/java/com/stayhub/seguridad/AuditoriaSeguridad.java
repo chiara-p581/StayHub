@@ -27,9 +27,9 @@ public final class AuditoriaSeguridad {
     private AuditoriaSeguridad() {}
 
     public static String preparar(HttpServletRequest request, HttpServletResponse response) {
-        String recibido = request.getHeader(HEADER_CORRELACION);
-        String id = recibido != null && ID_VALIDO.matcher(recibido).matches()
-                ? recibido : UUID.randomUUID().toString();
+        // El identificador es evidencia de auditoría: nunca se toma de una
+        // entrada controlada por el cliente.
+        String id = UUID.randomUUID().toString();
         request.setAttribute(ATRIBUTO_CORRELACION, id);
         response.setHeader(HEADER_CORRELACION, id);
         return id;
