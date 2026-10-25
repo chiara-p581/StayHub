@@ -18,8 +18,8 @@ jobs:
       run:
         working-directory: proyecto
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -30,7 +30,7 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress org.owasp:dependency-check-maven:check
       - name: Upload SBOM and audit reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: security-reports
           path: |
