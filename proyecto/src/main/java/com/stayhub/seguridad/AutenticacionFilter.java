@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
 public class AutenticacionFilter implements ContainerRequestFilter {
 
     private static final int MAX_CUERPO_WEBHOOK = 1_048_576;
+    private static final long DURACION_ABSOLUTA_SESION_MS = 8L * 60 * 60 * 1000;
+    private static final String INICIO_ABSOLUTO_SESION = "inicioAbsolutoSesion";
     private static final Pattern RUTA_WEBHOOK = Pattern.compile("canales-externos/otas/([^/]+)/reservas(?:/[^/]+)?");
     private final AutenticacionWebhookOta autenticacionWebhook = new AutenticacionWebhookOta();
 
@@ -36,6 +38,12 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         if (esPublica(ruta, metodo)) return;
 
         HttpSession sesion = request.getSession(false);
+        if (sesion != null && sesionExpirada(sesion, System.currentTimeMillis())) {
+            sesion.invalidate();
+            abortar(contexto, Response.Status.UNAUTHORIZED, "SESION_EXPIRADA",
+                    "La sesión expiró. Iniciá sesión nuevamente");
+            return;
+        }
         String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
 
         if (esWebhookOta(ruta)) {
@@ -59,6 +67,15 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         if (requiereAdmin(ruta, metodo) && !"ADMIN".equals(rol)) {
             abortar(contexto, Response.Status.FORBIDDEN, "ACCESO_DENEGADO", "Esta operación requiere rol ADMIN");
         }
+    }
+
+    boolean sesionExpirada(HttpSession sesion, long ahora) {
+        return inicioSesionExpirado(sesion.getAttribute(INICIO_ABSOLUTO_SESION), ahora);
+    }
+
+    boolean inicioSesionExpirado(Object inicio, long ahora) {
+        return !(inicio instanceof Long instante) || instante > ahora
+                || ahora - instante > DURACION_ABSOLUTA_SESION_MS;
     }
 
     String normalizarRuta(String ruta) {

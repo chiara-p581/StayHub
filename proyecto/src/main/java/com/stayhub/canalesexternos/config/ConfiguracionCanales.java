@@ -3,6 +3,8 @@ import com.stayhub.canalesexternos.dto.Canal;
 import com.stayhub.canalesexternos.exception.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.net.URI;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,12 +54,38 @@ public class ConfiguracionCanales {
                     || !hostsPermitidos().contains(host.toLowerCase())) {
                 throw new IllegalArgumentException();
             }
+            if (!(localHttp && "http".equalsIgnoreCase(uri.getScheme()) && esLocal(host))) {
+                validarDirecciones(host);
+            }
             return uri.toString();
         } catch (RuntimeException ex) {
             if (ex instanceof CanalExternoException canalExternoException) throw canalExternoException;
             throw new CanalExternoException(CodigoErrorCanal.SOLICITUD_INVALIDA,
                     "La URL de integración no pertenece a un host HTTPS permitido", ex);
         }
+    }
+
+    void validarDirecciones(String host) {
+        try {
+            InetAddress[] direcciones = resolver(host);
+            if (direcciones.length == 0 || Arrays.stream(direcciones).anyMatch(this::direccionBloqueada)) {
+                throw new IllegalArgumentException("El host resuelve a una red no permitida");
+            }
+        } catch (UnknownHostException ex) {
+            throw new IllegalArgumentException("No se pudo resolver el host", ex);
+        }
+    }
+
+    InetAddress[] resolver(String host) throws UnknownHostException {
+        return InetAddress.getAllByName(host);
+    }
+
+    private boolean direccionBloqueada(InetAddress direccion) {
+        byte[] bytes = direccion.getAddress();
+        boolean ipv6Privada = bytes.length == 16 && (bytes[0] & 0xfe) == 0xfc;
+        return direccion.isAnyLocalAddress() || direccion.isLoopbackAddress()
+                || direccion.isLinkLocalAddress() || direccion.isSiteLocalAddress()
+                || direccion.isMulticastAddress() || ipv6Privada;
     }
 
     private Set<String> hostsPermitidos() {

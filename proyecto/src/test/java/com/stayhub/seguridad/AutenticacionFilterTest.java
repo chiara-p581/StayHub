@@ -48,4 +48,12 @@ class AutenticacionFilterTest {
         assertTrue(filtro.esWebhookOta("canales-externos/otas/BOOKING/reservas/BK-1"));
         assertFalse(filtro.esWebhookOta("canales-externos/otas/BOOKING/sincronizaciones"));
     }
+
+    @Test
+    void aplicaVencimientoAbsolutoALaSesion() {
+        long ahora = System.currentTimeMillis();
+        assertTrue(filtro.inicioSesionExpirado(ahora - 9L * 60 * 60 * 1000, ahora));
+        assertFalse(filtro.inicioSesionExpirado(ahora - 60_000L, ahora));
+        assertTrue(filtro.inicioSesionExpirado(null, ahora));
+    }
 }

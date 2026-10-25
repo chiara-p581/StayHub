@@ -4,6 +4,8 @@ import com.stayhub.canalesexternos.exception.CanalExternoException;
 import com.stayhub.canalesexternos.exception.CodigoErrorCanal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,7 +22,7 @@ class ConfiguracionCanalesTest {
     @Test
     void aceptaSoloHttpsDeHostsExplicitamentePermitidos() {
         System.setProperty("stayhub.canales.hosts-permitidos", "api.booking.example,pms.example");
-        ConfiguracionCanales configuracion = new ConfiguracionCanales();
+        ConfiguracionCanales configuracion = configuracionConDns("8.8.8.8");
         assertEquals("https://api.booking.example/v1", configuracion.urlPermitida("https://api.booking.example/v1"));
         assertThrows(CanalExternoException.class,
                 () -> configuracion.urlPermitida("https://169.254.169.254/latest/meta-data"));
@@ -28,6 +30,22 @@ class ConfiguracionCanalesTest {
                 () -> configuracion.urlPermitida("https://otro.example/v1"));
         assertThrows(CanalExternoException.class,
                 () -> configuracion.urlPermitida("http://api.booking.example/v1"));
+    }
+
+    @Test
+    void rechazaHostPermitidoSiDnsResuelveARedPrivada() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "api.booking.example");
+        ConfiguracionCanales configuracion = configuracionConDns("127.0.0.1");
+        assertThrows(CanalExternoException.class,
+                () -> configuracion.urlPermitida("https://api.booking.example/v1"));
+    }
+
+    private ConfiguracionCanales configuracionConDns(String ip) {
+        return new ConfiguracionCanales() {
+            @Override InetAddress[] resolver(String host) throws UnknownHostException {
+                return new InetAddress[]{InetAddress.getByName(ip)};
+            }
+        };
     }
 
     @Test

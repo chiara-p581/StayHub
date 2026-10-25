@@ -26,6 +26,7 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UsuarioResource {
+    private static final String INICIO_ABSOLUTO_SESION = "inicioAbsolutoSesion";
 
     @Inject
     private ServicioDeUsuarios servicio;
@@ -65,6 +66,7 @@ public class UsuarioResource {
         sesion.setMaxInactiveInterval(900);
         sesion.setAttribute("usuarioId", usuario.id());
         sesion.setAttribute("usuarioRol", usuario.rol());
+        sesion.setAttribute(INICIO_ABSOLUTO_SESION, System.currentTimeMillis());
         Csrf.token(sesion);
         return usuario;
     }

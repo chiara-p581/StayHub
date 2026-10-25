@@ -34,11 +34,11 @@ class SeguridadHttpFilterTest {
         verify(res).setHeader(eq(AuditoriaSeguridad.HEADER_CORRELACION), matches("[0-9a-f-]{36}"));
         verify(req).setAttribute(eq(AuditoriaSeguridad.ATRIBUTO_CORRELACION), matches("[0-9a-f-]{36}"));
     }
-    @Test void conservaCorrelationIdValidoDelCliente() throws Exception {
+    @Test void reemplazaCorrelationIdControladoPorElCliente() throws Exception {
         when(req.getHeader(AuditoriaSeguridad.HEADER_CORRELACION)).thenReturn("pedido-seguro-123");
         filtro.doFilter(req,res,chain);
-        verify(res).setHeader(AuditoriaSeguridad.HEADER_CORRELACION,"pedido-seguro-123");
-        verify(req).setAttribute(AuditoriaSeguridad.ATRIBUTO_CORRELACION,"pedido-seguro-123");
+        verify(res).setHeader(eq(AuditoriaSeguridad.HEADER_CORRELACION), argThat(id -> !"pedido-seguro-123".equals(id)));
+        verify(req).setAttribute(eq(AuditoriaSeguridad.ATRIBUTO_CORRELACION), argThat(id -> !"pedido-seguro-123".equals(id)));
     }
     @Test void mutacionSinCsrfNoEjecutaServicio() throws Exception {
         when(req.getMethod()).thenReturn("POST");filtro.doFilter(req,res,chain);verify(res).setStatus(403);verifyNoInteractions(chain);
