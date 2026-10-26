@@ -1,5 +1,7 @@
 package com.stayhub.seguridad;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -7,13 +9,12 @@ import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HexFormat;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-final class AutenticacionWebhookOta {
+@ApplicationScoped
+class AutenticacionWebhookOta {
     static final long VENTANA_SEGUNDOS = 300;
     private final Clock reloj;
-    private final Map<String, Long> nonces = new ConcurrentHashMap<>();
+    @Inject LimitadorSolicitudes limitador;
 
     AutenticacionWebhookOta() { this(Clock.systemUTC()); }
     AutenticacionWebhookOta(Clock reloj) { this.reloj = reloj; }
@@ -31,8 +32,6 @@ final class AutenticacionWebhookOta {
         String secreto = secreto(canal);
         if (secreto == null || secreto.length() < 32) return false;
         String claveReplay = canal.toUpperCase() + ":" + nonce;
-        limpiarExpirados(ahora);
-        if (nonces.containsKey(claveReplay)) return false;
 
         String hashCuerpo = HexFormat.of().formatHex(sha256(cuerpo));
         String canonico = timestamp + "\n" + nonce + "\n" + metodo + "\n" + ruta + "\n" + hashCuerpo;
@@ -41,7 +40,9 @@ final class AutenticacionWebhookOta {
         try { recibida = HexFormat.of().parseHex(firma); }
         catch (IllegalArgumentException ex) { return false; }
         if (!MessageDigest.isEqual(esperada, recibida)) return false;
-        return nonces.putIfAbsent(claveReplay, ahora + VENTANA_SEGUNDOS) == null;
+        if (limitador == null) limitador = new LimitadorSolicitudes();
+        return limitador.permitir("webhook-replay:" + claveReplay, 1, ahora * 1000,
+                VENTANA_SEGUNDOS * 2 * 1000);
     }
 
     private String secreto(String canal) {
@@ -49,8 +50,6 @@ final class AutenticacionWebhookOta {
         String valor = System.getProperty(clave);
         return valor != null ? valor : System.getenv(clave.toUpperCase().replace('.', '_').replace('-', '_'));
     }
-
-    private void limpiarExpirados(long ahora) { nonces.entrySet().removeIf(e -> e.getValue() < ahora); }
 
     private byte[] hmac(String secreto, String valor) {
         try {

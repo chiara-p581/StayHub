@@ -5,8 +5,9 @@
    archivo antes que su propio <script> de página.
 
    El login crea una sesión HTTP en el backend. El navegador conserva la
-   cookie JSESSIONID y sessionStorage guarda solamente los datos públicos
-   del perfil para pintar la interfaz; la contraseña nunca se almacena.
+   cookie HttpOnly JSESSIONID es la única credencial. Web Storage conserva
+   sólo una vista mínima del perfil y del carrito; nunca tokens, email,
+   contraseña, respuestas de API completas ni datos de tarjeta.
    ============================================================ */
 
 const Api = (() => {
@@ -15,6 +16,13 @@ const Api = (() => {
     const CART_KEY = "stayhub_cart_v2";
     const CACHE_PREFIX = "stayhub_cache_v1:";
     const THEME_KEY = "stayhub_theme";
+    const memoryCache = new Map();
+
+    // Limpieza de formatos anteriores, que persistían respuestas completas.
+    Object.keys(localStorage).forEach(function (key) {
+        if (key.startsWith(CACHE_PREFIX)) localStorage.removeItem(key);
+    });
+    localStorage.removeItem(CART_KEY);
 
     function applyTheme(value) {
         var theme = value === "dark" ? "dark" : "light";
@@ -30,13 +38,21 @@ const Api = (() => {
             sessionStorage.removeItem(USER_KEY);
             throw new Error("The server did not return a valid user session.");
         }
-        sessionStorage.setItem(USER_KEY, JSON.stringify(usuario));
+        sessionStorage.setItem(USER_KEY, JSON.stringify({
+            id: Number(usuario.id),
+            rol: String(usuario.rol),
+            nombre: String(usuario.nombre || ""),
+            apellido: String(usuario.apellido || "")
+        }));
     }
 
     async function clearSession() {
         await request("usuarios/sesion", { method: "DELETE" });
         sessionStorage.removeItem(USER_KEY);
         saveLocalCart([]);
+        Object.keys(sessionStorage).forEach(function (key) {
+            if (key.startsWith("stayhub_pago_") || key === "stayhub_ultimo_pago_reservas") sessionStorage.removeItem(key);
+        });
         csrfPendiente = null;
     }
 
@@ -60,7 +76,8 @@ const Api = (() => {
         }
         try {
             const usuario = JSON.parse(raw);
-            if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
+            if (!usuario || typeof usuario !== "object" || !Number.isSafeInteger(usuario.id)
+                    || usuario.id <= 0 || !["HUESPED", "ADMIN"].includes(usuario.rol)) {
                 sessionStorage.removeItem(USER_KEY);
                 return null;
             }
@@ -139,7 +156,11 @@ const Api = (() => {
         const data = raw ? (isJson ? safeJson(raw) : raw) : null;
 
         if (!res.ok) {
-            if (res.status === 401) {
+            if (res.status === 401 && data && data.codigo === "REAUTENTICACION_REQUERIDA"
+                    && path !== "usuarios/reauth") {
+                const volver = encodeURIComponent(location.pathname.split("/").pop() + location.search + location.hash);
+                location.assign("login.html?reauth=1&next=" + volver);
+            } else if (res.status === 401) {
                 sessionStorage.removeItem(USER_KEY);
                 csrfPendiente = null;
                 if (auth) requireLogin();
@@ -159,16 +180,26 @@ const Api = (() => {
 
     function localCart() {
         try {
-            var value = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-            return Array.isArray(value) ? value : [];
+            var value = JSON.parse(sessionStorage.getItem(CART_KEY) || "[]");
+            return Array.isArray(value) ? value.map(cartItemSeguro) : [];
         } catch (e) {
-            localStorage.removeItem(CART_KEY);
+            sessionStorage.removeItem(CART_KEY);
             return [];
         }
     }
 
+    function cartItemSeguro(item) {
+        item = item && typeof item === "object" ? item : {};
+        var seguro = {};
+        ["itemId", "hotelId", "hotelNombre", "tipoHabitacion", "canal", "cantidadHabitaciones",
+            "checkIn", "checkOut", "huespedTelefono", "precioTotal", "moneda", "reservaId"]
+            .forEach(function (campo) { if (item[campo] !== undefined) seguro[campo] = item[campo]; });
+        return seguro;
+    }
+
     function saveLocalCart(items) {
-        localStorage.setItem(CART_KEY, JSON.stringify(items));
+        items = items.map(cartItemSeguro);
+        sessionStorage.setItem(CART_KEY, JSON.stringify(items));
         document.dispatchEvent(new CustomEvent("stayhub:cart-changed"));
         return items;
     }
@@ -176,7 +207,7 @@ const Api = (() => {
     function addLocalCartItem(item) {
         var items = localCart();
         if (items.length >= 10) throw new Error("The cart supports at most 10 bookings.");
-        items.push(Object.assign({ itemId: Date.now() + "-" + Math.random().toString(16).slice(2) }, item));
+        items.push(cartItemSeguro(Object.assign({ itemId: Date.now() + "-" + Math.random().toString(16).slice(2) }, item)));
         return saveLocalCart(items);
     }
 
@@ -195,9 +226,9 @@ const Api = (() => {
     }
 
     function invalidateCache(prefix = "") {
-        Object.keys(localStorage).forEach(function (key) {
-            if (key.startsWith(CACHE_PREFIX + buildUrl(prefix))) localStorage.removeItem(key);
-        });
+        for (const key of memoryCache.keys()) {
+            if (key.startsWith(CACHE_PREFIX + buildUrl(prefix))) memoryCache.delete(key);
+        }
     }
 
     function cachedRequest(path, params, ttlMs) {
@@ -205,20 +236,20 @@ const Api = (() => {
         if (currentUser() && currentUser().rol === "ADMIN") return request(path, { params });
         const key = cacheKey(path, params);
         let cached = null;
-        try { cached = JSON.parse(localStorage.getItem(key)); } catch (e) { localStorage.removeItem(key); }
+        cached = memoryCache.get(key) || null;
         if (cached) {
             // Mostramos lo ya conocido inmediatamente. Sólo revalidamos en
             // segundo plano cuando venció, sin bloquear la pantalla por Aiven.
             if (Date.now() - cached.savedAt >= ttlMs) {
                 request(path, { params }).then(function (fresh) {
-                    try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: fresh })); } catch (e) {}
+                    memoryCache.set(key, { savedAt: Date.now(), data: fresh });
                     document.dispatchEvent(new CustomEvent("stayhub:cache-refreshed", { detail: { path: path } }));
                 }).catch(function () {});
             }
             return Promise.resolve(cached.data);
         }
         return request(path, { params }).then(function (fresh) {
-            try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: fresh })); } catch (e) {}
+            memoryCache.set(key, { savedAt: Date.now(), data: fresh });
             return fresh;
         });
     }
@@ -269,7 +300,7 @@ const Api = (() => {
                 registered.add(element);
                 var siblings = element.parentElement ? Array.from(element.parentElement.children) : [];
                 var index = Math.max(0, siblings.indexOf(element));
-                element.style.setProperty("--reveal-delay", Math.min(index % 6, 5) * 65 + "ms");
+                element.classList.add("stayhub-reveal-delay-" + Math.min(index % 6, 5));
                 element.setAttribute("data-reveal", "");
                 observer.observe(element);
             });
@@ -386,6 +417,7 @@ const Api = (() => {
         resetearPassword: (dto) => request("usuarios/resetear-password", { method: "POST", body: dto }),
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
         loginUsuario: (dto) => request("usuarios/login", { method: "POST", body: dto }),
+        reautenticarAdmin: (dto) => request("usuarios/reauth", { method: "POST", body: dto, auth: true }),
         consultarUsuario: (id) => request(`usuarios/${id}`, { auth: true }),
         actualizarMiPerfil: (dto) => request("usuarios/me", { method: "PUT", body: dto, auth: true }),
 
@@ -434,8 +466,9 @@ const Api = (() => {
         crearReserva: (dto) => request("reservas", { method: "POST", auth: true, body: {
             hotelId: dto.hotelId, tipoHabitacion: dto.tipoHabitacion,
             cantidadHabitaciones: dto.cantidadHabitaciones, checkIn: dto.checkIn, checkOut: dto.checkOut,
-            huespedNombre: dto.huespedNombre, huespedApellido: dto.huespedApellido,
-            huespedEmail: dto.huespedEmail, huespedTelefono: dto.huespedTelefono,
+            // La identidad se toma de la sesión en el servidor; no se persiste
+            // ni se reenvía nombre/email desde Web Storage.
+            huespedTelefono: dto.huespedTelefono,
             precioTotal: dto.precioTotal, moneda: dto.moneda
         } }),
         consultarReserva: (id) => request(`reservas/${id}`, { auth: true }),

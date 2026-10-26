@@ -1,5 +1,7 @@
 package com.stayhub.servicioDeOverbooking.api;
 
+import jakarta.annotation.security.RolesAllowed;
+import com.stayhub.seguridad.ReautenticacionReciente;
 import com.stayhub.servicioDeOverbooking.contrato.ServicioDeOverbooking;
 import com.stayhub.servicioDeOverbooking.dto.ConflictoReservaDTO;
 import com.stayhub.servicioDeOverbooking.dto.ResultadoResolucionOverbookingDTO;
@@ -8,6 +10,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
 @Path("/overbooking")
+@RolesAllowed("ADMIN")
+@ReautenticacionReciente
 @Produces(MediaType.APPLICATION_JSON)
 public class OverbookingResource {
 

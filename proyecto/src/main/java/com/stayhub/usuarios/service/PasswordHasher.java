@@ -14,7 +14,8 @@ import java.util.Base64;
 @ApplicationScoped
 public class PasswordHasher {
 
-    static final int ITERACIONES = 310_000;
+    /** Piso recomendado para PBKDF2-HMAC-SHA256; se versiona dentro del hash. */
+    static final int ITERACIONES = 600_000;
     private static final int ITERACIONES_LEGACY = 65_536;
     private static final int LONGITUD_CLAVE = 256;
     private static final int LONGITUD_CLAVE_LEGACY = 128;

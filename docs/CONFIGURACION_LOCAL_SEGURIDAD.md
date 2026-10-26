@@ -1,5 +1,13 @@
 # Configuración local de seguridad — estado y activación
 
+## Controles KAN-47 a KAN-51 — 26 de octubre de 2026
+
+Antes del próximo despliegue se debe aplicar `config/seguridad-controles-schema.sql`
+y configurar un secreto TOTP por cada cuenta administradora. El procedimiento,
+incluido el generador que guarda el secreto fuera de Git, está en
+`docs/IMPLEMENTACION_KAN_47_51.md`. Sin estas tablas el rate limiting falla
+cerrado; sin el secreto correspondiente el login administrativo responde 503.
+
 ## Actualización de puertos — 16 de octubre de 2026
 
 La configuración de desarrollo usa **https://localhost:8080/StayHub/index.html**.
@@ -144,3 +152,11 @@ La primera corresponde a la configuración anterior a estos cambios; las
 siguientes guardan el estado antes de cada aplicación. Para restaurar: detener
 WildFly, guardar el XML actual, reemplazarlo por la copia elegida y arrancar
 con `-c standalone-full.xml`. Mantener los permisos y archivos privados.
+# Credenciales TLS fuera del XML de WildFly
+
+La configuración Elytron referencia `${env.STAYHUB_TLS_STORE_PASSWORD}`; no
+guarda la contraseña real de los archivos PKCS#12 en `standalone-full.xml`.
+Antes de iniciar o recargar WildFly, exportar esa variable en el entorno de su
+proceso usando el valor privado de `.local-security/secretos.json`. No copiar el
+valor a scripts versionados, argumentos de línea de comandos ni propiedades del
+servidor. El archivo privado se crea con permisos `0600` y está ignorado por Git.

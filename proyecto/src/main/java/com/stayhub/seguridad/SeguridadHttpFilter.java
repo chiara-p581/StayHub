@@ -9,10 +9,34 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import jakarta.inject.Inject;
 
 @WebFilter(urlPatterns = "/*")
 public class SeguridadHttpFilter implements Filter {
-    private final LimitadorSolicitudes limitador = new LimitadorSolicitudes();
+    /*
+     * Los hashes corresponden a los bloques <style> y atributos style estáticos
+     * de las páginas actuales. Permiten conservar la presentación sin habilitar
+     * style-src 'unsafe-inline' para contenido inyectado arbitrariamente.
+     */
+    private static final String CSP_ESTILOS = "'self' 'unsafe-hashes' "
+            + "'sha256-ExDwhCoLZPqGJBB6eq6YNLs7sURk2oo8FLVMUMNgH4w=' "
+            + "'sha256-+IEheqqy8pz0kp4hgBcN5pYmvWvuTH7X9wrSA/g0EIg=' "
+            + "'sha256-a+YwXevDRbeArioj40JfB8B3VP0NTxQWacEEKfTo/eE=' "
+            + "'sha256-SR9YrDIpmIls03ObYegGN6mznCPPVnyGgBvqsturVmA=' "
+            + "'sha256-BHaaLUxCE5dS4TGTVOLBO7kyJobEIqauj5mNHsh9hCg=' "
+            + "'sha256-0tT9WqC7P5fJ+QwxeWGnSuMLB1da0YChOBW7orXH5a0=' "
+            + "'sha256-vjrAFZEZajRB2hlj2QUKVNQWqgt1I0f4H0UTmQ7fm1U=' "
+            + "'sha256-bRl1JRh04ORtwRTe9KWhk7h9waQMvuB8RwnXXyEEukQ=' "
+            + "'sha256-msAtDZkyxX9K2NHxfjJ4h34naMQHpAEArU876xs3jWc=' "
+            + "'sha256-3x4Ga2UF8uxIej4tcLMqkVJn/3RRF+GIPgi8ZPovggY=' "
+            + "'sha256-Pv8UZFUM1QWHL0Gw5VNDwfcOAW/pByu4gal59cC89+Y=' "
+            + "'sha256-Q3eEHbti69X2qr6QzlOHA+qSDmfulYzgi4VMWwu9lS4=' "
+            + "'sha256-0vx9SSfpLQkb0xAap1jabkP+3z5f6dI9Qx1IU/NE9UE=' "
+            + "'sha256-JvZAvO7tUtEN8PuqLkGdxDsbgtGxOUI81LhBdyg7vYI=' "
+            + "'sha256-+bhY2cz2dSmul+Gl+dKzY2uN3cXrCM++B4YIcv/pUts=' "
+            + "'sha256-1kyMszWelz6bHQWpveXGs0r7Uw7c7YJMQ6eXZlDOCr8=' "
+            + "'sha256-Q+nAeb6+lO7Hw/QTTOowxLK49HpHGB7ZfnCD6jX0qa4='";
+    @Inject LimitadorSolicitudes limitador;
     private final java.util.concurrent.Semaphore concurrentes = new java.util.concurrent.Semaphore(32);
     public static boolean httpLocalHabilitado() { return "true".equals(config("stayhub.seguridad.http-local")); }
     static String config(String clave) {
@@ -100,6 +124,7 @@ public class SeguridadHttpFilter implements Filter {
         }
     }
     private void cuotas(HttpServletRequest request, String ruta) {
+        if (limitador == null) limitador = new LimitadorSolicitudes(); // pruebas unitarias fuera del contenedor
         long ahora = System.currentTimeMillis(); String ip = request.getRemoteAddr();
         if (!limitador.permitir("global:" + ip, 180, ahora)) throw new SeguridadException(429, "Demasiadas solicitudes");
         String grupo = ruta.contains("login") ? "login" : ruta.equals("/api/usuarios") ? "registro" :
@@ -146,7 +171,10 @@ public class SeguridadHttpFilter implements Filter {
         res.setHeader("X-Content-Type-Options", "nosniff"); res.setHeader("X-Frame-Options", "DENY");
         res.setHeader("Referrer-Policy", "no-referrer");
         res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
-        res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" + (tls ? "; upgrade-insecure-requests" : ""));
+        res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src " + CSP_ESTILOS
+                + "; font-src 'self'; img-src 'self' data:; connect-src 'self'; media-src 'self'; manifest-src 'self'; "
+                + "object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+                + (tls ? "; upgrade-insecure-requests" : ""));
         if (tls) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     }
 }

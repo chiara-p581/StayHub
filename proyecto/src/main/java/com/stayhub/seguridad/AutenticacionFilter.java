@@ -1,6 +1,9 @@
 package com.stayhub.seguridad;
 
 import jakarta.annotation.Priority;
+import jakarta.annotation.security.DenyAll;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.Priorities;
@@ -10,6 +13,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
+import jakarta.ws.rs.container.ResourceInfo;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
@@ -24,10 +28,13 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     private static final long DURACION_ABSOLUTA_SESION_MS = 8L * 60 * 60 * 1000;
     private static final String INICIO_ABSOLUTO_SESION = "inicioAbsolutoSesion";
     private static final Pattern RUTA_WEBHOOK = Pattern.compile("canales-externos/otas/([^/]+)/reservas(?:/[^/]+)?");
-    private final AutenticacionWebhookOta autenticacionWebhook = new AutenticacionWebhookOta();
+    @jakarta.inject.Inject
+    AutenticacionWebhookOta autenticacionWebhook;
 
     @Context
     HttpServletRequest request;
+    @Context
+    ResourceInfo resourceInfo;
 
     @Override
     public void filter(ContainerRequestContext contexto) {
@@ -35,7 +42,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         String metodo = contexto.getMethod();
 
         if ("OPTIONS".equals(metodo)) return;
-        if (esPublica(ruta, metodo)) return;
+        if (anotacion(PermitAll.class) != null) return;
 
         HttpSession sesion = request.getSession(false);
         if (sesion != null && sesionExpirada(sesion, System.currentTimeMillis())) {
@@ -46,7 +53,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         }
         String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
 
-        if (esWebhookOta(ruta)) {
+        if (anotacion(WebhookFirmado.class) != null) {
             if (firmaWebhookValida(contexto, ruta, metodo)) {
                 AuditoriaSeguridad.registrar(request, "WEBHOOK_OTA_AUTENTICADO", "EXITO", ruta, "FIRMA_VALIDA");
                 return;
@@ -59,13 +66,22 @@ public class AutenticacionFilter implements ContainerRequestFilter {
             abortar(contexto, Response.Status.UNAUTHORIZED, "NO_AUTENTICADO", "Iniciá sesión para continuar");
             return;
         }
-        if ("ADMIN".equals(rol) && esCompra(ruta, metodo)) {
-            abortar(contexto, Response.Status.FORBIDDEN, "ADMIN_NO_COMPRA",
-                    "Las cuentas ADMIN administran StayHub y no pueden realizar reservas ni compras");
+        if (anotacion(DenyAll.class) != null) {
+            abortar(contexto, Response.Status.FORBIDDEN, "ACCESO_DENEGADO", "Operación no permitida");
             return;
         }
-        if (requiereAdmin(ruta, metodo) && !"ADMIN".equals(rol)) {
-            abortar(contexto, Response.Status.FORBIDDEN, "ACCESO_DENEGADO", "Esta operación requiere rol ADMIN");
+        RolesAllowed roles = anotacion(RolesAllowed.class);
+        if (roles != null && java.util.Arrays.stream(roles.value()).noneMatch(rol::equals)) {
+            abortar(contexto, Response.Status.FORBIDDEN, "ACCESO_DENEGADO", "El rol no permite esta operación");
+            return;
+        }
+        if ("ADMIN".equals(rol) && !Boolean.TRUE.equals(sesion.getAttribute(SesionSegura.MFA_VERIFICADA))) {
+            abortar(contexto, Response.Status.UNAUTHORIZED, "MFA_REQUERIDO", "La sesión administrativa requiere MFA");
+            return;
+        }
+        if (anotacion(ReautenticacionReciente.class) != null && !reauthReciente(sesion, System.currentTimeMillis())) {
+            abortar(contexto, Response.Status.UNAUTHORIZED, "REAUTENTICACION_REQUERIDA",
+                    "Volvé a confirmar contraseña y MFA para esta operación");
         }
     }
 
@@ -90,33 +106,23 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         return normalizada;
     }
 
-    boolean esPublica(String ruta, String metodo) {
-        // Registro, login y recuperación de contraseña: se usan sin sesión iniciada
-        if ("POST".equals(metodo) && ("usuarios".equals(ruta) || "usuarios/login".equals(ruta)
-                || "usuarios/recuperar-password".equals(ruta) || "usuarios/resetear-password".equals(ruta))) return true;
-        if ("GET".equals(metodo) && ruta.equals("seguridad/csrf")) return true;
-        if ("GET".equals(metodo) && (ruta.equals("hoteles") || ruta.startsWith("hoteles/"))) return true;
-        if ("GET".equals(metodo) && ruta.startsWith("catalogo-canales/")) return true;
-        return "GET".equals(metodo) && ruta.startsWith("inventario-tarifas/");
+    boolean reauthReciente(HttpSession sesion, long ahora) {
+        Object valor = sesion.getAttribute(SesionSegura.ADMIN_REAUTENTICADO_EN);
+        return valor instanceof Long instante && instante <= ahora
+                && ahora - instante <= SesionSegura.REAUTENTICACION_ADMIN_MS;
     }
 
-    boolean esCompra(String ruta, String metodo) {
-        return !"GET".equals(metodo) && (ruta.startsWith("carrito")
-                || ruta.equals("reservas") || ruta.startsWith("pagos"));
-    }
-
-    boolean requiereAdmin(String ruta, String metodo) {
-        return ruta.startsWith("canales-externos/")
-                || ruta.startsWith("demo/")
-                || ruta.startsWith("overbooking/")
-                || ruta.startsWith("notificaciones/")
-                || (!"GET".equals(metodo) && ruta.startsWith("hoteles"))
-                || (!"GET".equals(metodo) && ruta.startsWith("inventario-tarifas/"))
-                || ("GET".equals(metodo) && "reservas".equals(ruta));
-    }
-
-    boolean esWebhookOta(String ruta) {
-        return ruta.matches("canales-externos/otas/[^/]+/reservas(?:/[^/]+)?");
+    private <T extends java.lang.annotation.Annotation> T anotacion(Class<T> tipo) {
+        if (resourceInfo == null) return null;
+        java.lang.reflect.Method metodo = resourceInfo.getResourceMethod();
+        if (metodo != null && metodo.isAnnotationPresent(tipo)) return metodo.getAnnotation(tipo);
+        if (metodo != null && tipo != ReautenticacionReciente.class
+                && (metodo.isAnnotationPresent(PermitAll.class)
+                    || metodo.isAnnotationPresent(DenyAll.class)
+                    || metodo.isAnnotationPresent(RolesAllowed.class)
+                    || metodo.isAnnotationPresent(WebhookFirmado.class))) return null;
+        Class<?> recurso = resourceInfo.getResourceClass();
+        return recurso == null ? null : recurso.getAnnotation(tipo);
     }
 
     private boolean firmaWebhookValida(ContainerRequestContext contexto, String ruta, String metodo) {
@@ -126,6 +132,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
             byte[] cuerpo = contexto.getEntityStream().readNBytes(MAX_CUERPO_WEBHOOK + 1);
             contexto.setEntityStream(new ByteArrayInputStream(cuerpo));
             if (cuerpo.length > MAX_CUERPO_WEBHOOK) return false;
+            if (autenticacionWebhook == null) autenticacionWebhook = new AutenticacionWebhookOta();
             return autenticacionWebhook.validar(matcher.group(1), metodo, ruta, cuerpo,
                     contexto.getHeaderString("X-StayHub-Timestamp"),
                     contexto.getHeaderString("X-StayHub-Nonce"),

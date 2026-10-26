@@ -3,8 +3,8 @@ package com.stayhub.reservas.api;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.dto.ReservaResponse;
 import com.stayhub.reservas.service.ServicioDeReservas;
-import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -41,11 +41,13 @@ public class ReservaResource {
 
     @GET
     @Path("/mias")
+    @RolesAllowed("HUESPED")
     public List<ReservaResponse> listarMias(@QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
         return servicio.listarMias(offset, limite);
     }
 
     @POST
+    @RolesAllowed("HUESPED")
     public Response crear(ReservaRequest solicitud) {
         ReservaResponse creada = servicio.crearReserva(solicitud);
         // UriInfo.getAbsolutePathBuilder() ya apunta a la URL completa de este
@@ -81,6 +83,7 @@ public class ReservaResource {
     }
 
     @GET
+    @RolesAllowed("ADMIN")
     public List<ReservaResponse> listarPorHotel(@QueryParam("hotelId") Long hotelId, @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
         return servicio.listarPorHotel(hotelId, offset, limite);
     }

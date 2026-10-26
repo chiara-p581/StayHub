@@ -1,5 +1,6 @@
 package com.stayhub.canalesexternos.api;
 
+import jakarta.annotation.security.PermitAll;
 import com.stayhub.canalesexternos.dto.OfertaCatalogoDTO;
 import com.stayhub.hoteles.service.ServicioDeHoteles;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import java.util.List;
  * como integración productiva; sirve para probar filtros y flujos multicanal.
  */
 @Path("/catalogo-canales/ofertas")
+@PermitAll
 @Produces(MediaType.APPLICATION_JSON)
 public class CatalogoCanalesResource {
 

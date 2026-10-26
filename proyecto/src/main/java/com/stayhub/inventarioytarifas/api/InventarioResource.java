@@ -7,7 +7,10 @@ import com.stayhub.inventarioytarifas.dto.DisponibilidadDTO;
 import com.stayhub.inventarioytarifas.dto.TarifaDTO;
 import com.stayhub.inventarioytarifas.exception.CodigoErrorInventarioTarifas;
 import com.stayhub.inventarioytarifas.exception.InventarioTarifasException;
+import com.stayhub.seguridad.ReautenticacionReciente;
 
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -27,6 +30,7 @@ import java.util.List;
  */
 @Path("/inventario-tarifas")
 @Produces(MediaType.APPLICATION_JSON)
+@PermitAll
 public class InventarioResource {
 
     @Inject
@@ -55,6 +59,8 @@ public class InventarioResource {
     @POST
     @Path("/cargas")
     @Consumes(MediaType.APPLICATION_JSON)
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public Response cargar(CargaInventarioRequest solicitud) {
         CargaInventarioResponse resultado = servicio.cargarInventario(solicitud);
         return Response.status(Response.Status.CREATED).entity(resultado).build();

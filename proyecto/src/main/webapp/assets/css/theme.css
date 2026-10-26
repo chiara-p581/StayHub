@@ -391,3 +391,10 @@ input:focus,select:focus,textarea:focus { border-color:#6b8db5 !important; box-s
     .stayhub-motion .stayhub-search-shell { animation:none !important; }
     .stayhub-motion [data-reveal] { opacity:1 !important; transform:none !important; transition:none !important; }
 }
+/* Retardos discretos: evitan crear estilos inline incompatibles con la CSP. */
+.stayhub-reveal-delay-0 { --reveal-delay: 0ms; }
+.stayhub-reveal-delay-1 { --reveal-delay: 65ms; }
+.stayhub-reveal-delay-2 { --reveal-delay: 130ms; }
+.stayhub-reveal-delay-3 { --reveal-delay: 195ms; }
+.stayhub-reveal-delay-4 { --reveal-delay: 260ms; }
+.stayhub-reveal-delay-5 { --reveal-delay: 325ms; }

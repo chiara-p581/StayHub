@@ -4,7 +4,10 @@ import com.stayhub.canalesexternos.contrato.ServicioDeCanalesExternos;
 import com.stayhub.canalesexternos.dto.*;
 import com.stayhub.canalesexternos.exception.CanalExternoException;
 import com.stayhub.canalesexternos.exception.CodigoErrorCanal;
+import com.stayhub.seguridad.ReautenticacionReciente;
+import com.stayhub.seguridad.WebhookFirmado;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
@@ -13,6 +16,7 @@ import java.time.format.DateTimeParseException;
 
 @Path("/canales-externos")
 @Produces(MediaType.APPLICATION_JSON)
+@RolesAllowed("ADMIN")
 public class CanalExternoResource {
     @Inject ServicioDeCanalesExternos servicio;
 
@@ -25,6 +29,7 @@ public class CanalExternoResource {
 
     @POST @Path("/otas/{canal}/reservas")
     @Consumes(MediaType.APPLICATION_JSON)
+    @WebhookFirmado
     public Response recibir(@PathParam("canal") String canal, ReservaExternaDTO reserva, @Context UriInfo uriInfo) {
         ReservaExternaDTO normalizada = conCanal(reserva, Canal.desde(canal));
         ResultadoReservaDTO resultado = servicio.recibirReserva(normalizada);
@@ -34,17 +39,20 @@ public class CanalExternoResource {
 
     @PUT @Path("/otas/{canal}/reservas/{idExterno}")
     @Consumes(MediaType.APPLICATION_JSON)
+    @WebhookFirmado
     public ResultadoReservaDTO modificar(@PathParam("canal") String canal, @PathParam("idExterno") String id,
                                          ReservaExternaDTO reserva) {
         return servicio.modificarReserva(conIdentidad(reserva, Canal.desde(canal), id));
     }
 
     @DELETE @Path("/otas/{canal}/reservas/{idExterno}")
+    @WebhookFirmado
     public ResultadoReservaDTO cancelar(@PathParam("canal") String canal, @PathParam("idExterno") String id) {
         return servicio.cancelarReserva(Canal.desde(canal), id);
     }
 
     @POST @Path("/otas/{canal}/sincronizaciones")
+    @ReautenticacionReciente
     public Response sincronizarOta(@PathParam("canal") String canal,
             @QueryParam("hotelId") Long hotelId, @QueryParam("desde") String desde, @QueryParam("hasta") String hasta) {
         return Response.accepted(servicio.sincronizarOta(hotelId, Canal.desde(canal),
@@ -52,6 +60,7 @@ public class CanalExternoResource {
     }
 
     @POST @Path("/pms/sincronizaciones")
+    @ReautenticacionReciente
     public Response sincronizarPms(@QueryParam("hotelId") Long hotelId,
             @QueryParam("desde") String desde, @QueryParam("hasta") String hasta) {
         return Response.accepted(servicio.sincronizarPms(hotelId,

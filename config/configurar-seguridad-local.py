@@ -35,6 +35,9 @@ else:
     secretos.write_text(json.dumps({'tls_store_password': password}))
 os.chmod(secretos, 0o600)
 env = dict(os.environ, STAYHUB_TLS_STORE_PASSWORD=password)
+# WildFly resuelve esta expresión desde el entorno de SU proceso. Así el XML
+# conserva solamente la referencia y nunca el secreto literal del PKCS#12.
+password_expression = '${env.STAYHUB_TLS_STORE_PASSWORD}'
 
 def ejecutar(argv):
     r = subprocess.run([str(x) for x in argv], env=env, capture_output=True, text=True)
@@ -77,9 +80,9 @@ def upsert(address, attrs):
     return cmds + ['end-if']
 
 cmds = []
-cmds += upsert('/subsystem=elytron/key-store=StayHubTLSKeys', {'path': q(certs / 'server.p12'), 'type': 'PKCS12', 'credential-reference': '{clear-text=' + q(password) + '}'})
-cmds += upsert('/subsystem=elytron/key-store=StayHubTLSTrust', {'path': q(certs / 'trust.p12'), 'type': 'PKCS12', 'credential-reference': '{clear-text=' + q(password) + '}'})
-cmds += upsert('/subsystem=elytron/key-manager=StayHubTLSKeyManager', {'key-store': 'StayHubTLSKeys', 'alias-filter': 'server', 'credential-reference': '{clear-text=' + q(password) + '}'})
+cmds += upsert('/subsystem=elytron/key-store=StayHubTLSKeys', {'path': q(certs / 'server.p12'), 'type': 'PKCS12', 'credential-reference': '{clear-text=' + q(password_expression) + '}'})
+cmds += upsert('/subsystem=elytron/key-store=StayHubTLSTrust', {'path': q(certs / 'trust.p12'), 'type': 'PKCS12', 'credential-reference': '{clear-text=' + q(password_expression) + '}'})
+cmds += upsert('/subsystem=elytron/key-manager=StayHubTLSKeyManager', {'key-store': 'StayHubTLSKeys', 'alias-filter': 'server', 'credential-reference': '{clear-text=' + q(password_expression) + '}'})
 cmds += upsert('/subsystem=elytron/trust-manager=StayHubTLSTrustManager', {'key-store': 'StayHubTLSTrust'})
 cmds += upsert('/subsystem=elytron/server-ssl-context=StayHubTLS', {'key-manager': 'StayHubTLSKeyManager', 'trust-manager': 'StayHubTLSTrustManager', 'protocols': '["TLSv1.3","TLSv1.2"]', 'want-client-auth': 'true', 'need-client-auth': 'false'})
 cmds += ['batch', '/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=StayHubTLS)']
@@ -145,3 +148,4 @@ print('Copia anterior:', backup.relative_to(root))
 print('Certificados locales:', certs.relative_to(root))
 print('Hoteles PMS:', ','.join(map(str, hoteles)) or 'ninguno: SOAP bloqueado')
 print('Configuración lista; requiere reload antes de desplegar. No se modificó la BD.')
+print('El proceso de WildFly debe iniciarse con STAYHUB_TLS_STORE_PASSWORD; el XML sólo guarda ${env.STAYHUB_TLS_STORE_PASSWORD}.')
