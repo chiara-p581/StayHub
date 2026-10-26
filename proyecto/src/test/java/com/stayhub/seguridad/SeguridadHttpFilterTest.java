@@ -30,7 +30,11 @@ class SeguridadHttpFilterTest {
         assertTrue(body.toString().contains("correlationId"));
     }
     @Test void solicitudSeguraIncluyeCabeceras() throws Exception {
-        filtro.doFilter(req,res,chain);verify(chain).doFilter(req,res);verify(res).setHeader(eq("Content-Security-Policy"),contains("script-src 'self'"));verify(res).setHeader("Strict-Transport-Security","max-age=31536000; includeSubDomains");
+        filtro.doFilter(req,res,chain);verify(chain).doFilter(req,res);
+        verify(res).setHeader(eq("Content-Security-Policy"),argThat(csp -> csp.contains("script-src 'self'")
+                && csp.contains("style-src 'self' 'unsafe-hashes'") && !csp.contains("'unsafe-inline'")
+                && csp.contains("frame-src 'none'") && csp.contains("worker-src 'none'")));
+        verify(res).setHeader("Strict-Transport-Security","max-age=31536000; includeSubDomains");
         verify(res).setHeader(eq(AuditoriaSeguridad.HEADER_CORRELACION), matches("[0-9a-f-]{36}"));
         verify(req).setAttribute(eq(AuditoriaSeguridad.ATRIBUTO_CORRELACION), matches("[0-9a-f-]{36}"));
     }

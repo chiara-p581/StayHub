@@ -2,6 +2,15 @@
     var form = document.getElementById("login-form");
     var errorBanner = document.getElementById("error-banner");
     var submitBtn = document.getElementById("submit-btn");
+    var params = new URLSearchParams(location.search);
+    var esReautenticacion = params.get("reauth") === "1";
+
+    if (esReautenticacion) {
+        document.getElementById("login-title").textContent = "Confirm administrator identity";
+        document.getElementById("login-description").textContent =
+            "Enter your password and a new authenticator code to continue the sensitive operation.";
+        submitBtn.textContent = "Confirm identity";
+    }
 
     // Si ya había una sesión activa, la mostramos como pre-cargada
     // (no auto-redirige: el usuario puede querer loguearse con otra cuenta).
@@ -12,19 +21,20 @@
 
         var email = document.getElementById("email").value.trim();
         var password = document.getElementById("password").value;
+        var codigoMfa = document.getElementById("codigo-mfa").value.trim();
 
         submitBtn.disabled = true;
         submitBtn.textContent = "Ingresando...";
 
-        Api.loginUsuario({ email: email, password: password })
+        var operacion = esReautenticacion ? Api.reautenticarAdmin : Api.loginUsuario;
+        operacion({ email: email, password: password, codigoMfa: codigoMfa || null })
             .then(function (usuario) {
-                Api.setSession(usuario);
+                if (!esReautenticacion) Api.setSession(usuario);
 
-                var params = new URLSearchParams(location.search);
                 var next = destinoLocalSeguro(params.get("next"));
                 if (next) {
                     location.assign(next);
-                } else if (usuario.rol === "ADMIN") {
+                } else if (esReautenticacion || usuario.rol === "ADMIN") {
                     location.href = "admin-dashboard.html";
                 } else {
                     location.href = "index.html";
@@ -38,7 +48,7 @@
                         : err
                 );
                 submitBtn.disabled = false;
-                submitBtn.textContent = "Sign in";
+                submitBtn.textContent = esReautenticacion ? "Confirm identity" : "Sign in";
             });
     });
 

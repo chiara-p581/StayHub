@@ -17,6 +17,9 @@ class ConfiguracionCanalesTest {
         System.clearProperty("stayhub.canales.timeout.lectura.ms");
         System.clearProperty("stayhub.canales.hosts-permitidos");
         System.clearProperty("stayhub.canales.permitir-http-local");
+        System.clearProperty("stayhub.pms.wsdl");
+        System.clearProperty("stayhub.pms.endpoint");
+        System.clearProperty("stayhub.ota.booking.token");
     }
 
     @Test
@@ -38,6 +41,34 @@ class ConfiguracionCanalesTest {
         ConfiguracionCanales configuracion = configuracionConDns("127.0.0.1");
         assertThrows(CanalExternoException.class,
                 () -> configuracion.urlPermitida("https://api.booking.example/v1"));
+    }
+
+    @Test
+    void rechazaRutasNormalizablesYUrlsExcesivas() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "api.booking.example");
+        ConfiguracionCanales configuracion = configuracionConDns("8.8.8.8");
+        assertThrows(CanalExternoException.class,
+                () -> configuracion.urlPermitida("https://api.booking.example/a/../admin"));
+        assertThrows(CanalExternoException.class,
+                () -> configuracion.urlPermitida("https://api.booking.example/" + "a".repeat(2_100)));
+    }
+
+    @Test
+    void endpointPmsNoPuedeCambiarDeOrigenRespectoDelWsdl() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "pms.example,otro.example");
+        System.setProperty("stayhub.pms.wsdl", "https://pms.example/Pms?wsdl");
+        ConfiguracionCanales configuracion = configuracionConDns("8.8.8.8");
+        assertEquals("https://pms.example/Pms", configuracion.endpointPms());
+        System.setProperty("stayhub.pms.endpoint", "https://otro.example/Pms");
+        assertThrows(CanalExternoException.class, configuracion::endpointPms);
+    }
+
+    @Test
+    void credencialOtaEsObligatoriaYNoAdmiteControles() {
+        ConfiguracionCanales configuracion = new ConfiguracionCanales();
+        assertThrows(CanalExternoException.class, () -> configuracion.tokenOta(com.stayhub.canalesexternos.dto.Canal.BOOKING));
+        System.setProperty("stayhub.ota.booking.token", "token\r\ninyectado");
+        assertThrows(CanalExternoException.class, () -> configuracion.tokenOta(com.stayhub.canalesexternos.dto.Canal.BOOKING));
     }
 
     private ConfiguracionCanales configuracionConDns(String ip) {

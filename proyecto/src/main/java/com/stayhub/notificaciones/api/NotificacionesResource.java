@@ -1,5 +1,7 @@
 package com.stayhub.notificaciones.api;
 
+import jakarta.annotation.security.RolesAllowed;
+import com.stayhub.seguridad.ReautenticacionReciente;
 import com.stayhub.notificaciones.contrato.ServicioDeNotificaciones;
 import com.stayhub.notificaciones.dto.ResultadoEnvioNotificacionDTO;
 import com.stayhub.notificaciones.dto.SolicitudNotificacionDTO;
@@ -9,6 +11,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
 @Path("/notificaciones")
+@RolesAllowed("ADMIN")
+@ReautenticacionReciente
 @Produces(MediaType.APPLICATION_JSON)
 public class NotificacionesResource {
 

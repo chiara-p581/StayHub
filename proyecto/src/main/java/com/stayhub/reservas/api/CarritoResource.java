@@ -1,5 +1,6 @@
 package com.stayhub.reservas.api;
 
+import jakarta.annotation.security.RolesAllowed;
 import com.stayhub.reservas.carrito.CarritoDeReserva;
 import com.stayhub.reservas.dto.CarritoResumenDTO;
 import com.stayhub.reservas.dto.ReservaResponse;
@@ -31,6 +32,7 @@ import java.io.Serializable;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @SessionScoped
+@RolesAllowed("HUESPED")
 public class CarritoResource implements Serializable {
 
     @Inject

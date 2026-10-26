@@ -12,8 +12,7 @@ import jakarta.inject.Inject;
 
 @Stateless
 public class ServicioDeNotificacionesImpl implements ServicioDeNotificaciones {
-    private static final LimitadorSolicitudes ENVIOS = new LimitadorSolicitudes();
-
+    @Inject LimitadorSolicitudes limitador;
     @Inject EmailNotificador emailNotificador;
     @Inject SmsNotificador smsNotificador;
     @Inject PushNotificador pushNotificador;
@@ -23,7 +22,10 @@ public class ServicioDeNotificacionesImpl implements ServicioDeNotificaciones {
         validar(solicitud);
         Limites.texto(solicitud.destinatario(), 120, true); Limites.texto(solicitud.asunto(), 200, true); Limites.texto(solicitud.mensaje(), 4000, true);
 
-        if (!ENVIOS.permitir(solicitud.canalPreferido() + ":" + solicitud.destinatario().toLowerCase(java.util.Locale.ROOT), 5, System.currentTimeMillis())) throw new SeguridadException(429, "Cuota de notificaciones excedida");
+        if (!limitador.permitir("notificacion:" + solicitud.canalPreferido() + ":"
+                + solicitud.destinatario().toLowerCase(java.util.Locale.ROOT), 5,
+                System.currentTimeMillis(), 60_000))
+            throw new SeguridadException(429, "Cuota de notificaciones excedida");
         NotificadorCanal notificador = switch (solicitud.canalPreferido()) {
             case EMAIL -> emailNotificador;
             case SMS -> smsNotificador;

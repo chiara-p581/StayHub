@@ -209,7 +209,6 @@
                 hotelId: Number(hotelId), hotelNombre: hotel.nombre, tipoHabitacion: tipoHabitacion,
                 canal: canalSeleccionado,
                 cantidadHabitaciones: cantidadHabitaciones, checkIn: checkIn, checkOut: checkOut,
-                huespedNombre: usuario.nombre, huespedApellido: usuario.apellido, huespedEmail: usuario.email,
                 huespedTelefono: telefono, precioTotal: precioTotal, moneda: moneda
             });
             location.href = "cart.html";

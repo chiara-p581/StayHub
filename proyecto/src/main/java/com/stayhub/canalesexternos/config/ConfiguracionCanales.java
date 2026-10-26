@@ -3,6 +3,7 @@ import com.stayhub.canalesexternos.dto.Canal;
 import com.stayhub.canalesexternos.exception.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -10,12 +11,41 @@ import java.util.Set;
 import java.util.stream.Collectors;
 @ApplicationScoped
 public class ConfiguracionCanales {
+    private static final int URL_MAXIMA = 2_048;
+    private static final int CREDENCIAL_MAXIMA = 4_096;
     private static final long TIMEOUT_CONEXION_PREDETERMINADO_MS = 3_000;
     private static final long TIMEOUT_LECTURA_PREDETERMINADO_MS = 10_000;
 
     public String urlOta(Canal canal) { return urlPermitida(requerida("stayhub.ota." + canal.name().toLowerCase() + ".url")); }
-    public String tokenOta(Canal canal) { return opcional("stayhub.ota." + canal.name().toLowerCase() + ".token"); }
+    public String tokenOta(Canal canal) {
+        String token = requerida("stayhub.ota." + canal.name().toLowerCase() + ".token");
+        if (token.length() > CREDENCIAL_MAXIMA || token.chars().anyMatch(c -> c < 0x20 || c == 0x7f)) {
+            throw new CanalExternoException(CodigoErrorCanal.SOLICITUD_INVALIDA,
+                    "La credencial OTA configurada no es válida");
+        }
+        return token;
+    }
     public String wsdlPms() { return urlPermitida(requerida("stayhub.pms.wsdl")); }
+    public String endpointPms() {
+        URI wsdl = URI.create(wsdlPms());
+        String configurado = opcional("stayhub.pms.endpoint");
+        URI endpoint;
+        try {
+            endpoint = configurado == null || configurado.isBlank()
+                    ? new URI(wsdl.getScheme(), wsdl.getUserInfo(), wsdl.getHost(), wsdl.getPort(),
+                            wsdl.getPath(), null, null)
+                    : URI.create(urlPermitida(configurado));
+        } catch (URISyntaxException | IllegalArgumentException ex) {
+            throw new CanalExternoException(CodigoErrorCanal.SOLICITUD_INVALIDA,
+                    "El endpoint PMS configurado no es válido", ex);
+        }
+        URI validado = URI.create(urlPermitida(endpoint.toString()));
+        if (!mismoOrigen(wsdl, validado)) {
+            throw new CanalExternoException(CodigoErrorCanal.SOLICITUD_INVALIDA,
+                    "El WSDL y el endpoint PMS deben pertenecer al mismo origen");
+        }
+        return validado.toString();
+    }
     public long timeoutConexionMs() { return enteroAcotado("stayhub.canales.timeout.conexion.ms", TIMEOUT_CONEXION_PREDETERMINADO_MS, 3_000); }
     public long timeoutLecturaMs() { return enteroAcotado("stayhub.canales.timeout.lectura.ms", TIMEOUT_LECTURA_PREDETERMINADO_MS, 10_000); }
     private String requerida(String clave) {
@@ -44,7 +74,9 @@ public class ConfiguracionCanales {
 
     String urlPermitida(String valor) {
         try {
+            if (valor == null || valor.length() > URL_MAXIMA || valor.indexOf('\\') >= 0) throw new IllegalArgumentException();
             URI uri = URI.create(valor);
+            if (!uri.equals(uri.normalize())) throw new IllegalArgumentException();
             String host = uri.getHost();
             boolean localHttp = Boolean.parseBoolean(opcional("stayhub.canales.permitir-http-local"));
             boolean esquemaValido = "https".equalsIgnoreCase(uri.getScheme())
@@ -63,6 +95,17 @@ public class ConfiguracionCanales {
             throw new CanalExternoException(CodigoErrorCanal.SOLICITUD_INVALIDA,
                     "La URL de integración no pertenece a un host HTTPS permitido", ex);
         }
+    }
+
+    private boolean mismoOrigen(URI primero, URI segundo) {
+        return primero.getScheme().equalsIgnoreCase(segundo.getScheme())
+                && primero.getHost().equalsIgnoreCase(segundo.getHost())
+                && puertoEfectivo(primero) == puertoEfectivo(segundo);
+    }
+
+    private int puertoEfectivo(URI uri) {
+        if (uri.getPort() >= 0) return uri.getPort();
+        return "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
     }
 
     void validarDirecciones(String host) {

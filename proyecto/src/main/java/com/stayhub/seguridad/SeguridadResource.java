@@ -1,11 +1,13 @@
 package com.stayhub.seguridad;
 
+import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import java.util.Map;
 
 @Path("/seguridad/csrf")
+@PermitAll
 @Produces(MediaType.APPLICATION_JSON)
 public class SeguridadResource {
     @GET

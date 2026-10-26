@@ -1,5 +1,6 @@
 package com.stayhub.pagos.api;
 
+import jakarta.annotation.security.RolesAllowed;
 import com.stayhub.pagos.contrato.ServicioDePagos;
 import com.stayhub.pagos.dto.PagoRequest;
 import com.stayhub.pagos.dto.PagoResponse;
@@ -18,6 +19,7 @@ import java.net.URI;
 import java.util.List;
 
 @Path("/pagos")
+@RolesAllowed("HUESPED")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class PagoResource {

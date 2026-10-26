@@ -4,6 +4,9 @@ import com.stayhub.hoteles.dto.*;
 import com.stayhub.hoteles.exception.CodigoErrorHotel;
 import com.stayhub.hoteles.exception.HotelException;
 import com.stayhub.hoteles.service.ServicioDeHoteles;
+import com.stayhub.seguridad.ReautenticacionReciente;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
@@ -17,11 +20,14 @@ import java.util.List;
 @Path("/hoteles")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@PermitAll
 public class HotelResource {
     @Inject
     private ServicioDeHoteles servicio;
 
     @POST
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public Response crear(HotelRequest solicitud, @Context UriInfo uriInfo) {
         HotelResponse creado = servicio.crearHotel(solicitud);
         URI ubicacion = uriInfo.getAbsolutePathBuilder().path(creado.id().toString()).build();
@@ -42,18 +48,24 @@ public class HotelResource {
 
     @PUT
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public HotelResponse modificar(@PathParam("id") String id, HotelRequest solicitud) {
         return servicio.modificarHotel(parsearId(id, "hotel"), solicitud);
     }
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public HotelResponse eliminar(@PathParam("id") String id) {
         return servicio.darDeBajaHotel(parsearId(id, "hotel"));
     }
 
     @POST
     @Path("/{hotelId}/tipos-habitacion")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public Response crearTipo(@PathParam("hotelId") String hotelId, TipoHabitacionRequest solicitud,
                               @Context UriInfo uriInfo) {
         TipoHabitacionResponse creado = servicio.crearTipo(parsearId(hotelId, "hotel"), solicitud);
@@ -81,6 +93,8 @@ public class HotelResource {
 
     @PUT
     @Path("/{hotelId}/tipos-habitacion/{tipoId}")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public TipoHabitacionResponse modificarTipo(@PathParam("hotelId") String hotelId,
             @PathParam("tipoId") String tipoId, TipoHabitacionRequest solicitud) {
         return servicio.modificarTipo(parsearId(hotelId, "hotel"),
@@ -89,6 +103,8 @@ public class HotelResource {
 
     @DELETE
     @Path("/{hotelId}/tipos-habitacion/{tipoId}")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public Response eliminarTipo(@PathParam("hotelId") String hotelId,
                                  @PathParam("tipoId") String tipoId) {
         servicio.darDeBajaTipo(parsearId(hotelId, "hotel"),
@@ -98,6 +114,8 @@ public class HotelResource {
 
     @POST
     @Path("/{hotelId}/habitaciones")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public Response crearHabitacion(@PathParam("hotelId") String hotelId, HabitacionRequest solicitud,
                                     @Context UriInfo uriInfo) {
         HabitacionResponse creada = servicio.crearHabitacion(parsearId(hotelId, "hotel"), solicitud);
@@ -125,6 +143,8 @@ public class HotelResource {
 
     @PUT
     @Path("/{hotelId}/habitaciones/{habitacionId}")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public HabitacionResponse modificarHabitacion(@PathParam("hotelId") String hotelId,
             @PathParam("habitacionId") String habitacionId, HabitacionRequest solicitud) {
         return servicio.modificarHabitacion(parsearId(hotelId, "hotel"),
@@ -133,6 +153,8 @@ public class HotelResource {
 
     @DELETE
     @Path("/{hotelId}/habitaciones/{habitacionId}")
+    @RolesAllowed("ADMIN")
+    @ReautenticacionReciente
     public Response eliminarHabitacion(@PathParam("hotelId") String hotelId,
                                        @PathParam("habitacionId") String habitacionId) {
         servicio.darDeBajaHabitacion(parsearId(hotelId, "hotel"),

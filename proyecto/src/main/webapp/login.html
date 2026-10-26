@@ -24,8 +24,8 @@
 <div class="bg-surface-container-lowest rounded-xl shadow-lg border-t-2 border-tertiary-fixed-dim/30 p-xl relative overflow-hidden">
 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-tertiary-fixed-dim/50 to-transparent"></div>
 <div class="mb-lg">
-<h2 class="font-headline-lg text-headline-lg text-primary mb-sm">Sign in</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">
+<h2 id="login-title" class="font-headline-lg text-headline-lg text-primary mb-sm">Sign in</h2>
+<p id="login-description" class="font-body-md text-body-md text-on-surface-variant">
                         Use the same email and password you registered with.
                     </p>
 </div>
@@ -50,6 +50,10 @@
 </div>
 <input class="block w-full pl-[48px] pr-md py-sm bg-surface-container-lowest border-outline-variant rounded-DEFAULT focus:ring-primary focus:border-primary font-body-md text-body-md text-on-surface" id="password" name="password" required type="password"/>
 </div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-xs" for="codigo-mfa">Authenticator code <span class="font-normal text-on-surface-variant">(administrators)</span></label>
+<input autocomplete="one-time-code" class="block w-full px-md py-sm bg-surface-container-lowest border-outline-variant rounded-DEFAULT focus:ring-primary focus:border-primary font-body-md text-body-md text-on-surface" id="codigo-mfa" inputmode="numeric" maxlength="6" name="codigoMfa" pattern="[0-9]{6}" placeholder="000000" type="text"/>
 </div>
 <div class="pt-sm">
 <button id="submit-btn" class="w-full flex justify-center items-center gap-xs py-[16px] px-md border border-transparent rounded-DEFAULT shadow-sm font-label-md text-label-md text-on-primary bg-primary hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200" type="submit">

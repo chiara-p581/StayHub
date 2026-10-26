@@ -22,7 +22,7 @@ public class OtaRestClientImpl implements OtaRestClient {
                 .build()) {
             Invocation.Builder request = client.target(configuracion.urlOta(canal)).path(ruta).request(MediaType.APPLICATION_JSON_TYPE);
             String token = configuracion.tokenOta(canal);
-            if (token != null && !token.isBlank()) request.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+            request.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
             try (Response response = request.put(Entity.json(cuerpo))) {
                 if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL)
                     throw new CanalExternoException(CodigoErrorCanal.ERROR_COMUNICACION_OTA,

@@ -1,5 +1,7 @@
 package com.stayhub.demo;
 
+import jakarta.annotation.security.RolesAllowed;
+import com.stayhub.seguridad.ReautenticacionReciente;
 import com.stayhub.hoteles.dto.HabitacionRequest;
 import com.stayhub.hoteles.dto.HotelRequest;
 import com.stayhub.hoteles.dto.HotelResponse;
@@ -22,6 +24,8 @@ import java.util.Set;
 
 /** Carga idempotente de un catálogo demostrativo usando los servicios reales. */
 @Path("/demo")
+@RolesAllowed("ADMIN")
+@ReautenticacionReciente
 @Produces(MediaType.APPLICATION_JSON)
 public class DemoDataResource {
     @Inject ServicioDeHoteles hoteles;

@@ -3,6 +3,7 @@ package com.stayhub.seguridad;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.enterprise.inject.spi.CDI;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -46,16 +47,26 @@ public final class AuditoriaSeguridad {
         Object actor = sesion == null ? null : sesion.getAttribute("usuarioId");
         Object rol = sesion == null ? null : sesion.getAttribute("usuarioRol");
         String origen = request == null ? "desconocido" : huella(request.getRemoteAddr());
+        Instant fecha = Instant.now();
+        String correlacion = correlationId(request);
+        String actorSeguro = sanitizar(actor == null ? "anonimo" : String.valueOf(actor));
+        String rolSeguro = sanitizar(rol == null ? "ANONIMO" : String.valueOf(rol));
+        String accionSegura = sanitizar(accion), resultadoSeguro = sanitizar(resultado);
+        String recursoSeguro = sanitizar(recurso), detalleSeguro = sanitizar(detalle);
         AUDIT.info(() -> "AUDIT " + json(
-                "fecha", Instant.now().toString(),
-                "correlationId", correlationId(request),
-                "actorId", actor == null ? "anonimo" : String.valueOf(actor),
-                "rol", rol == null ? "ANONIMO" : String.valueOf(rol),
-                "accion", accion,
-                "resultado", resultado,
-                "recurso", recurso,
-                "origenHash", origen,
-                "detalle", detalle));
+                "fecha", fecha.toString(), "correlationId", correlacion,
+                "actorId", actorSeguro, "rol", rolSeguro, "accion", accionSegura,
+                "resultado", resultadoSeguro, "recurso", recursoSeguro,
+                "origenHash", origen, "detalle", detalleSeguro));
+        try {
+            CDI.current().select(AuditoriaCentral.class).get().guardar(fecha, correlacion,
+                    actorSeguro, rolSeguro, accionSegura, resultadoSeguro,
+                    recursoSeguro, origen, detalleSeguro);
+        } catch (RuntimeException ex) {
+            // El log local sigue siendo respaldo; nunca se incluyen datos del evento
+            // ni del error para evitar una segunda vía de fuga de información.
+            ERROR.log(Level.SEVERE, "AUDITORIA_CENTRAL_NO_DISPONIBLE");
+        }
     }
 
     public static void registrarUnaVez(HttpServletRequest request, String accion, String resultado,

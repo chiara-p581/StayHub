@@ -20,7 +20,8 @@ import java.util.Properties;
 
 @ApplicationScoped
 public class EmailNotificador implements NotificadorCanal {
-    private static final com.stayhub.seguridad.LimitadorSolicitudes ENVIOS = new com.stayhub.seguridad.LimitadorSolicitudes();
+    @Inject
+    private com.stayhub.seguridad.LimitadorSolicitudes limitador;
 
     @Inject
     private ConfiguracionMail configuracion;
@@ -31,7 +32,8 @@ public class EmailNotificador implements NotificadorCanal {
         com.stayhub.seguridad.Limites.email(solicitud.destinatario());
         com.stayhub.seguridad.Limites.texto(solicitud.asunto(), 200, true);
         com.stayhub.seguridad.Limites.texto(solicitud.mensaje(), 4000, true);
-        if (!ENVIOS.permitir(solicitud.destinatario().toLowerCase(java.util.Locale.ROOT), 5, System.currentTimeMillis()))
+        if (!limitador.permitir("email:" + solicitud.destinatario().toLowerCase(java.util.Locale.ROOT),
+                5, System.currentTimeMillis(), 60_000))
             throw new com.stayhub.seguridad.SeguridadException(429, "Cuota de correo excedida");
         try {
             Properties propiedades = new Properties();

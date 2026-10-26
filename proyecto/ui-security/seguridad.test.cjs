@@ -1,11 +1,33 @@
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), {JSDOM}=require('jsdom'), {parse}=require('@babel/parser');
+const crypto = require('node:crypto');
 const web=path.resolve(__dirname,'../src/main/webapp');
 function browser(){const dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'https://stayhub.test/StayHub/index.html',runScripts:'outside-only'});dom.window.eval(fs.readFileSync(path.join(web,'assets/js/vendor/purify.min.js'),'utf8'));dom.window.eval(fs.readFileSync(path.join(web,'assets/js/dom-seguro.js'),'utf8')+'\nwindow.StayHubDOM=StayHubDOM;window.safeDOM=StayHubDOM;');return dom;}
 function walk(n,fn){if(!n||typeof n!=='object')return;fn(n);for(const[k,v]of Object.entries(n)){if(k==='loc')continue;if(Array.isArray(v))v.forEach(x=>walk(x,fn));else if(v&&typeof v==='object')walk(v,fn);}}
 function files(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(path.join(dir,e.name)):[path.join(dir,e.name)]);}
 test('todas las páginas usan scripts locales, sin handlers HTML ni código inline',()=>{
  for(const f of files(web).filter(p=>p.endsWith('.html'))){const dom=new JSDOM(fs.readFileSync(f,'utf8'));for(const script of dom.window.document.querySelectorAll('script')){assert.equal(script.textContent.trim(),'');assert.ok(!/^https?:/.test(script.getAttribute('src')));assert.ok(fs.existsSync(path.join(web,script.getAttribute('src').split('?')[0])));}for(const e of dom.window.document.querySelectorAll('*'))for(const a of e.attributes)assert.ok(!/^on/i.test(a.name),`${f}: ${a.name}`);dom.window.close();}
+});
+test('la CSP autoriza estilos estáticos por hash y no usa unsafe-inline',()=>{
+ const filter=fs.readFileSync(path.resolve(__dirname,'../src/main/java/com/stayhub/seguridad/SeguridadHttpFilter.java'),'utf8');
+ assert.ok(!filter.includes("style-src 'self' 'unsafe-inline'"));
+ for(const f of files(web).filter(p=>p.endsWith('.html'))){
+  const html=fs.readFileSync(f,'utf8');
+  const valores=[...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(m=>m[1])
+   .concat([...html.matchAll(/\sstyle="([^"]*)"/g)].map(m=>m[1]));
+  for(const valor of valores){
+   const hash="sha256-"+crypto.createHash('sha256').update(valor).digest('base64');
+   assert.ok(filter.includes(hash),`${f}: falta ${hash} en la CSP`);
+  }
+ }
+ for(const f of files(path.join(web,'assets/js')).filter(p=>p.endsWith('.js')&&!p.includes(path.sep+'vendor'+path.sep))){
+  const source=fs.readFileSync(f,'utf8');
+  for(const match of source.matchAll(/style=["']([^"']*)["']/g)){
+   const hash="sha256-"+crypto.createHash('sha256').update(match[1]).digest('base64');
+   assert.ok(filter.includes(hash),`${f}: falta ${hash} en la CSP`);
+  }
+  assert.ok(!/\.style\.|setAttribute\(["']style["']/.test(source),`${f}: crea estilos inline dinámicos`);
+ }
 });
 test('cada escritura innerHTML pasa por el saneador antes de tocar DOM',()=>{
  for(const p of files(path.join(web,'assets/js')).filter(p=>p.endsWith('.js')&&!p.includes(path.sep+'vendor'+path.sep))){walk(parse(fs.readFileSync(p,'utf8')),n=>{if(n.type==='AssignmentExpression'&&n.left.type==='MemberExpression'&&n.left.property.name==='innerHTML'){assert.equal(n.operator,'=');assert.equal(n.right.type,'CallExpression',p);assert.equal(n.right.callee.object?.name,'StayHubDOM',p);assert.equal(n.right.callee.property?.name,'html',p);}});}
@@ -19,6 +41,33 @@ test('login manda CSRF y logout espera al servidor y limpia carrito',async()=>{
  const dom=browser(),w=dom.window,calls=[];w.fetch=async(url,options)=>{calls.push({url,options});return{ok:true,status:url.endsWith('sesion')?204:200,headers:{get:()=> 'application/json'},json:async()=>({token:'token-prueba'}),text:async()=>JSON.stringify({id:1,rol:'HUESPED',nombre:'Ana',apellido:'Paz'})};};
  w.eval(fs.readFileSync(path.join(web,'assets/js/api.js'),'utf8')+'\nwindow.testApi=Api;');await w.testApi.loginUsuario({email:'ana@test.com',password:'password'});assert.equal(calls[0].url,'api/seguridad/csrf');assert.equal(calls[1].options.headers['X-CSRF-Token'],'token-prueba');
  w.testApi.setSession({id:1,rol:'HUESPED'});w.testApi.addLocalCartItem({hotelNombre:'Hotel'});await w.testApi.clearSession();assert.equal(w.testApi.currentUser(),null);assert.equal(w.testApi.localCart().length,0);assert.equal(calls.at(-1).options.method,'DELETE');assert.equal(calls.at(-1).options.headers['X-CSRF-Token'],'token-prueba');dom.window.close();
+});
+
+test('Web Storage no conserva email ni respuestas completas y limita el carrito a la pestaña',async()=>{
+ const dom=browser(),w=dom.window;let version=1;
+ w.localStorage.setItem('stayhub_cache_v1:api/hoteles','dato-anterior');
+ w.localStorage.setItem('stayhub_cart_v2','dato-anterior');
+ w.fetch=async()=>({ok:true,status:200,headers:{get:()=> 'application/json'},text:async()=>JSON.stringify({version})});
+ w.eval(fs.readFileSync(path.join(web,'assets/js/api.js'),'utf8')+'\nwindow.testApi=Api;');
+ const api=w.testApi;
+ api.setSession({id:7,rol:'HUESPED',nombre:'Ana',apellido:'Paz',email:'ana@example.test'});
+ const perfil=JSON.parse(w.sessionStorage.getItem('stayhub_user'));
+ assert.equal(perfil.email,undefined);
+ assert.deepEqual(Object.keys(perfil).sort(),['apellido','id','nombre','rol']);
+ api.addLocalCartItem({hotelId:1,huespedEmail:'ana@example.test',huespedNombre:'Ana'});
+ assert.equal(w.localStorage.getItem('stayhub_cart_v2'),null);
+ assert.ok(w.sessionStorage.getItem('stayhub_cart_v2'));
+ assert.equal(w.sessionStorage.getItem('stayhub_cart_v2').includes('ana@example.test'),false);
+ assert.equal(w.sessionStorage.getItem('stayhub_cart_v2').includes('huespedNombre'),false);
+ await api.listarHoteles();version=2;assert.equal((await api.listarHoteles()).version,1);
+ assert.equal(w.localStorage.getItem('stayhub_cache_v1:api/hoteles'),null);
+ dom.window.close();
+});
+
+test('la configuración de WildFly referencia la contraseña TLS desde el entorno',()=>{
+ const configurador=fs.readFileSync(path.resolve(__dirname,'../../config/configurar-seguridad-local.py'),'utf8');
+ assert.ok(configurador.includes("password_expression = '${env.STAYHUB_TLS_STORE_PASSWORD}'"));
+ assert.ok(!configurador.includes("'credential-reference': '{clear-text=' + q(password)"));
 });
 
 test('recuperar y resetear funcionan sin login y envían CSRF desde las páginas reales', async()=>{
