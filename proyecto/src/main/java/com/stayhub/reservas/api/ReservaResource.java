@@ -3,8 +3,11 @@ package com.stayhub.reservas.api;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.dto.ReservaResponse;
 import com.stayhub.reservas.service.ServicioDeReservas;
+import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -29,8 +32,18 @@ public class ReservaResource {
     @Inject
     private ServicioDeReservas servicio;
 
+
     @Context
     private UriInfo uriInfo;
+
+    @Context
+    private HttpServletRequest request;
+
+    @GET
+    @Path("/mias")
+    public List<ReservaResponse> listarMias(@QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarMias(offset, limite);
+    }
 
     @POST
     public Response crear(ReservaRequest solicitud) {
@@ -55,6 +68,12 @@ public class ReservaResource {
         return servicio.confirmarReserva(id);
     }
 
+    @PUT
+    @Path("/{id}")
+    public ReservaResponse modificar(@PathParam("id") Long id, ReservaRequest solicitud) {
+        return servicio.modificarReserva(id, solicitud);
+    }
+
     @DELETE
     @Path("/{id}")
     public ReservaResponse cancelar(@PathParam("id") Long id) {
@@ -62,7 +81,7 @@ public class ReservaResource {
     }
 
     @GET
-    public List<ReservaResponse> listarPorHotel(@QueryParam("hotelId") Long hotelId) {
-        return servicio.listarPorHotel(hotelId);
+    public List<ReservaResponse> listarPorHotel(@QueryParam("hotelId") Long hotelId, @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
+        return servicio.listarPorHotel(hotelId, offset, limite);
     }
 }

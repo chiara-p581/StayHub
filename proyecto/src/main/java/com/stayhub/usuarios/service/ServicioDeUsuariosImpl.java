@@ -1,21 +1,29 @@
 package com.stayhub.usuarios.service;
 
+import com.stayhub.seguridad.*;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
+import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
 import com.stayhub.usuarios.exception.CodigoErrorUsuario;
 import com.stayhub.usuarios.exception.UsuarioException;
+import com.stayhub.usuarios.messaging.EventoPassword;
 import com.stayhub.usuarios.messaging.EventoUsuarioRegistrado;
+import com.stayhub.usuarios.messaging.PublicadorEventoPassword;
 import com.stayhub.usuarios.messaging.PublicadorEventoUsuario;
+import com.stayhub.usuarios.messaging.TipoEventoPassword;
 import com.stayhub.usuarios.model.Usuario;
 import com.stayhub.usuarios.repository.UsuarioRepository;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
+import java.time.LocalDateTime;
 
 @Stateless
 public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
+    private static final int PASSWORD_MINIMA = 12;
+    private static final int PASSWORD_MAXIMA = 128;
 
     @Inject
     private UsuarioRepository repositorio;
@@ -25,6 +33,9 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
 
     @Inject
     private PublicadorEventoUsuario publicadorEventos;
+
+    @Inject
+    private PublicadorEventoPassword publicadorPassword;
 
     @Override
     public UsuarioResponse registrar(RegistroUsuarioRequest solicitud) {
@@ -48,6 +59,15 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
 
     @Override
     public UsuarioResponse autenticar(LoginRequest credenciales) {
+        if (credenciales == null || credenciales.email() == null || credenciales.email().isBlank()
+                // El mínimo de creación no invalida contraseñas de cuentas previas.
+                || credenciales.password() == null || credenciales.password().isEmpty()
+                || credenciales.password().length() > PASSWORD_MAXIMA) {
+            throw new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
+                    "Email o contraseña incorrectos");
+        }
+        Limites.texto(credenciales.email(), 120, true);
+        Limites.texto(credenciales.password(), PASSWORD_MAXIMA, true);
         Usuario usuario = repositorio.buscarPorEmail(credenciales.email())
                 .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
                         "Email o contraseña incorrectos"));
@@ -55,6 +75,14 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
         if (!passwordHasher.verificar(credenciales.password(), usuario.getPasswordHash())) {
             throw new UsuarioException(CodigoErrorUsuario.CREDENCIALES_INVALIDAS,
                     "Email o contraseña incorrectos");
+        }
+
+        // Las cuentas creadas con el costo anterior se actualizan de forma
+        // transparente después de una autenticación válida.
+        if (passwordHasher.requiereActualizacion(usuario.getPasswordHash())) {
+            usuario.actualizarPerfil(usuario.getEmail(), usuario.getNombre(), usuario.getApellido(),
+                    passwordHasher.hash(credenciales.password()));
+            repositorio.guardar(usuario);
         }
 
         return UsuarioMapper.aResponse(usuario);
@@ -68,13 +96,102 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
         return UsuarioMapper.aResponse(usuario);
     }
 
+    @Override
+    public UsuarioResponse actualizarPerfil(Long id, ActualizacionUsuarioRequest solicitud) {
+        if (solicitud == null) throw new SeguridadException(400, "Perfil requerido");
+        Limites.email(solicitud.email()); Limites.texto(solicitud.nombre(), 80, true); Limites.texto(solicitud.apellido(), 80, true); Limites.texto(solicitud.password(), 1024, false);
+        if (solicitud == null || solicitud.email() == null || solicitud.email().isBlank()
+                || solicitud.nombre() == null || solicitud.nombre().isBlank()
+                || solicitud.apellido() == null || solicitud.apellido().isBlank()
+                || (solicitud.password() != null && !solicitud.password().isBlank()
+                    && !passwordSegura(solicitud.password()))) {
+            throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
+                    "Los datos del perfil son incompletos o inválidos");
+        }
+        Usuario usuario = repositorio.buscarPorId(id)
+                .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.USUARIO_NO_ENCONTRADO,
+                        "No existe el usuario autenticado"));
+        repositorio.buscarPorEmail(solicitud.email().trim()).filter(u -> !u.getId().equals(id)).ifPresent(u -> {
+            throw new UsuarioException(CodigoErrorUsuario.EMAIL_YA_REGISTRADO,
+                    "Ya existe un usuario con ese email");
+        });
+        String nuevoHash = solicitud.password() == null || solicitud.password().isBlank()
+                ? null : passwordHasher.hash(solicitud.password());
+        usuario.actualizarPerfil(solicitud.email().trim(), solicitud.nombre().trim(),
+                solicitud.apellido().trim(), nuevoHash);
+        Usuario guardado = repositorio.guardar(usuario);
+
+        // Si cambió la contraseña: se invalida cualquier link de recuperación pendiente y se avisa por mail.
+        if (nuevoHash != null) {
+            guardado.limpiarTokenRecuperacion();
+            avisarPasswordCambiada(guardado);
+        }
+        return UsuarioMapper.aResponse(guardado);
+    }
+
+    // ---- Recuperación de contraseña ----
+
+    @Override
+    public void solicitarRecuperacionPassword(String email) {
+        if (email == null || email.isBlank() || email.length() > 120
+                || !email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) {
+            throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA, "Ingresá un email válido");
+        }
+
+        // Si el email no existe no hacemos nada, pero la respuesta es la misma:
+        // así nadie puede averiguar qué cuentas existen.
+        repositorio.buscarPorEmail(email.trim()).ifPresent(u -> {
+            if (u.recuperacionReciente()) return;
+            String token = TokenRecuperacion.generar();
+            u.generarTokenRecuperacion(TokenRecuperacion.hash(token), LocalDateTime.now().plusHours(1));
+            repositorio.guardar(u);
+            publicadorPassword.publicar(new EventoPassword(u.getId(), u.getEmail(), u.getNombre(),
+                    token, TipoEventoPassword.SOLICITUD_RECUPERACION));
+        });
+    }
+
+    @Override
+    public void resetearPassword(String token, String nuevaPassword) {
+        if (token == null || !token.matches("[A-Za-z0-9_-]{43}")
+                || !passwordSegura(nuevaPassword)) {
+            throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA, "Token o contraseña inválidos");
+        }
+
+        Usuario u = repositorio.buscarPorResetTokenHash(TokenRecuperacion.hash(token))
+                .filter(Usuario::tokenVigente)
+                .orElseThrow(() -> new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
+                        "El enlace es inválido o expiró"));
+
+        u.actualizarPerfil(u.getEmail(), u.getNombre(), u.getApellido(), passwordHasher.hash(nuevaPassword));
+        u.limpiarTokenRecuperacion();
+        repositorio.guardar(u);
+        avisarPasswordCambiada(u);
+    }
+
+    private void avisarPasswordCambiada(Usuario u) {
+        publicadorPassword.publicar(new EventoPassword(u.getId(), u.getEmail(), u.getNombre(),
+                null, TipoEventoPassword.PASSWORD_CAMBIADA));
+    }
+
     private void validar(RegistroUsuarioRequest s) {
+        if (s == null) throw new SeguridadException(400, "Registro requerido");
+        Limites.email(s.email()); Limites.texto(s.password(), 1024, true); Limites.texto(s.nombre(), 80, true); Limites.texto(s.apellido(), 80, true);
         if (s == null || s.email() == null || s.email().isBlank()
-                || s.password() == null || s.password().length() < 6
+                || !passwordSegura(s.password())
                 || s.nombre() == null || s.nombre().isBlank()
                 || s.rol() == null) {
             throw new UsuarioException(CodigoErrorUsuario.SOLICITUD_INVALIDA,
                     "La solicitud de registro está incompleta o contiene valores inválidos");
         }
+    }
+    private boolean passwordValidaEnLongitud(String password) {
+        return password != null && password.length() >= PASSWORD_MINIMA && password.length() <= PASSWORD_MAXIMA;
+    }
+
+    private boolean passwordSegura(String password) {
+        if (!passwordValidaEnLongitud(password)) return false;
+        String normalizada = password.toLowerCase();
+        return !normalizada.equals("password1234") && !normalizada.equals("contraseña123")
+                && !normalizada.equals("123456789012") && !normalizada.equals("qwertyuiop12");
     }
 }

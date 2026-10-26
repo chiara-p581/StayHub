@@ -1,5 +1,6 @@
 package com.stayhub.inventarioytarifas.service;
 
+import com.stayhub.seguridad.Limites;
 import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
 import com.stayhub.inventarioytarifas.dto.CargaInventarioRequest;
 import com.stayhub.inventarioytarifas.dto.CargaInventarioResponse;
@@ -94,19 +95,8 @@ public class ServicioDeInventarioYTarifasImpl
     @Override
     public CargaInventarioResponse cargarInventario(CargaInventarioRequest solicitud) {
         validarCarga(solicitud);
-        int diasCargados = 0;
-        for (LocalDate fecha = solicitud.desde(); fecha.isBefore(solicitud.hasta()); fecha = fecha.plusDays(1)) {
-            LocalDate fechaActual = fecha;
-            // Bloqueante: dos cargas simultáneas del mismo día se serializan en
-            // vez de pisarse (la segunda actualiza sobre lo que dejó la primera).
-            InventarioDiario dia = inventarioRepositorio
-                    .buscarPorHotelTipoYFechaBloqueando(solicitud.hotelId(), solicitud.tipoHabitacion(), fechaActual)
-                    .orElseGet(() -> new InventarioDiario(solicitud.hotelId(), solicitud.tipoHabitacion(), fechaActual,
-                            solicitud.unidadesTotales(), solicitud.precio(), solicitud.moneda()));
-            dia.actualizarCapacidadYTarifa(solicitud.unidadesTotales(), solicitud.precio(), solicitud.moneda());
-            inventarioRepositorio.guardar(dia);
-            diasCargados++;
-        }
+        int diasCargados = inventarioRepositorio.cargarRango(solicitud.hotelId(), solicitud.tipoHabitacion(),
+                solicitud.desde(), solicitud.hasta(), solicitud.unidadesTotales(), solicitud.precio(), solicitud.moneda());
         return InventarioTarifasMapper.aCargaResponse(solicitud, diasCargados);
     }
 
@@ -320,9 +310,10 @@ public class ServicioDeInventarioYTarifasImpl
      */
     private void validarSolicitudDeHold(Long hotelId, String tipoHabitacion, int cantidadHabitaciones,
                                         LocalDate checkIn, LocalDate checkOut) {
+        Limites.rango(checkIn, checkOut); Limites.cantidad(cantidadHabitaciones); Limites.texto(tipoHabitacion, 30, true);
         if (hotelId == null || tipoHabitacion == null || tipoHabitacion.isBlank()
                 || cantidadHabitaciones < 1 || checkIn == null || checkOut == null
-                || !checkOut.isAfter(checkIn)) {
+                || checkIn.isBefore(LocalDate.now()) || !checkOut.isAfter(checkIn)) {
             throw new InventarioTarifasException(CodigoErrorInventarioTarifas.SOLICITUD_INVALIDA,
                     "El pedido de hold está incompleto o contiene valores inválidos"
                             + " (hotelId / tipoHabitacion / cantidadHabitaciones >= 1 / checkIn < checkOut)");
@@ -330,6 +321,7 @@ public class ServicioDeInventarioYTarifasImpl
     }
 
     private void validarPeriodo(Long hotelId, LocalDate desde, LocalDate hasta) {
+        Limites.rango(desde, hasta);
         if (hotelId == null || desde == null || hasta == null || !hasta.isAfter(desde)) {
             throw new InventarioTarifasException(CodigoErrorInventarioTarifas.SOLICITUD_INVALIDA,
                     "hotelId y un período válido son obligatorios");
@@ -337,6 +329,9 @@ public class ServicioDeInventarioYTarifasImpl
     }
 
     private void validarCarga(CargaInventarioRequest s) {
+        if (s == null) throw new com.stayhub.seguridad.SeguridadException(400, "Carga inválida");
+        Limites.rango(s.desde(), s.hasta()); Limites.texto(s.tipoHabitacion(), 30, true); Limites.texto(s.moneda(), 3, true);
+        if (s.unidadesTotales() > 10000 || s.precio() != null && (s.precio().precision() > 12 || s.precio().scale() > 2)) throw new com.stayhub.seguridad.SeguridadException(400, "Carga fuera de límites");
         if (s == null || s.hotelId() == null || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.desde() == null || s.hasta() == null || !s.hasta().isAfter(s.desde())
                 || s.unidadesTotales() < 0 || s.precio() == null || s.precio().compareTo(BigDecimal.ZERO) < 0

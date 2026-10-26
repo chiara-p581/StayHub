@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Staff Portal</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css" rel="stylesheet"/>
+<link href="assets/css/tailwind.css" rel="stylesheet"/><link href="assets/css/fonts.css" rel="stylesheet"/>
+
+
+
+<link href="assets/css/theme.css?v=20261023-design2" rel="stylesheet"/>
 <style>
 .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -18,6 +18,7 @@
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 </style>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-lg min-h-screen flex flex-col md:flex-row">
 <header class="md:hidden bg-background shadow-sm w-full top-0 sticky z-40 flex justify-between items-center px-lg py-md">
@@ -26,7 +27,7 @@
 </div>
 <div class="font-headline-md text-headline-md-mobile text-primary">StayHub</div>
 <div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest">
-<img alt="Profile" class="w-full h-full object-cover" data-alt="A close up portrait of a professional female hotel manager in her 30s. She has warm, welcoming eyes and a subtle smile. She is wearing a tailored, dark navy blazer over a crisp white blouse. The background is a slightly blurred, elegant hotel lobby with soft, warm lighting. High-end hospitality aesthetic, natural light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnzep8DK2QQsuU0EhOyCMhgDqB1VMK9jhJ_CJFLBWCaGNHwu100W6OcvGl9oKlNxePu3UmLHnuy8JxUYz3yiqqMbDzyG9UmHFGYdru6UyFvdyDxvCFJ6F7h7jJXbK709ypA1YTjlR7bRzxtME8cso0jYX30UDTEAguK0x0U2JQpmAagLmWS7jyfyYHtKcaD4IDMf8TsHbuEiiDq-3X9ajDpxovpvwFnYDhmrA2ilqStXIWive27H7UOg"/>
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A close up portrait of a professional female hotel manager in her 30s. She has warm, welcoming eyes and a subtle smile. She is wearing a tailored, dark navy blazer over a crisp white blouse. The background is a slightly blurred, elegant hotel lobby with soft, warm lighting. High-end hospitality aesthetic, natural light." src="assets/images/stayhub-patagonia.png"/>
 </div>
 </header>
 <nav class="hidden md:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 flex-col py-xl z-40">
@@ -37,7 +38,7 @@
 <ul class="flex flex-col gap-sm">
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span><span class="font-body-md text-body-md">Dashboard</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="inventory.html"><span class="material-symbols-outlined">inventory_2</span><span class="font-body-md text-body-md">Inventory</span></a></li>
-<li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined">event_available</span><span class="font-body-md text-body-md">Reservations</span></a></li>
+<li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="admin-dashboard.html#reservas-table"><span class="material-symbols-outlined">event_available</span><span class="font-body-md text-body-md">Bookings</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="channels-sync.html"><span class="material-symbols-outlined">hub</span><span class="font-body-md text-body-md">Channels</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-on-surface-variant font-medium hover:bg-surface-container-high hover:text-primary transition-all duration-150 ease-in-out" href="payments.html"><span class="material-symbols-outlined">payments</span><span class="font-body-md text-body-md">Payments</span></a></li>
 <li><a class="flex items-center gap-md px-lg py-md text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-150 ease-in-out" href="staff-portal.html"><span class="material-symbols-outlined icon-filled">groups</span><span class="font-body-md text-body-md">Staff</span></a></li>
@@ -49,11 +50,11 @@
 </nav>
 <main class="flex-1 md:ml-64 p-lg md:p-xxl pb-32 md:pb-xxl max-w-container-max mx-auto w-full">
 <div id="acceso-denegado" class="hidden p-lg rounded-xl bg-surface-container-lowest border border-outline-variant/20 text-center">
-<p class="font-body-lg text-body-lg text-on-surface-variant">Esta sección es solo para personal (rol ADMIN). <a href="index.html" class="text-primary underline">Volver al inicio</a>.</p>
+<p class="font-body-lg text-body-lg text-on-surface-variant">This section is for staff members with the ADMIN role only. <a href="index.html" class="text-primary underline">Back to home</a>.</p>
 </div>
 <div id="panel">
 <div id="aviso-mock" class="mb-lg p-md rounded-DEFAULT bg-tertiary-fixed/40 text-on-tertiary-fixed-variant font-body-md text-body-md">
-Esta pantalla todavía es una maqueta visual: el directorio de personal y el tablón de anuncios no tienen un endpoint real en <code>ServicioDeUsuarios</code> (solo existe registrar/login/consultar por id, no "listar usuarios"). Queda documentado como pendiente.
+This page is still a visual mockup: the staff directory and notice board do not have a real endpoint in <code>ServicioDeUsuarios</code> (only register/login/find by ID exist, not “list users”). This remains documented as pending.
 </div>
 <div class="mb-xl flex flex-col md:flex-row md:items-end justify-between gap-md">
 <div>
@@ -107,7 +108,7 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 </div>
 <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_-4px_rgba(37,52,79,0.08)] border border-tertiary-fixed-dim/30 overflow-hidden">
 <div class="px-lg py-md border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low/50">
-<h3 class="font-title-lg text-title-lg text-primary">Team Directory &amp; Status</h3>
+<h3 class="font-title-lg text-title-lg text-primary">Team Directry &amp; Status</h3>
 <button class="text-secondary hover:text-primary transition-colors">
 <span class="material-symbols-outlined">filter_list</span>
 </button>
@@ -128,7 +129,7 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 <td class="px-lg py-sm min-h-[56px]">
 <div class="flex items-center gap-md">
 <div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
-<img alt="David Miller" class="w-full h-full object-cover" data-alt="A portrait of a young professional male receptionist in his 20s. He has a neat, modern haircut and is smiling warmly. He is wearing a crisp white shirt with a subtle, dark gray vest. The background is a soft, out-of-focus boutique hotel front desk environment. Warm, inviting lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJwzn5TLayLFgnoRHHb5uAGDb2LJJbBgsZ5ax9Zwpeh90EJJSnpPPZ5YEoDS1YKoyQn-8fo65QH6foaDeluCoaB3Tc-NSde6msEJanMS6LgRi5WgOVe1r3p7s1PUX8CPVSa5RyYRh1uGvBV4BYbJViVeywX7ITk0yRnoXS3LixMuRY69kzRclNbvnOFRCBDSww2vWATtNghNFY5J_0F1nSDmg3uLegIy07TJdfL4-NeFY5wccXjeRBiA"/>
+<img alt="David Miller" class="w-full h-full object-cover" data-alt="A portrait of a young professional male receptionist in his 20s. He has a neat, modern haircut and is smiling warmly. He is wearing a crisp white shirt with a subtle, dark gray vest. The background is a soft, out-of-focus boutique hotel front desk environment. Warm, inviting lighting." src="assets/images/stayhub-costa.png"/>
 </div>
 <span class="font-medium text-primary">David Miller</span>
 </div>
@@ -151,7 +152,7 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 <td class="px-lg py-sm min-h-[56px]">
 <div class="flex items-center gap-md">
 <div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
-<img alt="Elena Rostova" class="w-full h-full object-cover" data-alt="A portrait of a middle-aged female housekeeping supervisor. She has a practical, tidy hairstyle and a kind but focused expression. She is wearing a professional, charcoal gray tunic uniform. The background suggests a bright, clean hotel corridor. Natural, clear lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKGZRnoMUZYzlrL0kqS2mYLoimV1ZikWmtY8dVJNjbZAnJfoPWuQtFPn91eafgfwjMIzav-PPnPMcgeMl8D6mxjPwl2huPhy1dmGePoeaCxp2r2nV5b0odDMyTBnNtmcJ7W8P1jrygjvBr8mqe51VAYZ56gwzX9Cou5Mk7wjkJgAX0aaWmv6bsr6At_IlLxlhV6z1i1szcx448ViW9fZz379vS2kMEF9uG4IO12CIos8-7iCUGnp5OLA"/>
+<img alt="Elena Rostova" class="w-full h-full object-cover" data-alt="A portrait of a middle-aged female housekeeping supervisor. She has a practical, tidy hairstyle and a kind but focused expression. She is wearing a professional, charcoal gray tunic uniform. The background suggests a bright, clean hotel corridor. Natural, clear lighting." src="assets/images/stayhub-resort-hero.png"/>
 </div>
 <span class="font-medium text-primary">Elena Rostova</span>
 </div>
@@ -197,7 +198,7 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 <td class="px-lg py-sm min-h-[56px]">
 <div class="flex items-center gap-md">
 <div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden">
-<img alt="Thomas Wright" class="w-full h-full object-cover" data-alt="A portrait of a male maintenance technician in his 40s. He has short hair and a rugged, reliable appearance. He is wearing a dark blue polo shirt with a subtle hotel logo. The background is a slightly dim, industrial-looking maintenance area. Practical, direct lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKSv5LkufWZaX-KmgU4YNkA--4D_zk7Z5YuD3lN8m_v7gWJkxbrQbBSS7HyBlxioPNtv1KUcRFsLyDobYQRWlNT1EWcMxbxEgbm-i0Q114WftywC5D1MN-M0KbPr2yQzNMYypJi57DLac690cXIzFJ7fy3IjBGDT7mHkh3xvJfKcD3I6VzwJYjUD3RRo0qdQZSpRK6SSpOeHVYJdNECn8U27lYPD5Ps9HPfeOGraGsmnL-QzWyhedvRA"/>
+<img alt="Thomas Wright" class="w-full h-full object-cover" data-alt="A portrait of a male maintenance technician in his 40s. He has short hair and a rugged, reliable appearance. He is wearing a dark blue polo shirt with a subtle hotel logo. The background is a slightly dim, industrial-looking maintenance area. Practical, direct lighting." src="assets/images/stayhub-patagonia.png"/>
 </div>
 <span class="font-medium text-primary">Thomas Wright</span>
 </div>
@@ -221,7 +222,7 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 </div>
 <div class="px-lg py-md border-t border-outline-variant/20 flex justify-center bg-surface-container-lowest">
 <button class="text-secondary font-title-lg text-body-md hover:text-primary transition-colors flex items-center gap-xs">
-                    View Full Directory
+                    View Full Directry
                     <span class="material-symbols-outlined text-sm">arrow_forward</span>
 </button>
 </div>
@@ -240,26 +241,11 @@ Esta pantalla todavía es una maqueta visual: el directorio de personal y el tab
 </a>
 <a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant hover:bg-surface-variant/50 rounded-full px-4 py-1 transition-transform active:scale-90 group" href="settings.html">
 <span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
-<span class="font-label-md text-label-md mt-1 group-hover:text-primary transition-colors">Perfil</span>
+<span class="font-label-md text-label-md mt-1 group-hover:text-primary transition-colors">Profile</span>
 </a>
 </div>
 </nav>
 
-<script src="assets/js/api.js"></script>
-<script>
-(function () {
-    if (!Api.requireLogin()) return;
-    var usuario = Api.currentUser();
-    if (usuario.rol !== "ADMIN") {
-        document.getElementById("acceso-denegado").classList.remove("hidden");
-        document.getElementById("panel").classList.add("hidden");
-        return;
-    }
-    document.getElementById("perfil-admin").innerHTML =
-        '<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold">' +
-        usuario.nombre.charAt(0) + usuario.apellido.charAt(0) + '</div>' +
-        '<div><div class="font-title-lg text-body-lg text-primary">' + usuario.nombre + ' ' + usuario.apellido + '</div>' +
-        '<div class="font-label-md text-label-md text-on-surface-variant">' + usuario.rol + '</div></div>';
-})();
-</script>
+<script src="assets/js/api.js?v=20261023-motion2"></script>
+<script src="assets/js/pages/staff-portal-1.js"></script>
 </body></html>

@@ -1,0 +1,142 @@
+# Plantilla WildFly/Artemis: revisar patrones contra las direcciones runtime.
+# Aplicar después de notificaciones-reintentos.cli. No ejecutar desde la aplicación.
+# FAIL devuelve presión al productor en vez de crecer indefinidamente en memoria/disco.
+# Revisar con read-resource-description que la versión admita estos atributos.
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosEventos":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosEventos":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosEventos":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosEventos":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosEventos":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosEventos":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.topic.PagosEventos":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.PagosEventos":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.PagosEventos":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.PagosEventos":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.PagosEventos":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.PagosEventos":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosPassword":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosPassword":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosPassword":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosPassword":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosPassword":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosPassword":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.queue.OverbookingNotificaciones":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.OverbookingNotificaciones":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.OverbookingNotificaciones":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.OverbookingNotificaciones":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.OverbookingNotificaciones":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.OverbookingNotificaciones":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.queue.CanalesExternosSincronizaciones":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.CanalesExternosSincronizaciones":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.CanalesExternosSincronizaciones":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.CanalesExternosSincronizaciones":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.CanalesExternosSincronizaciones":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.CanalesExternosSincronizaciones":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubEmailDLQ":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubEmailDLQ":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubEmailDLQ":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubEmailDLQ":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubEmailDLQ":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubEmailDLQ":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="UsuariosEventos":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosEventos":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosEventos":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosEventos":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosEventos":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosEventos":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="PagosEventos":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="PagosEventos":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="PagosEventos":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="PagosEventos":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="PagosEventos":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="PagosEventos":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="UsuariosPassword":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosPassword":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosPassword":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosPassword":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosPassword":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="UsuariosPassword":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="OverbookingNotificaciones":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="OverbookingNotificaciones":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="OverbookingNotificaciones":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="OverbookingNotificaciones":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="OverbookingNotificaciones":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="OverbookingNotificaciones":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="CanalesExternosSincronizaciones":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="CanalesExternosSincronizaciones":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="CanalesExternosSincronizaciones":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="CanalesExternosSincronizaciones":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="CanalesExternosSincronizaciones":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="CanalesExternosSincronizaciones":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="StayHubEmailDLQ":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="StayHubEmailDLQ":add(max-size-bytes=10485760,address-full-policy=FAIL,max-delivery-attempts=5,redelivery-delay=10000)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="StayHubEmailDLQ":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="StayHubEmailDLQ":write-attribute(name=address-full-policy,value=FAIL)
+ /subsystem=messaging-activemq/server=default/address-setting="StayHubEmailDLQ":write-attribute(name=max-delivery-attempts,value=5)
+ /subsystem=messaging-activemq/server=default/address-setting="StayHubEmailDLQ":write-attribute(name=redelivery-delay,value=10000)
+end-if
+
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.queue.DLQ":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.DLQ":add(max-size-bytes=10485760,address-full-policy=FAIL)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.DLQ":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.DLQ":write-attribute(name=address-full-policy,value=FAIL)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="jms.queue.ExpiryQueue":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.ExpiryQueue":add(max-size-bytes=10485760,address-full-policy=FAIL)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.ExpiryQueue":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="jms.queue.ExpiryQueue":write-attribute(name=address-full-policy,value=FAIL)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="DLQ":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="DLQ":add(max-size-bytes=10485760,address-full-policy=FAIL)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="DLQ":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="DLQ":write-attribute(name=address-full-policy,value=FAIL)
+end-if
+
+if (outcome != success) of /subsystem=messaging-activemq/server=default/address-setting="ExpiryQueue":read-resource
+ /subsystem=messaging-activemq/server=default/address-setting="ExpiryQueue":add(max-size-bytes=10485760,address-full-policy=FAIL)
+else
+ /subsystem=messaging-activemq/server=default/address-setting="ExpiryQueue":write-attribute(name=max-size-bytes,value=10485760)
+ /subsystem=messaging-activemq/server=default/address-setting="ExpiryQueue":write-attribute(name=address-full-policy,value=FAIL)
+end-if

@@ -1,5 +1,6 @@
 package com.stayhub.usuarios.exception;
 
+@jakarta.ejb.ApplicationException(rollback = true)
 public class UsuarioException extends RuntimeException {
     private final CodigoErrorUsuario codigo;
 

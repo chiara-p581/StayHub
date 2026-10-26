@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StayHub - Hotel management</title>
+<link href="assets/css/tailwind.css" rel="stylesheet"/><link href="assets/css/fonts.css" rel="stylesheet"/>
+
+
+
+<link href="assets/css/theme.css?v=20261023-design2" rel="stylesheet"/>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/20 p-md z-40">
+  <div class="px-md py-lg mb-md"><a href="index.html" class="font-headline-md text-headline-md text-primary flex items-center gap-xs" title="Back to home"><span class="material-symbols-outlined">arrow_back</span><span>StayHub Admin</span></a></div>
+  <nav class="flex flex-col gap-xs">
+    <a class="nav" href="admin-dashboard.html"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+    <a class="nav bg-secondary-container text-on-secondary-container font-bold" href="hotel-management.html"><span class="material-symbols-outlined">domain</span>Hotels</a>
+    <a class="nav" href="inventory.html"><span class="material-symbols-outlined">inventory_2</span>Inventory</a>
+    <a class="nav" href="channels-sync.html"><span class="material-symbols-outlined">hub</span>Channels</a>
+    <a class="nav" href="payments.html"><span class="material-symbols-outlined">payments</span>Payments</a>
+    <a class="nav" href="alerts.html"><span class="material-symbols-outlined">notifications</span>Operations</a>
+  </nav>
+</aside>
+
+<main class="flex-1 md:ml-64 p-lg md:p-xxl pb-24 max-w-container-max mx-auto w-full">
+  <header class="flex flex-col lg:flex-row lg:items-end justify-between gap-md mb-xl">
+    <div><h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Hotel management</h1><p class="text-on-surface-variant mt-xs">Manage hotels, room types, and physical rooms.</p></div>
+    <div class="flex gap-sm flex-wrap"><button id="btn-demo" class="btn-secondary"><span class="material-symbols-outlined">dataset</span>Load demo catalog</button><button id="btn-nuevo-hotel" class="btn-primary"><span class="material-symbols-outlined">add</span>New hotel</button></div>
+  </header>
+  <div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container"></div>
+  <div id="success-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-secondary-fixed text-on-secondary-fixed"></div>
+  <div id="acceso-denegado" class="hidden card text-center">This section requires the ADMIN role. <a class="text-primary underline" href="index.html">Back</a>.</div>
+
+  <section id="panel" class="grid grid-cols-1 xl:grid-cols-12 gap-gutter">
+    <div class="xl:col-span-4 card self-start">
+      <div class="flex items-center justify-between mb-md"><h2 class="font-title-lg text-title-lg text-primary">Hotels</h2><label class="text-label-md text-on-surface-variant"><input id="ver-inactivos" type="checkbox" class="rounded text-primary"/> Show inactive</label></div>
+      <div id="hoteles-lista" class="flex flex-col gap-sm"></div>
+      <p id="hoteles-vacio" class="hidden text-on-surface-variant py-lg text-center">No hotels have been added yet.</p>
+    </div>
+
+    <div class="xl:col-span-8 space-y-gutter">
+      <form id="hotel-form" class="card hidden">
+        <div class="flex justify-between items-center mb-lg"><h2 id="hotel-form-title" class="font-title-lg text-title-lg text-primary">New hotel</h2><button type="button" data-cerrar="hotel-form" class="icon-btn"><span class="material-symbols-outlined">close</span></button></div>
+        <input id="hotel-id" type="hidden"/>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+          <label class="field">Hotel name<input id="hotel-nombre" required/></label>
+          <label class="field">Address<input id="hotel-direccion" required/></label>
+          <label class="field">Ciudad<input id="hotel-ciudad" required/></label>
+          <label class="field">Country<input id="hotel-pais" required/></label>
+          <label class="field md:col-span-2">Description<textarea id="hotel-descripcion" rows="3"></textarea></label>
+          <label class="field md:col-span-2">Amenities <span class="hint">comma-separated</span><input id="hotel-servicios" placeholder="wifi, breakfast, pool"/></label>
+        </div>
+        <div class="flex justify-end gap-sm mt-lg"><button type="button" data-cerrar="hotel-form" class="btn-secondary">Cancel</button><button class="btn-primary" type="submit">Save hotel</button></div>
+      </form>
+
+      <div id="detalle-vacio" class="card text-center text-on-surface-variant py-xxl">Choose a hotel to manage its rooms.</div>
+      <section id="detalle" class="hidden space-y-gutter">
+        <div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-md"><div><p class="text-label-md uppercase text-on-surface-variant">Selected hotel</p><h2 id="detalle-nombre" class="font-headline-md text-headline-md text-primary"></h2><p id="detalle-ubicacion" class="text-on-surface-variant"></p><div id="detalle-canales" class="flex flex-wrap gap-xs mt-sm"></div></div><div class="flex gap-sm"><button id="btn-editar-hotel" class="btn-secondary">Edit</button><button id="btn-baja-hotel" class="btn-danger">Deactivate</button></div></div>
+
+        <div class="card">
+          <div class="flex items-center justify-between mb-md"><div><h3 class="font-title-lg text-title-lg text-primary">Room types</h3><p class="text-on-surface-variant text-sm">Categories and maximum capacity.</p></div><button id="btn-nuevo-tipo" class="btn-secondary"><span class="material-symbols-outlined">add</span>Add</button></div>
+          <form id="tipo-form" class="hidden bg-surface-container-low rounded-lg p-md mb-md grid grid-cols-1 md:grid-cols-2 gap-sm">
+            <input id="tipo-id" type="hidden"/><label class="field">Code<input id="tipo-codigo" required/></label><label class="field">Room type name<input id="tipo-nombre" required/></label><label class="field">Capacity<input id="tipo-capacidad" type="number" min="1" required/></label><label class="field">Features<input id="tipo-caracteristicas" placeholder="balcony, accessible"/></label><label class="field md:col-span-2">Description<textarea id="tipo-descripcion" rows="2"></textarea></label><div class="md:col-span-2 flex justify-end gap-sm"><button type="button" data-cerrar="tipo-form" class="btn-secondary">Cancel</button><button class="btn-primary">Save room type</button></div>
+          </form>
+          <div id="tipos-lista" class="grid grid-cols-1 md:grid-cols-2 gap-sm"></div><p id="tipos-vacio" class="hidden text-on-surface-variant py-md">There are no active room types.</p>
+        </div>
+
+        <div class="card">
+          <div class="flex items-center justify-between mb-md"><div><h3 class="font-title-lg text-title-lg text-primary">Rooms</h3><p class="text-on-surface-variant text-sm">Physical rooms available at the hotel.</p></div><button id="btn-nueva-habitacion" class="btn-secondary"><span class="material-symbols-outlined">add</span>Add</button></div>
+          <form id="habitacion-form" class="hidden bg-surface-container-low rounded-lg p-md mb-md grid grid-cols-1 md:grid-cols-2 gap-sm">
+            <input id="habitacion-id" type="hidden"/><label class="field">Number<input id="habitacion-numero" required/></label><label class="field">Floor<input id="habitacion-piso" type="number" required/></label><label class="field">Type<select id="habitacion-tipo" required></select></label><label class="field">Features<input id="habitacion-caracteristicas" placeholder="ocean view, minibar"/></label><div class="md:col-span-2 flex justify-end gap-sm"><button type="button" data-cerrar="habitacion-form" class="btn-secondary">Cancel</button><button class="btn-primary">Save room</button></div>
+          </form>
+          <div class="overflow-x-auto"><table class="w-full text-left min-w-[560px]"><thead><tr class="border-b border-outline-variant text-label-md uppercase text-on-surface-variant"><th class="py-sm">Number</th><th>Floor</th><th>Type</th><th>Capacity</th><th>Actions</th></tr></thead><tbody id="habitaciones-body"></tbody></table></div><p id="habitaciones-vacio" class="hidden text-on-surface-variant py-md">There are no active rooms.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around p-sm z-50"><a href="admin-dashboard.html" class="mobile-nav"><span class="material-symbols-outlined">dashboard</span>Home</a><a href="hotel-management.html" class="mobile-nav text-primary"><span class="material-symbols-outlined">domain</span>Hotels</a><a href="inventory.html" class="mobile-nav"><span class="material-symbols-outlined">inventory_2</span>Inventory</a><a href="settings.html" class="mobile-nav"><span class="material-symbols-outlined">person</span>Profile</a></nav>
+
+<style>
+.nav{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:.5rem;color:#45464f}.nav:hover{background:#e4e2e4}.card{background:#fff;border:1px solid rgba(213,184,147,.3);border-radius:.75rem;padding:1.25rem;box-shadow:0 4px 20px -4px rgba(37,52,79,.08)}.field{display:flex;flex-direction:column;gap:.35rem;color:#45464f;font-size:.875rem}.field input,.field textarea,.field select{border:1px solid #c5c6ce;border-radius:.5rem;background:#fff;padding:.65rem .75rem;color:#1b1b1f}.hint{font-size:.75rem;color:#767680}.btn-primary,.btn-secondary,.btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border-radius:999px;padding:.6rem 1rem;font-weight:600}.btn-primary{background:#9fcaaf;color:#123724}.btn-secondary{border:1px solid #5d645f;color:#415f4c}.btn-danger{border:1px solid #ba1a1a;color:#ba1a1a}.icon-btn{padding:.4rem;border-radius:999px}.mobile-nav{display:flex;flex-direction:column;align-items:center;font-size:.7rem;color:#5d5f68}
+</style>
+<script src="assets/js/api.js?v=20261023-motion2"></script>
+<script src="assets/js/pages/hotel-management-1.js"></script>
+</body>
+</html>

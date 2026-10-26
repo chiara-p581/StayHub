@@ -13,13 +13,22 @@ public interface HotelRepository {
     Hotel guardar(Hotel hotel);
     TipoHabitacion guardar(TipoHabitacion tipo);
     Habitacion guardar(Habitacion habitacion);
+    /**
+     * Sincroniza los cambios pendientes con la base para detectar restricciones antes de que la
+     * Facade termine y el contenedor confirme la transacción.
+     */
+    void sincronizar();
     Optional<Hotel> buscarHotel(Long id);
     Optional<TipoHabitacion> buscarTipo(Long id);
     Optional<TipoHabitacion> buscarTipoPorCodigo(Long hotelId, String codigo);
     Optional<Habitacion> buscarHabitacion(Long id);
     Optional<Habitacion> buscarHabitacionPorNumero(Long hotelId, String numero);
     List<Hotel> listarHoteles(boolean incluirInactivos);
+    List<Hotel> listarHoteles(boolean incluirInactivos, int offset, int limite);
+    void darDeBajaDependientes(Long hotelId);
     List<TipoHabitacion> listarTipos(Long hotelId);
+    List<TipoHabitacion> listarTipos(Long hotelId, boolean incluir, int offset, int limite);
     List<Habitacion> listarHabitaciones(Long hotelId);
+    List<Habitacion> listarHabitaciones(Long hotelId, boolean incluir, int offset, int limite);
     long contarHabitacionesActivasPorTipo(Long tipoId);
 }

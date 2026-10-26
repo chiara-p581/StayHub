@@ -1,54 +1,68 @@
-# ServicioDeHoteles - aporte para la Entrega Parcial N.º 1
+# ServicioDeHoteles - aporte para la Entrega Obligatoria N.º 1 del 14/09
 
-## 1. Responsabilidad y límites
+## 1. Propósito del componente
 
-ServicioDeHoteles administra la información estructural y descriptiva de los establecimientos que
-participan en StayHub. Permite crear, modificar, consultar y dar de baja hoteles; gestionar sus tipos
-de habitación y habitaciones físicas; registrar capacidad máxima, servicios y características; y
-validar que esos elementos existan y pertenezcan entre sí.
+ServicioDeHoteles administra el catálogo estructural y descriptivo de los establecimientos que
+participan en StayHub. Permite crear, modificar, consultar y dar de baja hoteles, tipos de habitación
+y habitaciones físicas. También registra la capacidad máxima de cada tipo, los servicios del hotel y
+las características de tipos y habitaciones.
 
-El componente no administra disponibilidad por fecha, cupos ni tarifas. Esa responsabilidad pertenece
-a ServicioDeInventarioYTarifas. Tampoco crea reservas ni resuelve overbooking. Esta separación evita
-responsabilidades solapadas y permite que cada componente evolucione con un motivo de cambio claro.
+El componente expone, además, un puerto interno para que Inventario, Reservas y otros componentes
+puedan validar que un hotel, un tipo o una habitación existen, están activos y pertenecen entre sí,
+sin acceder directamente a las tablas ni depender de la API HTTP.
 
-## 2. Interfaces explícitas
+Su límite es deliberado: no calcula disponibilidad por fecha, cupos, tarifas, reservas ni
+overbooking. Esas responsabilidades pertenecen a ServicioDeInventarioYTarifas,
+ServicioDeReservas y ServicioDeOverbooking. Esta separación evita responsabilidades superpuestas.
+
+## 2. Trabajo realizado
+
+Para esta entrega se completaron y robustecieron los siguientes comportamientos:
+
+- Alta, consulta, modificación, listado y baja lógica de hoteles.
+- Alta, consulta, modificación, listado y baja lógica de tipos de habitación.
+- Alta, consulta, modificación, listado y baja lógica de habitaciones físicas.
+- Baja en cascada de los tipos y las habitaciones cuando se desactiva un hotel.
+- Bloqueo de la baja de un tipo mientras todavía tenga habitaciones activas.
+- Política de historial inmutable: un elemento dado de baja se puede consultar con fines de
+  auditoría, pero no modificar ni reactivar.
+- Validación de datos obligatorios, longitudes, identificadores positivos y capacidad máxima entera
+  y positiva.
+- Normalización a mayúsculas de códigos de tipo y números de habitación para evitar duplicados por
+  diferencias de escritura.
+- Restricciones únicas en PostgreSQL por hotel y traducción de conflictos concurrentes a una
+  respuesta de negocio `409`, sin exponer detalles SQL.
+- Respuestas de error JSON uniformes con `codigo`, `mensaje` y `fecha` para validaciones, recursos
+  inexistentes, conflictos y cuerpos JSON incorrectos.
+- Pruebas unitarias y una colección de Postman que cubren recorridos exitosos, validaciones, bajas
+  lógicas y casos adversariales.
+
+## 3. Interfaces explícitas
 
 | Interfaz | Consumidor | Operaciones principales | Responsabilidad |
 | --- | --- | --- | --- |
-| `ServicioDeHoteles` | API REST y administración | Crear, modificar, consultar, listar y dar de baja hoteles, tipos y habitaciones | Facade de casos de uso del componente |
-| `ServicioDeHotelesPort` | Reservas, Inventario y otros componentes internos | Consultar hotel, validar hotel/tipo/habitación activa y consultar capacidad | Puerto de lectura sin dependencia HTTP |
-| `HotelRepository` | Capa de negocio | Guardar, buscar y listar entidades; verificar duplicados y relaciones | Contrato de acceso a datos |
+| `ServicioDeHoteles` | API REST y administración | Crear, modificar, consultar, listar y dar de baja hoteles, tipos y habitaciones | Facade de los casos de uso del componente |
+| `ServicioDeHotelesPort` | Reservas, Inventario y otros componentes internos | Consultar hotel, validar hotel, tipo o habitación activa y consultar capacidad | Puerto interno de lectura sin dependencia HTTP |
+| `HotelRepository` | Capa de negocio | Guardar, buscar, listar, verificar relaciones y sincronizar cambios | Contrato de acceso a datos |
 
-La interfaz administrativa intercambia DTOs y no expone entidades JPA. El puerto interno ofrece solo
-las operaciones que otros componentes necesitan, evitando que dependan de detalles de la API REST o
-de la base de datos.
-
-## 3. Tipo de componente: stateless
-
-La implementación se declara con `@Stateless`. Una llamada como `consultarHotel(15)` recibe toda la
-información necesaria para ejecutarse y no conserva un estado conversacional para la siguiente
-petición. El estado persistente pertenece a PostgreSQL y se accede dentro de las transacciones
-administradas por WildFly.
-
-Esta elección permite que el contenedor mantenga un pool de instancias, reutilice cualquiera de ellas
-entre usuarios y escale las consultas sin afinidad de sesión. Un EJB stateful no aportaría valor aquí:
-no existe un carrito, asistente por pasos ni hold temporal asociado a un cliente. El hold de una
-reserva corresponde a ServicioDeInventarioYTarifas.
+Las interfaces de negocio intercambian DTOs y no exponen entidades JPA. Esto mantiene estable el
+contrato del componente y evita que otros módulos conozcan relaciones lazy, consultas JPQL o detalles
+de PostgreSQL.
 
 ## 4. Arquitectura en capas
 
-| Capa | Elementos | Decisiones |
+| Capa | Elementos principales | Responsabilidad |
 | --- | --- | --- |
-| Presentación | `HotelResource`, `HotelExceptionMapper`, DTOs | Expone JAX-RS, recibe JSON y traduce errores a HTTP |
-| Negocio | `ServicioDeHotelesImpl`, interfaces de servicio, `HotelMapper` | Ejecuta casos de uso, validaciones, bajas lógicas y mapeos |
-| Datos | `HotelRepository`, `HotelRepositoryJpa`, entidades | Encapsula JPA y persiste en PostgreSQL mediante `StayHubPU` |
+| Presentación | `HotelResource`, `HotelExceptionMapper`, `JsonProcessingExceptionMapper`, DTOs | Adaptar HTTP y JSON, construir ubicaciones y traducir resultados y errores a códigos HTTP |
+| Negocio | `ServicioDeHotelesImpl`, `ServicioDeHoteles`, `ServicioDeHotelesPort`, `HotelMapper` | Ejecutar casos de uso, reglas, validaciones, bajas lógicas y transformaciones |
+| Datos | `HotelRepository`, `HotelRepositoryJpa`, `Hotel`, `TipoHabitacion`, `Habitacion` | Encapsular JPA y persistir el estado en PostgreSQL mediante `StayHubPU` |
 
 ```mermaid
 flowchart LR
-    HTTP[Cliente REST / Postman] --> API[HotelResource]
+    HTTP[Cliente REST o Postman] --> API[HotelResource]
     API --> F[ServicioDeHoteles]
-    INTERNOS[Reservas / Inventario] --> P[ServicioDeHotelesPort]
-    F --> S[ServicioDeHotelesImpl - Stateless]
+    INTERNOS[Reservas e Inventario] --> P[ServicioDeHotelesPort]
+    F --> S[ServicioDeHotelesImpl Stateless]
     P --> S
     S --> M[HotelMapper]
     S --> D[HotelRepository]
@@ -56,68 +70,110 @@ flowchart LR
     J --> PG[(PostgreSQL)]
 ```
 
-La regla de dependencias es explícita: presentación depende de la interfaz de negocio; negocio depende
-del contrato de datos; JPA queda confinado a la implementación del repositorio.
+La presentación depende de la interfaz de negocio, la capa de negocio depende del contrato de datos
+y solamente la implementación del repositorio conoce `EntityManager` y JPQL.
 
-## 5. Patrones aplicados y justificación
+## 5. Tipo de componente y ciclo de vida
+
+`ServicioDeHotelesImpl` se declara con `@Stateless`. Cada operación recibe todos los datos necesarios
+y no conserva información conversacional entre pedidos. El estado duradero se almacena en PostgreSQL,
+por lo que WildFly puede crear un pool de instancias y asignar cualquiera de ellas a cada solicitud.
+
+La anotación EJB también evidencia la administración del ciclo de vida por parte del contenedor:
+WildFly crea, reutiliza y destruye las instancias, realiza la inyección de dependencias y delimita las
+transacciones. No se agregaron callbacks vacíos de inicialización o destrucción porque el componente
+no necesita ejecutar una acción propia en esos momentos.
+
+El componente stateful requerido por la entrega es una responsabilidad global del sistema. En los
+cambios de `development` del 07/09 se incorporó `CarritoDeReserva` con `@Stateful`, `@PostConstruct`,
+`@PreDestroy` y `@Remove`. Esa implementación debe integrarse antes de preparar la versión final.
+
+## 6. Patrones aplicados y justificación
 
 ### Facade
 
-`ServicioDeHoteles` funciona como Facade porque presenta una entrada única y coherente a un subsistema
-formado por hoteles, tipos, habitaciones, validaciones, mapeos y persistencia. Sin esta Facade,
-`HotelResource` tendría que conocer repositorios, relaciones JPA y el orden de las operaciones. El
-patrón reduce acoplamiento y concentra las transacciones y reglas del componente.
+`ServicioDeHoteles` presenta una entrada única y coherente a un subsistema formado por hoteles,
+tipos, habitaciones, validaciones, mapeos y persistencia. `HotelResource` delega en esta Facade y no
+coordina repositorios ni entidades. La implementación también ofrece `ServicioDeHotelesPort`, una
+vista de lectura más acotada para otros componentes.
 
-### DAO / Repository
+### DAO o Repository
 
-`HotelRepository` abstrae el acceso a datos y `HotelRepositoryJpa` implementa ese contrato mediante
-`EntityManager` y JPQL. Las reglas de negocio no conocen consultas ni infraestructura de PostgreSQL.
-Esto mejora la mantenibilidad y permite reemplazar el DAO por un doble de prueba sin modificar el
-servicio.
+`HotelRepository` define las operaciones de persistencia que necesita el negocio y
+`HotelRepositoryJpa` las implementa mediante JPA. Las reglas no dependen de Hibernate, PostgreSQL ni
+consultas JPQL concretas. Esta abstracción también permite probar el servicio con un repositorio doble.
 
 ### Data Mapper
 
-`HotelMapper` convierte las entidades persistentes en `HotelResponse`, `TipoHabitacionResponse` y
-`HabitacionResponse`. La API no serializa entidades JPA directamente, lo que evita filtrar relaciones
-lazy, detalles de persistencia o ciclos de referencias. Los DTOs constituyen un contrato estable para
-clientes y otros componentes.
+`HotelMapper` transforma `Hotel`, `TipoHabitacion` y `Habitacion` en DTOs de respuesta. La API no
+serializa entidades JPA directamente, con lo cual evita ciclos, relaciones lazy y filtración de
+detalles internos.
 
-Estos patrones resuelven problemas presentes en el componente. No se agregó Factory o Strategy solo
-para aumentar el conteo: hoy no hay una familia de objetos compleja ni algoritmos alternativos que lo
-justifiquen. El tercer patrón obligatorio se evalúa a nivel del sistema y también puede respaldarse con
-Adapter en ServicioDeCanalesExternos.
+Estos tres patrones responden a problemas reales del componente. No se agregó Factory o Strategy
+de manera artificial porque actualmente no hay familias de objetos ni algoritmos intercambiables
+que lo justifiquen.
 
-## 6. Stack tecnológico
+## 7. Recursos y tecnologías utilizados
 
-- Java 17 y Jakarta EE 10.
-- EJB `@Stateless` para la capa de negocio y transacciones administradas por el contenedor.
-- JAX-RS para la API REST.
-- CDI para inyección de dependencias.
-- JPA/Hibernate con la unidad `StayHubPU`.
-- PostgreSQL mediante el datasource WildFly `java:/PostgresDS`.
-- Maven para compilación y empaquetado WAR.
-- WildFly como servidor de aplicaciones.
+- Java 17 y Jakarta EE 10 como plataforma de desarrollo.
+- EJB `@Stateless` para negocio, ciclo de vida y transacciones administradas por el contenedor.
+- JAX-RS para exponer la API REST y CDI para inyectar dependencias.
+- JPA con Hibernate para mapear y persistir el modelo.
+- PostgreSQL mediante la unidad `StayHubPU` y el datasource `java:/PostgresDS`.
+- WildFly 41 con el perfil `standalone-full.xml` como servidor de aplicaciones.
+- Maven para compilar, ejecutar pruebas y generar `StayHub.war`.
+- JUnit 5 para las pruebas automatizadas del componente.
+- Postman para la demostración funcional y las pruebas de integración manuales.
+- Git y una rama por funcionalidad para conservar un historial incremental.
 
-La elección es consistente con una aplicación empresarial basada en componentes: el contenedor
-administra ciclo de vida, inyección, transacciones, REST y persistencia, mientras que PostgreSQL
-mantiene el estado duradero.
+## 8. Persistencia, transacciones y manejo de errores
 
-## 7. Evidencia para el checkpoint del 31/08
+Las operaciones públicas del EJB usan las transacciones administradas por WildFly. Una excepción
+de negocio se declara con `@ApplicationException(rollback = true)`, de modo que una operación
+inválida no deja cambios parciales.
 
-La implementación ya incluye las tres capas, la Facade explícita, el puerto interno, el DAO JPA, las
-entidades y los endpoints REST. El proyecto genera `target/StayHub.war` y la colección
-`postman/StayHub-ServicioDeHoteles.postman_collection.json` automatiza el flujo de alta, modificación,
-consulta, validaciones y bajas lógicas.
+Los tipos de habitación tienen una restricción única por `hotel_id` y `codigo`; las habitaciones,
+por `hotel_id` y `numero`. Antes de terminar una creación o modificación sensible a duplicados, el
+repositorio ejecuta `flush`. Así una carrera concurrente se detecta dentro del caso de uso y se
+traduce al código de dominio correspondiente.
 
-Para cerrar la evidencia de la entrega falta ejecutar el WAR en un WildFly real con `PostgresDS`,
-correr la colección de Postman y conservar capturas del despliegue exitoso y de las pruebas. La
-consigna del 31/08 exige al menos un componente desplegado en un contenedor real; compilar el WAR sin
-desplegarlo no alcanza para afirmar que ese punto está cumplido.
+La capa REST devuelve `400` para solicitudes inválidas, `404` para elementos inexistentes y `409`
+para duplicados, elementos inactivos o reglas de baja incumplidas. El cliente recibe un contrato de
+error estable y no ve excepciones internas.
 
-## 8. Relación con el cronograma
+## 9. API y evidencia de prueba
 
-En la Entrega Parcial N.º 1 del 31/08 los patrones todavía no figuran como requisito independiente:
-se exige arquitectura general, interfaces documentadas, capas, stack, un componente real desplegado y
-la justificación stateful/stateless. Documentarlos ahora deja preparado ServicioDeHoteles para la
-Entrega Obligatoria N.º 1 del 14/09, donde sí se requieren al menos tres patrones distintos aplicados y
-justificados a nivel del sistema.
+La base local es `http://localhost:8080/StayHub/api/hoteles`. La API contiene quince operaciones
+REST para hoteles, tipos y habitaciones. Los listados excluyen elementos inactivos por defecto y las
+consultas directas los conservan visibles como evidencia histórica.
+
+La colección `postman/StayHub-ServicioDeHoteles.postman_collection.json` contiene 30 solicitudes con
+30 scripts de verificación. Incluye el recorrido completo y pruebas de duplicados, capacidad decimal,
+JSON malformado, tipos JSON incorrectos, identificadores textuales, modificaciones después de una
+baja y dos carreras concurrentes.
+
+El 07/09 se verificó que el proyecto compila, ejecuta las 11 pruebas de hoteles sin fallas y genera
+`StayHub.war`. El registro local de WildFly también evidencia un despliegue exitoso con PostgreSQL y
+el registro del EJB `ServicioDeHotelesImpl`. Antes de la defensa se debe repetir el despliegue y la
+colección completa después de integrar la versión más reciente de `development`.
+
+## 10. Aporte a los requisitos del 14/09
+
+| Requisito | Aporte de ServicioDeHoteles | Estado |
+| --- | --- | --- |
+| Tres componentes implementados y desplegados | ServicioDeHoteles aporta uno de los componentes completos | Cumple en su alcance; el total se demuestra con otros dos componentes del equipo |
+| Arquitectura en capas | Presentación, negocio y datos están separadas por interfaces | Cumple |
+| Un componente stateless | `ServicioDeHotelesImpl` usa `@Stateless` y no conserva estado conversacional | Cumple |
+| Un componente stateful | No corresponde al catálogo; lo aporta `CarritoDeReserva` en `development` | Pendiente de integrar en esta rama |
+| Tres patrones distintos | Facade, DAO o Repository y Data Mapper están implementados y justificados | Cumple en este componente |
+| Seguridad declarativa | No pertenece a este componente; se aplica a la cancelación de reservas | Se verifica a nivel del sistema tras integrar `development` |
+| Documento técnico de 5 a 8 páginas | Este texto documenta solamente el aporte de hoteles | Debe incorporarse al documento consolidado del equipo |
+| Demostración en contenedor real | Existe evidencia local de despliegue; falta repetirla sobre el código integrado final | Revalidar antes de entregar |
+
+## 11. Declaración de uso de inteligencia artificial
+
+Se utilizó inteligencia artificial generativa como apoyo para auditar la correspondencia entre la
+consigna, el código y las pruebas, y para revisar la claridad de esta documentación. Las afirmaciones
+técnicas se contrastaron con el código fuente, la compilación, las pruebas automatizadas, la
+colección de Postman y el registro de despliegue. La decisión de diseño y su defensa siguen siendo
+responsabilidad del equipo.

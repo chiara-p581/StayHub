@@ -8,7 +8,7 @@ final class PagoMapper {
     private PagoMapper() { }
 
     static PagoResponse aResponse(Pago p) {
-        return new PagoResponse(p.getId(), p.getReservaId(), p.getMonto(), p.getMoneda(),
+        return new PagoResponse(p.getId(), p.getReservaId(), p.getReservaIds(), p.getMonto(), p.getMoneda(),
                 p.getEstado().name(), p.getReferenciaPasarela(), p.getFechaPago());
     }
 }

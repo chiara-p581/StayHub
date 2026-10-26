@@ -4,6 +4,9 @@ import com.stayhub.reservas.dto.CarritoResumenDTO;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.dto.ReservaResponse;
 import com.stayhub.reservas.service.ServicioDeReservas;
+import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
+import com.stayhub.reservas.exception.CodigoErrorReserva;
+import com.stayhub.reservas.exception.ReservaException;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -13,6 +16,7 @@ import jakarta.inject.Inject;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.logging.Logger;
 
 /**
  * Carrito de armado de una reserva: mantiene en la MEMORIA de esta instancia
@@ -35,9 +39,15 @@ import java.time.LocalDate;
  */
 @Stateful
 public class CarritoDeReserva {
+    private static final Logger LOG = Logger.getLogger(CarritoDeReserva.class.getName());
 
+    @Inject private com.stayhub.seguridad.IdentidadActual identidad;
+    @Inject private com.stayhub.usuarios.contrato.ServicioDeUsuarios usuarios;
     @Inject
     private ServicioDeReservas servicioDeReservas;
+
+    @Inject
+    private ServicioDeInventarioYTarifas inventarioYTarifas;
 
     private Long hotelId;
     private String tipoHabitacion;
@@ -53,33 +63,37 @@ public class CarritoDeReserva {
 
     @PostConstruct
     private void iniciar() {
-        System.out.println("[CarritoDeReserva] nueva conversación iniciada (instancia " + this.hashCode() + ")");
+        LOG.fine("Nueva conversación de carrito iniciada");
     }
 
     @PreDestroy
     private void finalizar() {
-        System.out.println("[CarritoDeReserva] conversación finalizada (instancia " + this.hashCode() + ")");
+        LOG.fine("Conversación de carrito finalizada");
     }
 
     public void seleccionarHotelYHabitacion(Long hotelId, String tipoHabitacion, int cantidadHabitaciones) {
+        com.stayhub.seguridad.Limites.cantidad(cantidadHabitaciones);
+        com.stayhub.seguridad.Limites.texto(tipoHabitacion, 30, true);
+        if (hotelId == null || hotelId <= 0) throw new com.stayhub.seguridad.SeguridadException(400, "Hotel inválido");
         this.hotelId = hotelId;
         this.tipoHabitacion = tipoHabitacion;
         this.cantidadHabitaciones = cantidadHabitaciones;
     }
 
     public void seleccionarFechas(LocalDate checkIn, LocalDate checkOut) {
+        com.stayhub.seguridad.Limites.rango(checkIn, checkOut);
         this.checkIn = checkIn;
         this.checkOut = checkOut;
     }
 
     public void seleccionarHuespedYPrecio(String huespedNombre, String huespedApellido, String huespedEmail,
                                            String huespedTelefono, BigDecimal precioTotal, String moneda) {
-        this.huespedNombre = huespedNombre;
-        this.huespedApellido = huespedApellido;
-        this.huespedEmail = huespedEmail;
+        identidad.exigirHuesped();
+        var usuario = usuarios.buscarPorId(identidad.usuarioId());
+        com.stayhub.seguridad.Limites.texto(huespedTelefono, 30, true);
+        this.huespedNombre = usuario.nombre(); this.huespedApellido = usuario.apellido(); this.huespedEmail = usuario.email();
         this.huespedTelefono = huespedTelefono;
-        this.precioTotal = precioTotal;
-        this.moneda = moneda;
+        calcularPrecioDesdeTarifas();
     }
 
     public CarritoResumenDTO resumen() {
@@ -99,10 +113,26 @@ public class CarritoDeReserva {
      */
     @Remove
     public ReservaResponse confirmar() {
+        calcularPrecioDesdeTarifas();
         ReservaRequest solicitud = new ReservaRequest(hotelId, tipoHabitacion, cantidadHabitaciones,
                 checkIn, checkOut, huespedNombre, huespedApellido, huespedEmail, huespedTelefono,
                 precioTotal, moneda);
         return servicioDeReservas.crearReserva(solicitud);
+    }
+
+    private void calcularPrecioDesdeTarifas() {
+        if (hotelId == null || tipoHabitacion == null || checkIn == null || checkOut == null
+                || cantidadHabitaciones < 1) {
+            throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                    "Elegí hotel, habitación y fechas antes de confirmar");
+        }
+        var tarifa = inventarioYTarifas.consultarTarifas(hotelId, checkIn, checkOut).stream()
+                .filter(t -> tipoHabitacion.equals(t.tipoHabitacion()))
+                .findFirst()
+                .orElseThrow(() -> new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                        "No hay una tarifa cargada para el tipo de habitación y período elegidos"));
+        precioTotal = tarifa.importe().multiply(BigDecimal.valueOf(cantidadHabitaciones));
+        moneda = tarifa.moneda();
     }
 
     public void vaciar() {

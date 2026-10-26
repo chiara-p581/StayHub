@@ -14,6 +14,7 @@ Plataforma de reservas de hotel desarrollada como Trabajo Práctico de **Desarro
 | `ServicioDeOverbooking` | Resolución asincrónica de conflictos de sobreventa |
 | `ServicioDeNotificaciones` | Envío de notificaciones (email/SMS/push) |
 | `ServicioDeUsuarios` | Gestión de usuarios con dos roles: **Huésped** y **Administrador** |
+| `IntegracionPms` (fachada SOAP) | Servicio web SOAP que StayHub expone al PMS legado del hotel (reservas, llegadas, disponibilidad y tarifas) |
 
 Son 7 componentes de EJB (mínimo exigido por la cátedra: 6) más el componente de usuarios.
 
@@ -34,6 +35,27 @@ Son 7 componentes de EJB (mínimo exigido por la cátedra: 6) más el componente
 Rama por feature → merge a `development` → merge a `main`. Los Pull Requests y los commits descriptivos son tenidos en cuenta en la evaluación.
 
 ## Cómo levantar el entorno local
+
+Para `feature/seguridad-a`, consultar primero
+[configuración local de seguridad](docs/CONFIGURACION_LOCAL_SEGURIDAD.md):
+HTTPS usa el puerto 8080 y SOAP requiere permisos explícitos. Las URLs HTTP
+de las instrucciones originales siguientes corresponden al entorno anterior.
+
+Abrir **https://localhost:8080/StayHub/index.html**. HTTP queda en 8081 y
+redirige a HTTPS para navegación. El modo HTTP local queda desactivado.
+Los puertos se guardan en WildFly, fuera de este repositorio: cada persona debe
+configurar su servidor. El script `config/configurar-seguridad-local.py` prepara
+TLS y estos puertos; requiere también PostgreSQL y el datasource configurados.
+Si ya tiene la configuración TLS `StayHubTLS`, puede aplicar solo los puertos:
+
+```sh
+"$WILDFLY_HOME/bin/jboss-cli.sh" --connect --file=config/https-8080.cli
+"$WILDFLY_HOME/bin/jboss-cli.sh" --connect --command=:reload
+```
+
+Ejecutar desde la raíz de StayHub con `WILDFLY_HOME` apuntando a la instalación.
+Los certificados privados y la confianza del certificado son locales a cada
+computadora; no se comparten por Git.
 
 ### 1. Arrancar WildFly con el perfil `full`
 
@@ -68,11 +90,30 @@ Para ejercitar `/canales-externos/otas/.../sincronizaciones` y `/canales-externo
 
 La URL del OTA es un mock de Postman; la del PMS asume un servicio SOAP corriendo localmente en el puerto 9091.
 
-### 4. Base URL de la API
+### 4. PMS legado simulado (SOAP)
+
+El PMS del hotel no existe, así que se simula con un servicio JAX-WS standalone en el puerto 9091:
+
+```bash
+cd pms-legado-mock
+mvn compile exec:java
+```
+
+Ver [`pms-legado-mock/README.md`](pms-legado-mock/README.md).
+
+### 5. Base URL de la API
 
 ```
 http://localhost:8080/StayHub/api
 ```
+
+### 6. Servicio SOAP para el PMS legado
+
+```
+http://localhost:8080/StayHub/soap/integracion-pms?wsdl
+```
+
+Ver [`proyecto/src/main/java/com/stayhub/integracionpms/README.md`](proyecto/src/main/java/com/stayhub/integracionpms/README.md) y [`docs/entrega-4/integracion-soap-pms.md`](docs/entrega-4/integracion-soap-pms.md).
 
 ## Postman
 

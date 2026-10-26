@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
 public class IllegalArgumentExceptionMapper implements ExceptionMapper<IllegalArgumentException> {
     public Response toResponse(IllegalArgumentException ex) {
         return Response.status(Response.Status.BAD_REQUEST)
-                .entity(new ErrorDTO("SOLICITUD_INVALIDA",ex.getMessage(),OffsetDateTime.now()))
+                .entity(new ErrorDTO("SOLICITUD_INVALIDA","La solicitud contiene valores inválidos",OffsetDateTime.now()))
                 .type(MediaType.APPLICATION_JSON).build();
     }
 }

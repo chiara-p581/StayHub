@@ -36,6 +36,12 @@ public class ReservaRepositoryJpa implements ReservaRepository {
         return Optional.ofNullable(em.find(Reserva.class, id));
     }
 
+    @Override public Optional<Reserva> buscarPorIdBloqueando(Long id) {
+        Reserva reserva = em.find(Reserva.class, id, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (reserva != null) em.refresh(reserva, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        return Optional.ofNullable(reserva);
+    }
+
     @Override
     public Optional<Reserva> buscarPorCanalYReferencia(String canal, String referenciaExterna) {
         try {
@@ -55,6 +61,42 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     public List<Reserva> listarPorHotel(Long hotelId) {
         return em.createQuery("SELECT r FROM Reserva r WHERE r.hotelId = :hotelId", Reserva.class)
                 .setParameter("hotelId", hotelId)
-                .getResultList();
+                .setMaxResults(com.stayhub.seguridad.Limites.RESULTADOS).getResultList();
+    }
+
+    @Override
+    public List<Reserva> listarPorHuespedEmail(String email) {
+        return em.createQuery("SELECT r FROM Reserva r WHERE lower(r.huesped.email) = lower(:email) "
+                        + "ORDER BY r.checkIn DESC", Reserva.class)
+                .setParameter("email", email)
+                .setMaxResults(com.stayhub.seguridad.Limites.RESULTADOS).getResultList();
+    }
+
+    @Override public List<Reserva> listarPorUsuario(Long id, int offset, int limite) {
+        com.stayhub.seguridad.Limites.pagina(offset, limite);
+        return em.createQuery("SELECT r FROM Reserva r WHERE r.usuarioId=:id ORDER BY r.id DESC", Reserva.class)
+                .setParameter("id", id).setFirstResult(offset).setMaxResults(limite).getResultList();
+    }
+    @Override public List<Reserva> listarPorHotel(Long hotelId, int offset, int limite) {
+        com.stayhub.seguridad.Limites.pagina(offset, limite);
+        return em.createQuery("SELECT r FROM Reserva r WHERE r.hotelId=:id ORDER BY r.id DESC", Reserva.class)
+                .setParameter("id", hotelId).setFirstResult(offset).setMaxResults(limite).getResultList();
+    }
+    @Override public long contarPendientesPorUsuario(Long id) {
+        return em.createQuery("SELECT COUNT(r) FROM Reserva r WHERE r.usuarioId=:id AND r.estado=:estado", Long.class)
+                .setParameter("id", id).setParameter("estado", com.stayhub.reservas.model.EstadoReserva.PENDIENTE).getSingleResult();
+    }
+    @Override public void bloquearUsuario(Long id) {
+        em.find(com.stayhub.usuarios.model.Usuario.class, id, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+    }
+    @Override public List<Reserva> pendientesVencidas(java.time.LocalDateTime antes) {
+        return em.createQuery("SELECT r FROM Reserva r WHERE r.estado=:estado AND r.usuarioId IS NOT NULL AND r.fechaCreacion < :antes ORDER BY r.id", Reserva.class)
+                .setParameter("estado", com.stayhub.reservas.model.EstadoReserva.PENDIENTE).setParameter("antes", antes)
+                .setMaxResults(100).getResultList();
+    }
+    @Override public List<Reserva> listarLlegadas(Long hotelId, java.time.LocalDate fecha) {
+        return em.createQuery("SELECT r FROM Reserva r WHERE r.hotelId=:hotel AND r.checkIn=:fecha AND r.estado=:estado ORDER BY r.id", Reserva.class)
+                .setParameter("hotel", hotelId).setParameter("fecha", fecha).setParameter("estado", com.stayhub.reservas.model.EstadoReserva.CONFIRMADA)
+                .setMaxResults(100).getResultList();
     }
 }

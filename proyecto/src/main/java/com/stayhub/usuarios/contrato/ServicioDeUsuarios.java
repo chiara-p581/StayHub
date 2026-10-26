@@ -1,5 +1,6 @@
 package com.stayhub.usuarios.contrato;
 
+import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
@@ -11,4 +12,10 @@ public interface ServicioDeUsuarios {
     UsuarioResponse autenticar(LoginRequest credenciales);
 
     UsuarioResponse buscarPorId(Long id);
+
+    UsuarioResponse actualizarPerfil(Long id, ActualizacionUsuarioRequest solicitud);
+
+    void solicitarRecuperacionPassword(String email);
+
+    void resetearPassword(String token, String nuevaPassword);
 }

@@ -1,39 +1,33 @@
-<!DOCTYPE web-app PUBLIC
- "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
- "http://java.sun.com/dtd/web-app_2_3.dtd" >
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd" version="6.0">
+  <display-name>StayHub</display-name>
+  <session-config>
+    <session-timeout>15</session-timeout>
+    <cookie-config><http-only>true</http-only><secure>true</secure></cookie-config>
+    <tracking-mode>COOKIE</tracking-mode>
+  </session-config>
+  <!-- Servicio web SOAP (JAX-WS) que StayHub expone al PMS legado del hotel.
+       En WildFly el servlet-class de un endpoint JAX-WS es la propia clase
+       anotada con @WebService: el subsistema de webservices la detecta y la
+       publica en la URL de abajo. El WSDL generado queda en
+         http://localhost:8080/StayHub/soap/integracion-pms?wsdl -->
+  <servlet>
+    <servlet-name>IntegracionPmsService</servlet-name>
+    <servlet-class>com.stayhub.integracionpms.api.IntegracionPmsWebService</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>IntegracionPmsService</servlet-name>
+    <url-pattern>/soap/integracion-pms</url-pattern>
+  </servlet-mapping>
 
-<web-app>
-  <display-name>Archetype Created Web Application</display-name>
-
-  <!-- Seguridad declarativa mínima pedida por el TP: solo un usuario logueado
-       con rol ADMIN o HUESPED puede cancelar una reserva directa
-       (DELETE /api/reservas/{id}). Ambos roles pueden cancelar -no es un chequeo
-       de "dueño de la reserva", es autorización por rol- porque en la vida real
-       cualquier huésped logueado tiene que poder cancelar su reserva, no solo
-       el personal del hotel. El resto de la API queda sin cambios. -->
-  <security-constraint>
-    <web-resource-collection>
-      <web-resource-name>CancelarReserva</web-resource-name>
-      <url-pattern>/api/reservas/*</url-pattern>
-      <http-method>DELETE</http-method>
-    </web-resource-collection>
-    <auth-constraint>
-      <role-name>ADMIN</role-name>
-      <role-name>HUESPED</role-name>
-    </auth-constraint>
-  </security-constraint>
-
-  <login-config>
-    <auth-method>BASIC</auth-method>
-    <realm-name>ApplicationRealm</realm-name>
-  </login-config>
-
-  <security-role>
-    <role-name>ADMIN</role-name>
-  </security-role>
-
-  <security-role>
-    <role-name>HUESPED</role-name>
-  </security-role>
+  <filter>
+    <filter-name>SeguridadHttpFilter</filter-name>
+    <filter-class>com.stayhub.seguridad.SeguridadHttpFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>SeguridadHttpFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
 
 </web-app>

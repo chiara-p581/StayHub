@@ -1,2 +1,15 @@
 .DS_Store
 proyecto/target/
+pms-legado-mock/target/
+
+# Configuración privada del correo
+mail.local.properties
+mail.properties
+.env
+.env.*
+!.env.example
+# Herramientas locales para generar CSS y probar seguridad de UI
+**/node_modules/
+
+# Certificados, claves, copias y configuración privada del servidor local
+.local-security/

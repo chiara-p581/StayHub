@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>StayHub - Detalle de reserva</title>
+<link href="assets/css/tailwind.css" rel="stylesheet"/><link href="assets/css/fonts.css" rel="stylesheet"/>
+
+
+<link href="assets/css/theme.css?v=20261023-design2" rel="stylesheet"/>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
+</head><body class="bg-background text-on-background font-body-md min-h-screen">
+<main class="max-w-5xl mx-auto px-md py-xxl">
+  <a href="settings.html#mis-reservas" class="inline-flex items-center gap-xs text-primary mb-lg"><span class="material-symbols-outlined">arrow_back</span>Back a mis reservas</a>
+  <div id="error-banner" class="hidden p-md rounded-lg bg-error-container text-on-error-container"></div>
+  <section id="detalle" class="hidden overflow-hidden bg-white rounded-2xl border border-outline-variant/30 shadow-sm">
+    <div class="grid md:grid-cols-[320px_1fr]">
+      <img id="hotel-imagen" class="w-full h-full min-h-64 object-cover" alt="Booking hotel"/>
+      <div class="p-xl">
+        <div class="flex flex-wrap justify-between gap-md"><div><p class="uppercase tracking-wider text-xs text-on-surface-variant">Booking <span id="reserva-id"></span></p><h1 id="hotel-nombre" class="font-headline-lg text-headline-lg text-primary mt-xs"></h1><p id="hotel-ubicacion" class="text-on-surface-variant"></p></div><span id="estado" class="h-fit rounded-full px-md py-xs text-sm font-semibold"></span></div>
+        <dl class="grid sm:grid-cols-2 gap-lg mt-xl border-t border-outline-variant/30 pt-xl">
+          <div><dt class="text-xs uppercase text-on-surface-variant">Dates</dt><dd id="fechas" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Room</dt><dd id="habitacion" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Guest</dt><dd id="huesped" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Channel</dt><dd id="canal" class="font-semibold mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">Amount</dt><dd id="importe" class="font-semibold text-lg text-primary mt-xs"></dd></div>
+          <div><dt class="text-xs uppercase text-on-surface-variant">External reference</dt><dd id="referencia" class="font-semibold mt-xs"></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</main><script src="assets/js/api.js?v=20261023-motion2"></script><script src="assets/js/pages/reservation-details-1.js"></script></body></html>

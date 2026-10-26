@@ -1,5 +1,6 @@
 package com.stayhub.canalesexternos.service;
 
+import com.stayhub.seguridad.Limites;
 import com.stayhub.canalesexternos.contrato.ServicioDeCanalesExternos;
 import com.stayhub.canalesexternos.contrato.interno.*;
 import com.stayhub.canalesexternos.dto.*;
@@ -16,6 +17,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     @Inject Instance<ServicioDeReservasPort> reservas;
     @Inject Instance<ServicioDeInventarioYTarifasPort> inventarioYTarifas;
     @Inject PublicadorSincronizacion publicadorSincronizacion;
+    @Inject com.stayhub.canalesexternos.config.ConfiguracionCanales configuracion;
 
     @Override
     public List<DisponibilidadDTO> consultarDisponibilidad(Long hotelId, LocalDate desde, LocalDate hasta) {
@@ -48,6 +50,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     public ResultadoSincronizacionDTO sincronizarOta(Long hotelId, Canal canal, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
         if (canal == null) invalida("El canal es obligatorio");
+        configuracion.urlOta(canal); // Rechazar configuración faltante antes de encolar.
         String solicitudId = publicadorSincronizacion.publicarOta(hotelId, canal, desde, hasta);
         return ResultadoSincronizacionDTO.encolado(solicitudId, canal.name());
     }
@@ -55,6 +58,7 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
     @Override
     public ResultadoSincronizacionDTO sincronizarPms(Long hotelId, LocalDate desde, LocalDate hasta) {
         validarPeriodo(hotelId, desde, hasta);
+        configuracion.wsdlPms();
         String solicitudId = publicadorSincronizacion.publicarPms(hotelId, desde, hasta);
         return ResultadoSincronizacionDTO.encolado(solicitudId, "PMS");
     }
@@ -79,13 +83,16 @@ public class ServicioDeCanalesExternosImpl implements ServicioDeCanalesExternos 
         return new ResultadoReservaDTO(resultado.reservaId(),r.idExterno(),r.canal(),resultado.estado());
     }
     private void validarPeriodo(Long hotelId, LocalDate desde, LocalDate hasta) {
+        Limites.rango(desde, hasta);
         if (hotelId == null || desde == null || hasta == null || !hasta.isAfter(desde))
             invalida("hotelId y un período válido son obligatorios");
     }
     private void validarReserva(ReservaExternaDTO r) {
+        if (r == null) invalida("Reserva requerida");
+        Limites.rango(r.checkIn(), r.checkOut()); Limites.cantidad(r.cantidadHabitaciones()); Limites.texto(r.idExterno(), 60, true);
         if (r == null || r.idExterno() == null || r.idExterno().isBlank() || r.canal() == null ||
                 r.hotelId() == null || r.checkIn() == null || r.checkOut() == null ||
-                !r.checkOut().isAfter(r.checkIn()) || r.tipoHabitacion() == null ||
+                r.checkIn().isBefore(LocalDate.now()) || !r.checkOut().isAfter(r.checkIn()) || r.tipoHabitacion() == null ||
                 r.tipoHabitacion().isBlank() || r.cantidadHabitaciones() < 1 || r.huesped() == null ||
                 r.precioTotal() == null || r.precioTotal().signum() < 0 || r.moneda() == null || r.moneda().isBlank() ||
                 r.huesped().nombre() == null || r.huesped().nombre().isBlank() ||

@@ -1,27 +1,44 @@
 package com.stayhub.usuarios.api;
 
+import com.stayhub.seguridad.Csrf;
+import com.stayhub.seguridad.ProteccionLogin;
+import com.stayhub.usuarios.exception.UsuarioException;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
+import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
 import com.stayhub.usuarios.dto.LoginRequest;
 import com.stayhub.usuarios.dto.RegistroUsuarioRequest;
+import com.stayhub.usuarios.dto.ResetPasswordRequest;
+import com.stayhub.usuarios.dto.SolicitudRecuperacionRequest;
 import com.stayhub.usuarios.dto.UsuarioResponse;
+import com.stayhub.usuarios.model.RolUsuario;
 
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Map;
 
 @Path("/usuarios")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UsuarioResource {
+    private static final String INICIO_ABSOLUTO_SESION = "inicioAbsolutoSesion";
 
     @Inject
     private ServicioDeUsuarios servicio;
 
+    @Inject
+    private ProteccionLogin proteccionLogin;
+
     @POST
     public Response registrar(RegistroUsuarioRequest solicitud) {
-        UsuarioResponse usuario = servicio.registrar(solicitud);
+        RegistroUsuarioRequest registroPublico = solicitud == null ? null : new RegistroUsuarioRequest(
+                solicitud.email(), solicitud.password(), solicitud.nombre(), solicitud.apellido(), RolUsuario.HUESPED);
+        UsuarioResponse usuario = servicio.registrar(registroPublico);
         return Response.status(Response.Status.CREATED)
                 .location(URI.create("api/usuarios/" + usuario.id()))
                 .entity(usuario)
@@ -30,13 +47,81 @@ public class UsuarioResource {
 
     @POST
     @Path("/login")
-    public UsuarioResponse login(LoginRequest credenciales) {
-        return servicio.autenticar(credenciales);
+    public UsuarioResponse login(LoginRequest credenciales, @Context HttpServletRequest request) {
+        String email = credenciales == null ? null : credenciales.email();
+        String ip = request.getRemoteAddr();
+        proteccionLogin.verificar(email, ip);
+        UsuarioResponse usuario;
+        try {
+            usuario = servicio.autenticar(credenciales);
+        } catch (UsuarioException ex) {
+            proteccionLogin.registrarFallo(email, ip);
+            throw ex;
+        }
+        proteccionLogin.registrarExito(email, ip);
+        HttpSession anterior = request.getSession(false);
+        if (anterior != null) anterior.invalidate();
+        HttpSession sesion = request.getSession(true);
+        request.changeSessionId();
+        sesion.setMaxInactiveInterval(900);
+        sesion.setAttribute("usuarioId", usuario.id());
+        sesion.setAttribute("usuarioRol", usuario.rol());
+        sesion.setAttribute(INICIO_ABSOLUTO_SESION, System.currentTimeMillis());
+        Csrf.token(sesion);
+        return usuario;
+    }
+
+    @DELETE
+    @Path("/sesion")
+    public Response cerrarSesion(@Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        if (sesion != null) sesion.invalidate();
+        return Response.noContent().build();
     }
 
     @GET
     @Path("/{id}")
-    public UsuarioResponse consultar(@PathParam("id") Long id) {
+    public UsuarioResponse consultar(@PathParam("id") Long id, @Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
+        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
+        if (usuarioId == null || (!usuarioId.equals(id) && !"ADMIN".equals(rol))) {
+            throw new WebApplicationException("No podés consultar el perfil de otro usuario",
+                    Response.Status.FORBIDDEN);
+        }
         return servicio.buscarPorId(id);
+    }
+
+    @PUT
+    @Path("/me")
+    public UsuarioResponse actualizarMiPerfil(ActualizacionUsuarioRequest solicitud,
+                                              @Context HttpServletRequest request) {
+        HttpSession sesion = request.getSession(false);
+        if (sesion == null || sesion.getAttribute("usuarioId") == null) {
+            throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
+        }
+        UsuarioResponse actualizado = servicio.actualizarPerfil((Long) sesion.getAttribute("usuarioId"), solicitud);
+        sesion.setAttribute("usuarioRol", actualizado.rol());
+        return actualizado;
+    }
+
+    // ---- Recuperación de contraseña (públicos: se usan sin estar logueado) ----
+
+    @POST
+    @Path("/recuperar-password")
+    public Response recuperar(SolicitudRecuperacionRequest s) {
+        if (s == null) throw new BadRequestException("Falta la solicitud");
+        servicio.solicitarRecuperacionPassword(s.email());
+        // Misma respuesta exista o no la cuenta
+        return Response.accepted(Map.of("mensaje",
+                "Si existe la cuenta, recibirás un enlace de recuperación")).build();
+    }
+
+    @POST
+    @Path("/resetear-password")
+    public Response resetear(ResetPasswordRequest s) {
+        if (s == null) throw new BadRequestException("Falta la solicitud");
+        servicio.resetearPassword(s.token(), s.nuevaPassword());
+        return Response.noContent().build();
     }
 }

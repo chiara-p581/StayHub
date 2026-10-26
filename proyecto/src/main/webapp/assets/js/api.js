@@ -4,52 +4,80 @@
    desde cualquier pantalla del front. Todas las páginas cargan este
    archivo antes que su propio <script> de página.
 
-   Cómo maneja el login: el back tiene DOS sistemas de identidad hoy:
-     1) El "usuario de negocio" (POST /api/usuarios y /api/usuarios/login,
-        vive en la base de StayHub) — sirve para saber el nombre/rol
-        de quien está usando la app.
-     2) El usuario de seguridad de WildFly (ApplicationRealm, creado con
-        add-user.sh) — es el que protege con HTTP Basic las operaciones
-        sensibles (cancelar una reserva), vía @RolesAllowed/web.xml.
-   login.html pide un solo email+contraseña y los usa para las dos cosas:
-   valida contra /api/usuarios/login (para mostrar nombre/rol en la UI)
-   y guarda esas mismas credenciales como header "Authorization: Basic"
-   para las llamadas que WildFly protege. Para que ambas coincidan, el
-   usuario de WildFly tiene que existir con el mismo email/contraseña.
+   El login crea una sesión HTTP en el backend. El navegador conserva la
+   cookie JSESSIONID y sessionStorage guarda solamente los datos públicos
+   del perfil para pintar la interfaz; la contraseña nunca se almacena.
    ============================================================ */
 
 const Api = (() => {
     const BASE = "api/";
-    const AUTH_KEY = "stayhub_auth";
     const USER_KEY = "stayhub_user";
+    const CART_KEY = "stayhub_cart_v2";
+    const CACHE_PREFIX = "stayhub_cache_v1:";
+    const THEME_KEY = "stayhub_theme";
 
-    function authHeaderValue() {
-        const raw = sessionStorage.getItem(AUTH_KEY);
-        return raw ? "Basic " + raw : null;
+    function applyTheme(value) {
+        var theme = value === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem(THEME_KEY, theme);
+        return theme;
     }
 
-    function setSession(email, password, usuario) {
-        sessionStorage.setItem(AUTH_KEY, btoa(email + ":" + password));
+    applyTheme(localStorage.getItem(THEME_KEY));
+
+    function setSession(usuario) {
+        if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
+            sessionStorage.removeItem(USER_KEY);
+            throw new Error("The server did not return a valid user session.");
+        }
         sessionStorage.setItem(USER_KEY, JSON.stringify(usuario));
     }
 
-    function clearSession() {
-        sessionStorage.removeItem(AUTH_KEY);
+    async function clearSession() {
+        await request("usuarios/sesion", { method: "DELETE" });
         sessionStorage.removeItem(USER_KEY);
+        saveLocalCart([]);
+        csrfPendiente = null;
+    }
+
+    let csrfPendiente = null;
+    function csrfToken() {
+        if (!csrfPendiente) {
+            csrfPendiente = fetch(BASE + "seguridad/csrf", { credentials: "same-origin", cache: "no-store" })
+                .then(async response => {
+                    if (!response.ok) throw new Error("Could not initialize a secure session.");
+                    return (await response.json()).token;
+                }).catch(error => { csrfPendiente = null; throw error; });
+        }
+        return csrfPendiente;
     }
 
     function currentUser() {
         const raw = sessionStorage.getItem(USER_KEY);
-        return raw ? JSON.parse(raw) : null;
+        if (!raw || raw === "undefined" || raw === "null") {
+            sessionStorage.removeItem(USER_KEY);
+            return null;
+        }
+        try {
+            const usuario = JSON.parse(raw);
+            if (!usuario || typeof usuario !== "object" || !usuario.id || !usuario.rol) {
+                sessionStorage.removeItem(USER_KEY);
+                return null;
+            }
+            return usuario;
+        } catch (e) {
+            sessionStorage.removeItem(USER_KEY);
+            return null;
+        }
     }
 
     function isLoggedIn() {
-        return !!sessionStorage.getItem(AUTH_KEY);
+        return currentUser() !== null;
     }
 
     /**
      * Redirige a login.html si no hay sesión, guardando la página actual
-     * para volver después de loguearse. Se llama al principio de las
+     * para volver después de loguearse. Se llama to principio de las
      * páginas que necesitan un usuario logueado.
      */
     function requireLogin() {
@@ -79,25 +107,25 @@ const Api = (() => {
         const headers = { Accept: "application/json" };
         if (body !== undefined) headers["Content-Type"] = "application/json";
         if (auth) {
-            const authValue = authHeaderValue();
-            if (!authValue) {
-                const err = new Error("Tenés que iniciar sesión para hacer esto.");
+            if (!isLoggedIn()) {
+                const err = new Error("You must sign in to do this.");
                 err.status = 401;
                 throw err;
             }
-            headers["Authorization"] = authValue;
         }
 
+        if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers["X-CSRF-Token"] = await csrfToken();
         let res;
         try {
             res = await fetch(url, {
                 method,
                 headers,
+                credentials: "same-origin",
                 body: body !== undefined ? JSON.stringify(body) : undefined,
             });
         } catch (networkErr) {
             const err = new Error(
-                "No se pudo conectar con el servidor. ¿WildFly está corriendo en localhost:8080?"
+                "Could not connect to the server. Is WildFly running on localhost:8080?"
             );
             err.cause = networkErr;
             throw err;
@@ -111,6 +139,11 @@ const Api = (() => {
         const data = raw ? (isJson ? safeJson(raw) : raw) : null;
 
         if (!res.ok) {
+            if (res.status === 401) {
+                sessionStorage.removeItem(USER_KEY);
+                csrfPendiente = null;
+                if (auth) requireLogin();
+            }
             const msg =
                 (data && (data.mensaje || data.message || data.error)) ||
                 (typeof data === "string" && data) ||
@@ -120,7 +153,74 @@ const Api = (() => {
             err.body = data;
             throw err;
         }
+        if (path === "usuarios/login") csrfPendiente = null;
         return data;
+    }
+
+    function localCart() {
+        try {
+            var value = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+            return Array.isArray(value) ? value : [];
+        } catch (e) {
+            localStorage.removeItem(CART_KEY);
+            return [];
+        }
+    }
+
+    function saveLocalCart(items) {
+        localStorage.setItem(CART_KEY, JSON.stringify(items));
+        document.dispatchEvent(new CustomEvent("stayhub:cart-changed"));
+        return items;
+    }
+
+    function addLocalCartItem(item) {
+        var items = localCart();
+        if (items.length >= 10) throw new Error("The cart supports at most 10 bookings.");
+        items.push(Object.assign({ itemId: Date.now() + "-" + Math.random().toString(16).slice(2) }, item));
+        return saveLocalCart(items);
+    }
+
+    function removeLocalCartItem(itemId) {
+        return saveLocalCart(localCart().filter(function (item) { return item.itemId !== itemId; }));
+    }
+
+    function updateLocalCartItem(itemId, changes) {
+        return saveLocalCart(localCart().map(function (item) {
+            return item.itemId === itemId ? Object.assign({}, item, changes) : item;
+        }));
+    }
+
+    function cacheKey(path, params) {
+        return CACHE_PREFIX + buildUrl(path, params);
+    }
+
+    function invalidateCache(prefix = "") {
+        Object.keys(localStorage).forEach(function (key) {
+            if (key.startsWith(CACHE_PREFIX + buildUrl(prefix))) localStorage.removeItem(key);
+        });
+    }
+
+    function cachedRequest(path, params, ttlMs) {
+        // La administración necesita leer el resultado persistido de cada cambio.
+        if (currentUser() && currentUser().rol === "ADMIN") return request(path, { params });
+        const key = cacheKey(path, params);
+        let cached = null;
+        try { cached = JSON.parse(localStorage.getItem(key)); } catch (e) { localStorage.removeItem(key); }
+        if (cached) {
+            // Mostramos lo ya conocido inmediatamente. Sólo revalidamos en
+            // segundo plano cuando venció, sin bloquear la pantalla por Aiven.
+            if (Date.now() - cached.savedAt >= ttlMs) {
+                request(path, { params }).then(function (fresh) {
+                    try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: fresh })); } catch (e) {}
+                    document.dispatchEvent(new CustomEvent("stayhub:cache-refreshed", { detail: { path: path } }));
+                }).catch(function () {});
+            }
+            return Promise.resolve(cached.data);
+        }
+        return request(path, { params }).then(function (fresh) {
+            try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: fresh })); } catch (e) {}
+            return fresh;
+        });
     }
 
     function safeJson(text) {
@@ -131,6 +231,140 @@ const Api = (() => {
         }
     }
 
+    function initMotion() {
+        var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduceMotion || !("IntersectionObserver" in window)) {
+            document.documentElement.classList.add("stayhub-motion-disabled");
+            return;
+        }
+
+        document.documentElement.classList.add("stayhub-motion");
+        var selector = [
+            "main > div",
+            ".stayhub-section-heading",
+            ".stayhub-filter-bar",
+            ".stayhub-hotel-card",
+            ".card",
+            ".dashboard-panel-card",
+            "main form",
+            "main table",
+            "main aside",
+            ".stayhub-global-footer > div"
+        ].join(",");
+        var registered = new WeakSet();
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.08, rootMargin: "0px 0px -7% 0px" });
+
+        function register(root) {
+            var candidates = [];
+            if (root.nodeType === 1 && root.matches(selector)) candidates.push(root);
+            if (root.querySelectorAll) candidates = candidates.concat(Array.from(root.querySelectorAll(selector)));
+            candidates.forEach(function (element) {
+                if (registered.has(element) || element.closest(".stayhub-home-hero")) return;
+                registered.add(element);
+                var siblings = element.parentElement ? Array.from(element.parentElement.children) : [];
+                var index = Math.max(0, siblings.indexOf(element));
+                element.style.setProperty("--reveal-delay", Math.min(index % 6, 5) * 65 + "ms");
+                element.setAttribute("data-reveal", "");
+                observer.observe(element);
+            });
+        }
+
+        register(document.body);
+        var mutations = new MutationObserver(function (records) {
+            records.forEach(function (record) {
+                record.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) register(node);
+                });
+            });
+        });
+        mutations.observe(document.body, { childList: true, subtree: true });
+        window.addEventListener("pagehide", function () {
+            observer.disconnect();
+            mutations.disconnect();
+        }, { once: true });
+    }
+    function initShell() {
+        if (!document.body || document.querySelector(".stayhub-global-header")) return;
+        var page = location.pathname.split("/").pop() || "index.html";
+        var usuario = currentUser();
+        var adminPages = ["admin-dashboard.html", "inventory.html", "hotel-management.html", "channels-sync.html", "payments.html", "alerts.html"];
+        var esAdminPage = usuario && usuario.rol === "ADMIN" && adminPages.indexOf(page) !== -1;
+        document.body.classList.add("stayhub-unified");
+        if (esAdminPage) document.body.classList.add("stayhub-admin-layout");
+        var header = document.createElement("header");
+        header.className = "stayhub-global-header";
+        header.innerHTML = StayHubDOM.html('<div class="stayhub-header-inner">' +
+            '<a class="stayhub-brand" href="index.html"><span class="stayhub-brand-mark">S</span><span class="stayhub-brand-name">StayHub</span>' +
+            (usuario && usuario.rol === "ADMIN" ? '<span class="stayhub-admin-badge">Admin</span>' : '') + '</a>' +
+            (page === "index.html" ? '<div class="stayhub-channel-shortcuts"><a href="index.html?canal=STAYHUB#hoteles">StayHub</a><a href="index.html?canal=BOOKING#hoteles">Booking</a><a href="index.html?canal=AIRBNB#hoteles">Airbnb</a><a href="index.html?canal=EXPEDIA#hoteles">Expedia</a></div>' : '') +
+            '<nav class="stayhub-header-nav" aria-label="Main navigation">' +
+            '<a class="stayhub-header-icon" href="index.html" aria-label="Home" title="Home"><span class="material-symbols-outlined">home</span></a>' +
+            '<a class="stayhub-header-icon" href="index.html#hoteles" aria-label="Search hotels" title="Search hotels"><span class="material-symbols-outlined">search</span></a>' +
+            (usuario && usuario.rol === "ADMIN" ? '<a class="stayhub-header-icon" href="admin-dashboard.html" aria-label="Administration" title="Administration"><span class="material-symbols-outlined">space_dashboard</span></a>' : '') +
+            (!usuario || usuario.rol !== "ADMIN" ? '<a class="stayhub-header-icon stayhub-cart-link" href="cart.html" aria-label="Cart" title="Cart"><span class="material-symbols-outlined">shopping_bag</span><span id="global-cart-count" class="stayhub-cart-count">0</span></a>' : '') +
+            '<a class="stayhub-profile-pill" href="' + (usuario ? 'settings.html' : 'login.html') + '"><span class="stayhub-avatar">' + (usuario ? String(usuario.nombre || "U").charAt(0).toUpperCase() : '<span class="material-symbols-outlined">person</span>') + '</span><span>' + (usuario ? usuario.nombre : 'Sign in') + '</span></a>' +
+            '</nav></div>');
+        document.body.insertBefore(header, document.body.firstChild);
+
+        if (esAdminPage) {
+            var items = [
+                ["admin-dashboard.html", "space_dashboard", "Overview"],
+                ["inventory.html", "inventory_2", "Inventory"],
+                ["hotel-management.html", "domain", "Hotels"],
+                ["admin-dashboard.html#reservas-table", "calendar_month", "Bookings"],
+                ["channels-sync.html", "hub", "Channels"],
+                ["payments.html", "payments", "Payments"],
+                ["alerts.html", "notifications", "Operations"]
+            ];
+            var sidebar = document.createElement("aside");
+            sidebar.className = "stayhub-admin-sidebar";
+            sidebar.innerHTML = StayHubDOM.html('<div class="stayhub-sidebar-title"><span>Admin panel</span><small>StayHub management</small></div><nav>' +
+                items.map(function (item) {
+                    var parts = item[0].split("#");
+                    var itemPage = parts[0];
+                    var itemHash = parts[1] ? "#" + parts[1] : "";
+                    var active = itemPage === page && (itemHash ? location.hash === itemHash : !location.hash);
+                    return '<a href="' + item[0] + '" data-page="' + itemPage + '" data-hash="' + itemHash + '"' + (active ? ' class="active" aria-current="page"' : '') + '><span class="material-symbols-outlined">' + item[1] + '</span><span>' + item[2] + '</span></a>';
+                }).join("") + '</nav><a class="stayhub-sidebar-profile" href="settings.html"><span class="stayhub-avatar">' + String(usuario.nombre || "A").charAt(0).toUpperCase() + '</span><span><strong>' + StayHubDOM.text(usuario.nombre) + '</strong><small>View profile</small></span></a>');
+            document.body.insertBefore(sidebar, header.nextSibling);
+            function updateAdminNavigation() {
+                sidebar.querySelectorAll("nav a").forEach(function (link) {
+                    var active = link.dataset.page === page && (link.dataset.hash ? location.hash === link.dataset.hash : !location.hash);
+                    link.classList.toggle("active", active);
+                    if (active) link.setAttribute("aria-current", "page");
+                    else link.removeAttribute("aria-current");
+                });
+                var pageTitle = document.getElementById("admin-page-title");
+                if (pageTitle && page === "admin-dashboard.html") {
+                    pageTitle.textContent = location.hash === "#reservas-table" ? "Bookings" : "Overview";
+                }
+            }
+            window.addEventListener("hashchange", updateAdminNavigation);
+            updateAdminNavigation();
+        }
+        function updateCartBadge() {
+            var badge = document.getElementById("global-cart-count");
+            if (badge) badge.textContent = String(localCart().length);
+        }
+        updateCartBadge();
+        document.addEventListener("stayhub:cart-changed", updateCartBadge);
+
+        var authPages = ["login.html", "register.html", "recover-password.html", "reset-password.html"];
+        if (!esAdminPage && authPages.indexOf(page) === -1 && !document.querySelector(".stayhub-global-footer")) {
+            var footer = document.createElement("footer");
+            footer.className = "stayhub-global-footer";
+            footer.innerHTML = StayHubDOM.html('<div class="stayhub-footer-inner"><div class="stayhub-footer-brand"><span class="stayhub-brand-mark">S</span><div><strong>StayHub</strong><p>Your next stay, all in one place.</p></div></div><nav aria-label="StayHub information"><a href="about-us.html">About us</a><a href="help-faq.html">Frequently asked questions</a></nav><p class="stayhub-footer-note">Academic project · Application Development II</p></div>');
+            document.body.appendChild(footer);
+        }
+        initMotion();
+    }
+
     return {
         // ---- sesión ----
         setSession,
@@ -138,17 +372,52 @@ const Api = (() => {
         currentUser,
         isLoggedIn,
         requireLogin,
+        initShell,
+        localCart,
+        addLocalCartItem,
+        removeLocalCartItem,
+        updateLocalCartItem,
+        clearLocalCart: () => saveLocalCart([]),
+        theme: () => localStorage.getItem(THEME_KEY) || "light",
+        applyTheme,
 
         // ---- usuarios ----
+        solicitarRecuperacionPassword: (email) => request("usuarios/recuperar-password", { method: "POST", body: { email } }),
+        resetearPassword: (dto) => request("usuarios/resetear-password", { method: "POST", body: dto }),
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
         loginUsuario: (dto) => request("usuarios/login", { method: "POST", body: dto }),
         consultarUsuario: (id) => request(`usuarios/${id}`, { auth: true }),
+        actualizarMiPerfil: (dto) => request("usuarios/me", { method: "PUT", body: dto, auth: true }),
 
         // ---- hoteles ----
-        listarHoteles: (incluirInactivos = false) =>
-            request("hoteles", { params: { incluirInactivos } }),
-        consultarHotel: (id) => request(`hoteles/${id}`),
-        listarTiposHabitacion: (hotelId) => request(`hoteles/${hotelId}/tipos-habitacion`),
+        listarHoteles: (incluirInactivos = false) => cachedRequest("hoteles", { incluirInactivos }, 300000),
+        listarOfertasCanales: () => cachedRequest("catalogo-canales/ofertas", null, 300000),
+        consultarHotel: (id) => cachedRequest(`hoteles/${id}`, null, 300000),
+        crearHotel: (dto) => request("hoteles", { method: "POST", body: dto, auth: true }).then(r => (invalidateCache("hoteles"), r)),
+        modificarHotel: (id, dto) => request(`hoteles/${id}`, { method: "PUT", body: dto, auth: true }).then(r => (invalidateCache("hoteles"), r)),
+        eliminarHotel: (id) => request(`hoteles/${id}`, { method: "DELETE", auth: true }).then(r => (invalidateCache("hoteles"), r)),
+        listarTiposHabitacion: (hotelId, incluirInactivos = false) =>
+            cachedRequest(`hoteles/${hotelId}/tipos-habitacion`, { incluirInactivos }, 300000),
+        crearTipoHabitacion: (hotelId, dto) =>
+            request(`hoteles/${hotelId}/tipos-habitacion`, { method: "POST", body: dto, auth: true })
+                .then(r => (invalidateCache("hoteles"), r)),
+        modificarTipoHabitacion: (hotelId, tipoId, dto) =>
+            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "PUT", body: dto, auth: true })
+                .then(r => (invalidateCache("hoteles"), r)),
+        eliminarTipoHabitacion: (hotelId, tipoId) =>
+            request(`hoteles/${hotelId}/tipos-habitacion/${tipoId}`, { method: "DELETE", auth: true })
+                .then(r => (invalidateCache("hoteles"), r)),
+        listarHabitaciones: (hotelId, incluirInactivas = false) =>
+            cachedRequest(`hoteles/${hotelId}/habitaciones`, { incluirInactivas }, 300000),
+        crearHabitacion: (hotelId, dto) =>
+            request(`hoteles/${hotelId}/habitaciones`, { method: "POST", body: dto, auth: true })
+                .then(r => (invalidateCache("hoteles"), r)),
+        modificarHabitacion: (hotelId, habitacionId, dto) =>
+            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "PUT", body: dto, auth: true })
+                .then(r => (invalidateCache("hoteles"), r)),
+        eliminarHabitacion: (hotelId, habitacionId) =>
+            request(`hoteles/${hotelId}/habitaciones/${habitacionId}`, { method: "DELETE", auth: true })
+                .then(r => (invalidateCache("hoteles"), r)),
 
         // ---- carrito de reserva (EJB @Stateful, sesión HTTP) ----
         carritoSeleccionarHotel: (dto) =>
@@ -162,25 +431,36 @@ const Api = (() => {
         carritoVaciar: () => request("carrito", { method: "DELETE", auth: true }),
 
         // ---- reservas ----
-        crearReserva: (dto) => request("reservas", { method: "POST", body: dto, auth: true }),
+        crearReserva: (dto) => request("reservas", { method: "POST", auth: true, body: {
+            hotelId: dto.hotelId, tipoHabitacion: dto.tipoHabitacion,
+            cantidadHabitaciones: dto.cantidadHabitaciones, checkIn: dto.checkIn, checkOut: dto.checkOut,
+            huespedNombre: dto.huespedNombre, huespedApellido: dto.huespedApellido,
+            huespedEmail: dto.huespedEmail, huespedTelefono: dto.huespedTelefono,
+            precioTotal: dto.precioTotal, moneda: dto.moneda
+        } }),
         consultarReserva: (id) => request(`reservas/${id}`, { auth: true }),
+        listarMisReservas: () => request("reservas/mias", { auth: true }),
         confirmarReserva: (id) =>
             request(`reservas/${id}/confirmacion`, { method: "POST", auth: true }),
         cancelarReserva: (id) => request(`reservas/${id}`, { method: "DELETE", auth: true }),
         listarReservasPorHotel: (hotelId) =>
             request("reservas", { params: { hotelId }, auth: true }),
 
+        // ---- datos demostrativos (solo ADMIN; persiste mediante APIs reales) ----
+        cargarDatosDemo: () => request("demo/cargar", { method: "POST", auth: true }).then(r => (invalidateCache(), r)),
+
         // ---- inventario y tarifas ----
         consultarDisponibilidad: (hotelId, desde, hasta) =>
-            request("inventario-tarifas/disponibilidad", { params: { hotelId, desde, hasta } }),
+            cachedRequest("inventario-tarifas/disponibilidad", { hotelId, desde, hasta }, 20000),
         consultarTarifas: (hotelId, desde, hasta) =>
-            request("inventario-tarifas/tarifas", { params: { hotelId, desde, hasta } }),
+            cachedRequest("inventario-tarifas/tarifas", { hotelId, desde, hasta }, 60000),
         cargarInventario: (dto) =>
-            request("inventario-tarifas/cargas", { method: "POST", body: dto, auth: true }),
+            request("inventario-tarifas/cargas", { method: "POST", body: dto, auth: true })
+                .then(r => (invalidateCache("inventario-tarifas/"), r)),
 
         // ---- canales externos ----
         disponibilidadCanales: (hotelId, desde, hasta) =>
-            request("canales-externos/disponibilidad", { params: { hotelId, desde, hasta } }),
+            request("canales-externos/disponibilidad", { params: { hotelId, desde, hasta }, auth: true }),
         sincronizarOta: (canal, hotelId, desde, hasta) =>
             request(`canales-externos/otas/${canal}/sincronizaciones`, {
                 method: "POST",
@@ -196,9 +476,20 @@ const Api = (() => {
 
         // ---- pagos ----
         procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true }),
+        procesarPagoLote: (dto) => request("pagos/lote", { method: "POST", body: dto, auth: true }),
         consultarPago: (id) => request(`pagos/${id}`, { auth: true }),
+        listarMisPagos: () => request("pagos/mios", { auth: true }),
+
+        // ---- operaciones ----
+        enviarNotificacion: (dto) =>
+            request("notificaciones/enviar", { method: "POST", body: dto, auth: true }),
+        resolverOverbooking: (dto) =>
+            request("overbooking/resolver", { method: "POST", body: dto, auth: true }),
     };
 })();
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", Api.initShell);
+else Api.initShell();
 
 /**
  * Helper genérico para mostrar errores de la API en un elemento de la
@@ -206,7 +497,7 @@ const Api = (() => {
  */
 function mostrarError(el, err) {
     if (!el) return;
-    el.textContent = err && err.message ? err.message : "Ocurrió un error inesperado.";
+    el.textContent = err && err.message ? err.message : "An unexpected error occurred.";
     el.classList.remove("hidden");
 }
 

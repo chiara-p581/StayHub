@@ -1,6 +1,7 @@
 package com.stayhub.usuarios.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "usuario", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
@@ -26,6 +27,13 @@ public class Usuario {
     @Column(nullable = false, length = 20)
     private RolUsuario rol;
 
+    /** Hash SHA-256 del token de recuperación (nunca el token en sí). */
+    @Column(name = "reset_token_hash", length = 64, unique = true)
+    private String resetTokenHash;
+
+    @Column(name = "reset_token_vencimiento")
+    private LocalDateTime resetTokenVencimiento;
+
     @Version
     private Long version;
 
@@ -47,4 +55,34 @@ public class Usuario {
     public String getNombre() { return nombre; }
     public String getApellido() { return apellido; }
     public RolUsuario getRol() { return rol; }
+
+    public void actualizarPerfil(String email, String nombre, String apellido, String nuevoPasswordHash) {
+        this.email = email;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        if (nuevoPasswordHash != null) this.passwordHash = nuevoPasswordHash;
+    }
+
+    // ---- Recuperación de contraseña ----
+
+    public void generarTokenRecuperacion(String hash, LocalDateTime vencimiento) {
+        this.resetTokenHash = hash;
+        this.resetTokenVencimiento = vencimiento;
+    }
+
+    /** true si se pidió un link hace menos de 1 minuto (evita que spameen pedidos). */
+    public boolean recuperacionReciente() {
+        return resetTokenVencimiento != null
+                && resetTokenVencimiento.isAfter(LocalDateTime.now().plusMinutes(59));
+    }
+
+    public boolean tokenVigente() {
+        return resetTokenHash != null && resetTokenVencimiento != null
+                && resetTokenVencimiento.isAfter(LocalDateTime.now());
+    }
+
+    public void limpiarTokenRecuperacion() {
+        this.resetTokenHash = null;
+        this.resetTokenVencimiento = null;
+    }
 }

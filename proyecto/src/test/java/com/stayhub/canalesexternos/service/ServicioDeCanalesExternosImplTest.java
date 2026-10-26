@@ -29,6 +29,7 @@ class ServicioDeCanalesExternosImplTest {
         servicio.inventarioYTarifas = mock(Instance.class);
         publicador = mock(PublicadorSincronizacion.class);
         servicio.publicadorSincronizacion = publicador;
+        servicio.configuracion = mock(com.stayhub.canalesexternos.config.ConfiguracionCanales.class);
     }
 
     @Test
@@ -44,6 +45,18 @@ class ServicioDeCanalesExternosImplTest {
         assertEquals("BOOKING", resultado.destino());
     }
 
+    @Test
+    void noEncolaSiFaltaLaConfiguracionOta() {
+        when(servicio.configuracion.urlOta(Canal.BOOKING)).thenThrow(new CanalExternoException(CodigoErrorCanal.DEPENDENCIA_NO_DISPONIBLE,"Falta configurar OTA"));
+        assertThrows(CanalExternoException.class, () -> servicio.sincronizarOta(1L, Canal.BOOKING, LocalDate.now(), LocalDate.now().plusDays(1)));
+        verifyNoInteractions(publicador);
+    }
+    @Test
+    void noEncolaSiFaltaLaConfiguracionPms() {
+        when(servicio.configuracion.wsdlPms()).thenThrow(new CanalExternoException(CodigoErrorCanal.DEPENDENCIA_NO_DISPONIBLE,"Falta configurar PMS"));
+        assertThrows(CanalExternoException.class, () -> servicio.sincronizarPms(1L, LocalDate.now(), LocalDate.now().plusDays(1)));
+        verifyNoInteractions(publicador);
+    }
     @Test
     void rechazaHuespedSinEmailAntesDeInvocarReservas() {
         ReservaExternaDTO solicitud = new ReservaExternaDTO(
@@ -61,10 +74,10 @@ class ServicioDeCanalesExternosImplTest {
 
     @Test
     void rechazaPeriodoInvertido() {
-        CanalExternoException error = assertThrows(CanalExternoException.class,
+        var error = assertThrows(com.stayhub.seguridad.SeguridadException.class,
                 () -> servicio.consultarDisponibilidad(1L,
                         LocalDate.of(2026, 10, 2), LocalDate.of(2026, 10, 1)));
 
-        assertEquals(CodigoErrorCanal.SOLICITUD_INVALIDA, error.getCodigo());
+        assertEquals(400, error.getEstado());
     }
 }

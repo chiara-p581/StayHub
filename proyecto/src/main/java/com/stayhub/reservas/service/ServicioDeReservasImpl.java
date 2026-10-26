@@ -1,5 +1,9 @@
 package com.stayhub.reservas.service;
 
+import com.stayhub.seguridad.*;
+import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
+import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
+import com.stayhub.pagos.repository.PagoRepository;
 import com.stayhub.canalesexternos.contrato.interno.ResultadoOperacionReserva;
 import com.stayhub.canalesexternos.contrato.interno.ServicioDeReservasPort;
 import com.stayhub.canalesexternos.contrato.interno.SolicitudReserva;
@@ -13,16 +17,13 @@ import com.stayhub.reservas.model.EstadoReserva;
 import com.stayhub.reservas.model.Reserva;
 import com.stayhub.reservas.repository.ReservaRepository;
 
-import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.PermitAll;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Núcleo de ServicioDeReservas.
@@ -43,31 +44,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * Ambos caminos convergen en los métodos privados crear/confirmar/cancelar,
  * para no duplicar la lógica de negocio.
  *
- * @DeclareRoles + @RolesAllowed en cancelarReserva: seguridad declarativa
- * mínima pedida por el TP. Cancelar una reserva directa exige estar
- * autenticado y tener el rol ADMIN o HUESPED; el contenedor EJB valida
- * esto solo, sin que el código de negocio tenga que preguntar "¿este
- * usuario tiene permiso?". Se apoya en el login BASIC configurado en
- * web.xml/jboss-web.xml, que autentica al llamador antes de que el pedido
- * llegue hasta acá.
- *
- * Nota: esto es autorización POR ROL, no por "dueño" de la reserva — un
- * HUESPED cualquiera puede cancelar cualquier reserva, no solo la propia.
- * Verificar que la reserva le pertenece al huésped autenticado sería una
- * capa distinta (comparar identidad contra el huésped de la reserva), más
- * allá de lo que pide la seguridad declarativa por rol de esta entrega.
- *
- * @PermitAll en el resto de los métodos: WildFly, apenas detecta CUALQUIER
- * @RolesAllowed en un bean, pasa a denegar por defecto cualquier otro
- * método del mismo bean que no tenga una anotación de seguridad explícita
- * (default-missing-method-permissions-deny-access). Sin @PermitAll acá,
- * crearReserva y el resto quedarían bloqueados para cualquiera —incluido
- * CarritoDeReserva, que los invoca sin pasar por un login HTTP— por ese
- * comportamiento del contenedor, no por el estándar Jakarta EE.
+ * La autorización HTTP se aplica en AutenticacionFilter a partir de la sesión
+ * creada por ServicioDeUsuarios. El servicio conserva @PermitAll porque también
+ * recibe invocaciones internas desde el carrito y desde Canales Externos; no debe
+ * depender de un segundo usuario duplicado en el realm de WildFly.
  */
 @Stateless
-@DeclareRoles({"ADMIN", "HUESPED"})
 public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioDeReservas {
+
+    @Inject private IdentidadActual identidad;
+    @Inject private ServicioDeUsuarios usuarios;
+    @Inject private ServicioDeInventarioYTarifas tarifas;
+    @Inject private PagoRepository pagos;
 
     @Inject
     private ReservaRepository repositorio;
@@ -81,29 +69,10 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Inject
     private Instance<GestionDeDisponibilidadPort> disponibilidad;
 
-    /**
-     * Candado en memoria por combinación canal+referenciaExterna, para
-     * evitar la condición de carrera "revisar y después actuar" en
-     * crearDesdeCanal/modificarDesdeCanal/cancelarDesdeCanal: los tres
-     * primero preguntan si la reserva ya existe (o en qué estado está) y
-     * recién después actúan, con una ventana en el medio donde dos pedidos
-     * casi simultáneos para la MISMA reserva podrían pisarse (p. ej. crear
-     * dos veces la misma reserva de una OTA). Serializar por clave hace que
-     * pedidos sobre reservas DISTINTAS sigan corriendo en paralelo sin
-     * bloquearse entre sí -- solo se sincronizan los que comparten la misma
-     * combinación canal+referencia.
-     *
-     * static porque el contenedor puede crear varias instancias de este
-     * @Stateless para atender pedidos en paralelo: el mapa tiene que ser
-     * compartido por todas para que el candado sirva de algo. Esto protege
-     * un único nodo de WildFly (que es el despliegue real de este
-     * proyecto); no alcanzaría si algún día StayHub corriera en más de un
-     * servidor al mismo tiempo.
-     */
-    private static final ConcurrentHashMap<String, Object> candadosPorReferencia = new ConcurrentHashMap<>();
-
+    /** 256 locks acotados por referencia. La restricción única en DB protege duplicados entre nodos. */
+    private static final Object[] CANDADOS = java.util.stream.IntStream.range(0, 256).mapToObj(i -> new Object()).toArray();
     private Object candadoPara(String canal, String referenciaExterna) {
-        return candadosPorReferencia.computeIfAbsent(canal + "|" + referenciaExterna, k -> new Object());
+        return CANDADOS[Math.floorMod(java.util.Objects.hash(canal, referenciaExterna), CANDADOS.length)];
     }
 
     // ------------------------------------------------------------------
@@ -177,8 +146,18 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Override
     @PermitAll
     public ReservaResponse crearReserva(ReservaRequest solicitud) {
+        identidad.exigirHuesped();
+        var usuario = usuarios.buscarPorId(identidad.usuarioId());
         validarDirecta(solicitud);
-        Reserva reserva = ReservaMapper.nuevaDirecta(solicitud);
+        repositorio.bloquearUsuario(usuario.id());
+        if (repositorio.contarPendientesPorUsuario(usuario.id()) >= 10)
+            throw new SeguridadException(429, "Tenés demasiadas reservas pendientes de pago");
+        var tarifa = precio(solicitud.hotelId(), solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(), solicitud.checkIn(), solicitud.checkOut());
+        ReservaRequest segura = new ReservaRequest(solicitud.hotelId(), solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(),
+                solicitud.checkIn(), solicitud.checkOut(), usuario.nombre(), usuario.apellido(), usuario.email(),
+                solicitud.huespedTelefono(), tarifa.importe().multiply(java.math.BigDecimal.valueOf(solicitud.cantidadHabitaciones())), tarifa.moneda());
+        Reserva reserva = ReservaMapper.nuevaDirecta(segura);
+        reserva.asignarPropietario(usuario.id());
         iniciarHold(reserva);
         repositorio.guardar(reserva);
         return ReservaMapper.aResponse(reserva);
@@ -187,13 +166,18 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Override
     @PermitAll
     public ReservaResponse consultarReserva(Long id) {
-        return ReservaMapper.aResponse(buscarOFallar(id));
+        Reserva reserva = buscarOFallar(id);
+        identidad.autorizarReserva(reserva);
+        return ReservaMapper.aResponse(reserva);
     }
 
     @Override
     @PermitAll
     public ReservaResponse confirmarReserva(Long id) {
-        Reserva reserva = buscarOFallar(id);
+        Reserva reserva = buscarBloqueando(id);
+        identidad.autorizarReserva(reserva);
+        if (!pagos.existeAprobadoParaReserva(id)) throw new SeguridadException(409, "La reserva requiere un pago aprobado");
+        if (reserva.getEstado() == EstadoReserva.CONFIRMADA) return ReservaMapper.aResponse(reserva);
         if (reserva.getEstado() != EstadoReserva.PENDIENTE) {
             throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
                     "Solo se puede confirmar una reserva PENDIENTE (estado actual: " + reserva.getEstado() + ")");
@@ -205,9 +189,10 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     @Override
-    @RolesAllowed({"ADMIN", "HUESPED"})
+    @PermitAll
     public ReservaResponse cancelarReserva(Long id) {
-        Reserva reserva = buscarOFallar(id);
+        Reserva reserva = buscarBloqueando(id);
+        identidad.autorizarReserva(reserva);
         if (reserva.getEstado() == EstadoReserva.CANCELADA) {
             // Cancelación repetida sobre la misma reserva: no repetimos la
             // liberación del hold (mismo criterio que cancelarDesdeCanal).
@@ -219,10 +204,56 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         return ReservaMapper.aResponse(reserva);
     }
 
+    /** Solo reservas pendientes: un cambio de una reserva pagada necesita ajuste de pago explícito. */
+    @Override
+    @PermitAll
+    public ReservaResponse modificarReserva(Long id, ReservaRequest solicitud) {
+        Reserva reserva = buscarBloqueando(id);
+        identidad.autorizarReserva(reserva);
+        if (reserva.getEstado() == EstadoReserva.CANCELADA || reserva.getEstado() == EstadoReserva.RECHAZADA) {
+            throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
+                    "No se puede modificar una reserva en estado " + reserva.getEstado());
+        }
+        validarModificacion(solicitud);
+        if (pagos.existeAprobadoParaReserva(id) || reserva.getEstado() == EstadoReserva.CONFIRMADA)
+            throw new SeguridadException(409, "Una reserva pagada requiere un flujo de ajuste de pago para modificarla");
+        var tarifa = precio(reserva.getHotelId(), solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(), solicitud.checkIn(), solicitud.checkOut());
+        if (!tarifa.moneda().equals(reserva.getMoneda())) throw new SeguridadException(409, "La modificación no puede cambiar de moneda");
+        solicitud = new ReservaRequest(reserva.getHotelId(), solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(), solicitud.checkIn(), solicitud.checkOut(),
+                null, null, null, null, tarifa.importe().multiply(java.math.BigDecimal.valueOf(solicitud.cantidadHabitaciones())), tarifa.moneda());
+
+        if (reserva.getHoldId() == null) {
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            iniciarHold(reserva);
+        } else {
+            String nuevoHoldId;
+            try {
+                nuevoHoldId = disponibilidad().reemplazarHold(reserva.getHoldId(), reserva.getHotelId(),
+                        solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(),
+                        solicitud.checkIn(), solicitud.checkOut());
+            } catch (SinDisponibilidadException ex) {
+                throw new ReservaException(CodigoErrorReserva.SIN_DISPONIBILIDAD,
+                        "No hay disponibilidad para la modificación pedida: la reserva se mantiene sin cambios", ex);
+            }
+            reserva.actualizarDatos(solicitud.checkIn(), solicitud.checkOut(), solicitud.tipoHabitacion(),
+                    solicitud.cantidadHabitaciones(), solicitud.precioTotal());
+            reserva.iniciarHold(nuevoHoldId);
+        }
+        repositorio.guardar(reserva);
+        return ReservaMapper.aResponse(reserva);
+    }
+
     @Override
     @PermitAll
     public List<ReservaResponse> listarPorHotel(Long hotelId) {
-        return repositorio.listarPorHotel(hotelId).stream().map(ReservaMapper::aResponse).toList();
+        return listarPorHotel(hotelId, 0, Limites.RESULTADOS);
+    }
+
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarPorHuespedEmail(String email) {
+        return listarMias(0, Limites.RESULTADOS);
     }
 
     // ------------------------------------------------------------------
@@ -326,10 +357,25 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         return disponibilidad.get();
     }
 
+    private Reserva buscarBloqueando(Long id) {
+        if (id == null || id <= 0) throw new SeguridadException(404, "Reserva no disponible");
+        return repositorio.buscarPorIdBloqueando(id).orElseThrow(() -> new SeguridadException(404, "Reserva no disponible"));
+    }
+    @Override
+    @PermitAll
+    public ReservaResponse consultarParaPago(Long id) {
+        identidad.exigirHuesped();
+        Reserva reserva = buscarBloqueando(id);
+        identidad.autorizarReserva(reserva);
+        if (reserva.getEstado() != EstadoReserva.PENDIENTE || reserva.getFechaCreacion().isBefore(java.time.LocalDateTime.now().minusMinutes(30)))
+            throw new SeguridadException(409, "La reserva no está pendiente o venció");
+        return ReservaMapper.aResponse(reserva);
+    }
+
     private Reserva buscarOFallar(Long id) {
+        if (id == null || id <= 0) throw new SeguridadException(404, "Reserva no disponible");
         return repositorio.buscarPorId(id)
-                .orElseThrow(() -> new ReservaException(CodigoErrorReserva.RESERVA_NO_ENCONTRADA,
-                        "No existe una reserva con id " + id));
+                .orElseThrow(() -> new SeguridadException(404, "Reserva no disponible"));
     }
 
     private ReservaException noEncontrada(String canal, String referenciaExterna) {
@@ -338,14 +384,43 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     }
 
     private void validar(SolicitudReserva s) {
+        if (s == null) throw new SeguridadException(400, "Reserva externa inválida");
+        Limites.rango(s.checkIn(), s.checkOut()); Limites.cantidad(s.cantidadHabitaciones()); Limites.texto(s.referenciaExterna(), 60, true);
+        Limites.texto(s.tipoHabitacion(), 30, true); Limites.texto(s.moneda(), 3, true);
+        if (s.huesped() != null) {
+            Limites.texto(s.huesped().nombre(), 80, true); Limites.texto(s.huesped().apellido(), 80, true);
+            Limites.email(s.huesped().email()); Limites.texto(s.huesped().telefono(), 30, false);
+        }
+        if (s.precioTotal() != null && (s.precioTotal().precision() > 12 || s.precioTotal().scale() > 2 || s.precioTotal().scale() < 0)) throw new SeguridadException(400, "Precio externo fuera de límites");
         if (s == null || s.referenciaExterna() == null || s.referenciaExterna().isBlank()
                 || s.canal() == null || s.canal().isBlank() || s.hotelId() == null
-                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
+                || s.checkIn() == null || s.checkOut() == null || s.checkIn().isBefore(java.time.LocalDate.now())
+                || !s.checkOut().isAfter(s.checkIn())
                 || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
                 || s.cantidadHabitaciones() < 1 || s.huesped() == null || s.precioTotal() == null
                 || s.precioTotal().signum() < 0 || s.moneda() == null || s.moneda().isBlank()) {
             throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
                     "La solicitud de reserva está incompleta o contiene valores inválidos");
+        }
+    }
+
+    /**
+     * Igual que validarDirecta, pero sin exigir hotelId ni datos del
+     * huésped: una modificación no cambia de hotel ni de titular, solo
+     * fechas/tipo/cantidad/precio (ver modificarReserva).
+     */
+    private void validarModificacion(ReservaRequest s) {
+        if (s == null) throw new SeguridadException(400, "Modificación inválida");
+        Limites.rango(s.checkIn(), s.checkOut()); Limites.cantidad(s.cantidadHabitaciones()); Limites.texto(s.tipoHabitacion(), 30, true);
+        if (s == null
+                || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
+                || s.cantidadHabitaciones() < 1
+                || s.checkIn() == null || s.checkOut() == null
+                || s.checkIn().isBefore(java.time.LocalDate.now()) || !s.checkOut().isAfter(s.checkIn())
+                || s.precioTotal() == null || s.precioTotal().signum() < 0
+                || s.moneda() == null || s.moneda().isBlank()) {
+            throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
+                    "La modificación está incompleta o contiene valores inválidos");
         }
     }
 
@@ -358,18 +433,44 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
      * devolver un 400 claro.
      */
     private void validarDirecta(ReservaRequest s) {
-        if (s == null || s.hotelId() == null
-                || s.tipoHabitacion() == null || s.tipoHabitacion().isBlank()
-                || s.cantidadHabitaciones() < 1
-                || s.checkIn() == null || s.checkOut() == null || !s.checkOut().isAfter(s.checkIn())
-                || s.huespedNombre() == null || s.huespedNombre().isBlank()
-                || s.huespedApellido() == null || s.huespedApellido().isBlank()
-                || s.huespedEmail() == null || s.huespedEmail().isBlank()
-                || s.huespedTelefono() == null || s.huespedTelefono().isBlank()
-                || s.precioTotal() == null || s.precioTotal().signum() < 0
-                || s.moneda() == null || s.moneda().isBlank()) {
-            throw new ReservaException(CodigoErrorReserva.SOLICITUD_INVALIDA,
-                    "La reserva está incompleta o contiene valores inválidos");
+        if (s == null || s.hotelId() == null || s.hotelId() <= 0) throw new SeguridadException(400, "Reserva inválida");
+        Limites.texto(s.tipoHabitacion(), 30, true); Limites.texto(s.huespedTelefono(), 30, true);
+        Limites.cantidad(s.cantidadHabitaciones()); Limites.rango(s.checkIn(), s.checkOut());
+        if (s.checkIn().isBefore(java.time.LocalDate.now())) throw new SeguridadException(400, "La reserva no puede iniciar en el pasado");
+    }
+    private com.stayhub.inventarioytarifas.dto.TarifaDTO precio(Long hotel, String tipo, int cantidad, java.time.LocalDate desde, java.time.LocalDate hasta) {
+        Limites.cantidad(cantidad); Limites.rango(desde, hasta);
+        var tarifa = tarifas.consultarTarifas(hotel, desde, hasta).stream().filter(t -> tipo.equals(t.tipoHabitacion()))
+                .findFirst().orElseThrow(() -> new SeguridadException(409, "Faltan tarifas para todas las noches solicitadas"));
+        var total = tarifa.importe().multiply(java.math.BigDecimal.valueOf(cantidad));
+        if (total.signum() < 0 || total.scale() > 2 || total.precision() > 12)
+            throw new SeguridadException(400, "El total de la reserva supera los límites permitidos");
+        return tarifa;
+    }
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarMias(int offset, int limite) {
+        return repositorio.listarPorUsuario(identidad.usuarioId(), offset, Limites.pagina(offset, limite)).stream().map(ReservaMapper::aResponse).toList();
+    }
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarPorHotel(Long hotelId, int offset, int limite) {
+        identidad.autorizarListado(hotelId);
+        return repositorio.listarPorHotel(hotelId, offset, Limites.pagina(offset, limite)).stream().map(ReservaMapper::aResponse).toList();
+    }
+    @Override
+    @PermitAll
+    public List<ReservaResponse> listarLlegadas(Long hotelId, java.time.LocalDate fecha) {
+        identidad.autorizarHotel(hotelId);
+        return repositorio.listarLlegadas(hotelId, fecha).stream().map(ReservaMapper::aResponse).toList();
+    }
+    @jakarta.ejb.Schedule(hour = "*", minute = "*/5", second = "0", persistent = false)
+    public void liberarPendientesVencidas() {
+        for (Reserva reserva : repositorio.pendientesVencidas(java.time.LocalDateTime.now().minusMinutes(30))) {
+            Reserva bloqueada = buscarBloqueando(reserva.getId());
+            if (bloqueada.getEstado() == EstadoReserva.PENDIENTE && !pagos.existeAprobadoParaReserva(bloqueada.getId())) {
+                liberarHoldSiExiste(bloqueada); bloqueada.cancelar(); repositorio.guardar(bloqueada);
+            }
         }
     }
 }

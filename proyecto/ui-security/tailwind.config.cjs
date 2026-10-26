@@ -6,7 +6,7 @@
    Antes este bloque (~100 líneas) estaba pegado y repetido dentro
    del <head> de cada una de las 12 páginas.
    ============================================================ */
-tailwind.config = {
+module.exports = {
     darkMode: "class",
     theme: {
         extend: {
@@ -99,3 +99,6 @@ tailwind.config = {
         }
     }
 };
+
+module.exports.content = [__dirname + "/../src/main/webapp/**/*.{html,js}"];
+module.exports.plugins = [require("@tailwindcss/forms"), require("@tailwindcss/container-queries")];

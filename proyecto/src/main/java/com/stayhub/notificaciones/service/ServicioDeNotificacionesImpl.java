@@ -1,5 +1,6 @@
 package com.stayhub.notificaciones.service;
 
+import com.stayhub.seguridad.*;
 import com.stayhub.notificaciones.client.*;
 import com.stayhub.notificaciones.contrato.ServicioDeNotificaciones;
 import com.stayhub.notificaciones.dto.ResultadoEnvioNotificacionDTO;
@@ -11,6 +12,7 @@ import jakarta.inject.Inject;
 
 @Stateless
 public class ServicioDeNotificacionesImpl implements ServicioDeNotificaciones {
+    private static final LimitadorSolicitudes ENVIOS = new LimitadorSolicitudes();
 
     @Inject EmailNotificador emailNotificador;
     @Inject SmsNotificador smsNotificador;
@@ -19,7 +21,9 @@ public class ServicioDeNotificacionesImpl implements ServicioDeNotificaciones {
     @Override
     public ResultadoEnvioNotificacionDTO enviar(SolicitudNotificacionDTO solicitud) {
         validar(solicitud);
+        Limites.texto(solicitud.destinatario(), 120, true); Limites.texto(solicitud.asunto(), 200, true); Limites.texto(solicitud.mensaje(), 4000, true);
 
+        if (!ENVIOS.permitir(solicitud.canalPreferido() + ":" + solicitud.destinatario().toLowerCase(java.util.Locale.ROOT), 5, System.currentTimeMillis())) throw new SeguridadException(429, "Cuota de notificaciones excedida");
         NotificadorCanal notificador = switch (solicitud.canalPreferido()) {
             case EMAIL -> emailNotificador;
             case SMS -> smsNotificador;

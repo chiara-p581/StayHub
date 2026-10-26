@@ -2,6 +2,7 @@ package com.stayhub.hoteles.model;
 
 import jakarta.persistence.*;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 
 @Entity
@@ -35,7 +36,9 @@ public class Habitacion {
     }
     public void actualizar(TipoHabitacion tipo, String numero, Integer piso, Set<String> caracteristicas) {
         this.tipo = tipo;
-        this.numero = numero;
+        // La forma canónica hace que la restricción única de PostgreSQL también proteja la
+        // regla sin distinción de mayúsculas cuando dos altas llegan al mismo tiempo.
+        this.numero = numero == null ? null : numero.trim().toUpperCase(Locale.ROOT);
         this.piso = piso;
         this.caracteristicas.clear();
         if (caracteristicas != null) this.caracteristicas.addAll(caracteristicas);

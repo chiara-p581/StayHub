@@ -1,5 +1,6 @@
 package com.stayhub.inventarioytarifas.exception;
 
+@jakarta.ejb.ApplicationException(rollback = true)
 public class InventarioTarifasException extends RuntimeException {
     private final CodigoErrorInventarioTarifas codigo;
 

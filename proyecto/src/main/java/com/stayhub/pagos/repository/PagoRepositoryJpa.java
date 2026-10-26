@@ -1,10 +1,12 @@
 package com.stayhub.pagos.repository;
 
 import com.stayhub.pagos.model.Pago;
+import com.stayhub.pagos.model.EstadoPago;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.Optional;
+import java.util.List;
 
 @ApplicationScoped
 public class PagoRepositoryJpa implements PagoRepository {
@@ -24,5 +26,42 @@ public class PagoRepositoryJpa implements PagoRepository {
     @Override
     public Optional<Pago> buscarPorId(Long id) {
         return Optional.ofNullable(em.find(Pago.class, id));
+    }
+
+    @Override
+    public Optional<Pago> buscarPorClaveIdempotencia(Long usuarioId, String clave) {
+        if (usuarioId == null || clave == null || clave.isBlank()) return Optional.empty();
+        return em.createQuery("SELECT p FROM Pago p WHERE p.usuarioId=:usuarioId AND p.claveIdempotencia=:clave", Pago.class)
+                .setParameter("usuarioId", usuarioId).setParameter("clave", clave).getResultStream().findFirst();
+    }
+
+    @Override
+    public void bloquearReservas(List<Long> reservaIds) {
+        reservaIds.stream().sorted().forEach(id ->
+                em.createNativeQuery("SELECT pg_advisory_xact_lock(?1)").setParameter(1, id).getSingleResult());
+    }
+
+    @Override
+    public boolean existeAprobadoParaReserva(Long reservaId) {
+        Long cantidad = em.createQuery("SELECT COUNT(p) FROM Pago p WHERE p.estado=:estado " +
+                        "AND (p.reservaId=:reservaId OR :reservaId MEMBER OF p.reservaIds)", Long.class)
+                .setParameter("estado", EstadoPago.APROBADO)
+                .setParameter("reservaId", reservaId).getSingleResult();
+        return cantidad > 0;
+    }
+
+    @Override
+    public List<Pago> listarPorReservas(List<Long> reservaIds) {
+        if (reservaIds == null || reservaIds.isEmpty()) return List.of();
+        return em.createQuery("SELECT DISTINCT p FROM Pago p LEFT JOIN p.reservaIds r "
+                        + "WHERE p.reservaId IN :ids OR r IN :ids ORDER BY p.fechaPago DESC", Pago.class)
+                .setParameter("ids", reservaIds)
+                .setMaxResults(100).getResultList();
+    }
+
+    @Override public List<Pago> listarPorUsuario(Long id, int offset, int limite) {
+        com.stayhub.seguridad.Limites.pagina(offset, limite);
+        return em.createQuery("SELECT p FROM Pago p WHERE EXISTS (SELECT r.id FROM Reserva r WHERE r.usuarioId=:id AND (r.id=p.reservaId OR r.id MEMBER OF p.reservaIds)) ORDER BY p.id DESC", Pago.class)
+                .setParameter("id",id).setFirstResult(offset).setMaxResults(limite).getResultList();
     }
 }

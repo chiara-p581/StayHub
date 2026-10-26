@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>StayHub - Register</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/tailwind-config.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Manrope:wght@400;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="assets/css/theme.css" rel="stylesheet"/>
+<link href="assets/css/tailwind.css" rel="stylesheet"/><link href="assets/css/fonts.css" rel="stylesheet"/>
+
+
+
+<link href="assets/css/theme.css?v=20261023-design2" rel="stylesheet"/>
 <style>
 /* Smooth transitions for inputs */
         .input-transition {
             transition: border-color 0.3s ease, background-color 0.3s ease;
         }
 </style>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
 </head>
-<body class="bg-background min-h-screen flex items-center justify-center relative font-body-md text-on-surface antialiased overflow-hidden">
+<body class="stayhub-auth-page bg-background min-h-screen flex items-center justify-center relative font-body-md text-on-surface antialiased">
 <!-- Ambient Background Image -->
-<div class="absolute inset-0 z-0 opacity-40 mix-blend-multiply" data-alt="A wide, slightly blurred background image of an elegant, modern boutique hotel lobby. The space features warm, ambient lighting, natural wood textures, and plush cream seating areas. A subtle, sophisticated light-mode aesthetic dominates, with soft shadows and a sense of calm luxury. High-end architectural details like a marble reception desk and minimalist brass fixtures are visible in the soft-focus distance, creating a welcoming and premium atmosphere suitable for a hospitality software interface." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuALfjs3rHjXznRlfeTEC0a6zkrzrfaVkUhZKt0sTX4DR6Bj1cdWYugh6C5zo2SUQYeELe91ILcmFFw8Qk3a0Xa7DI3bhoWFmpnc3l8tZOxpkoUKkkIt4lOrpOuO_JvYbRXzZ3ODbmh71acD-oQzs6Mj1OF3_HRdu0pMsyXDSGX3t3F95z4TvwG_MA2Yy4Gpbe710944iQ5-A6nl8CCXuUjpSXABUy60J-xbEt16kyPI2IPhvR1BhcyLrQ')">
+<div class="absolute inset-0 z-0 opacity-40 mix-blend-multiply" data-alt="A wide, slightly blurred background image of an elegant, modern boutique hotel lobby. The space features warm, ambient lighting, natural wood textures, and plush cream seating areas. A subtle, sophisticated light-mode aesthetic dominates, with soft shadows and a sense of calm luxury. High-end architectural details like a marble reception desk and minimalist brass fixtures are visible in the soft-focus distance, creating a welcoming and premium atmosphere suitable for a hospitality software interface." style="background-image: url('assets/images/stayhub-resort-hero.png')">
 </div>
 <!-- Optional gradient overlay to ensure legibility -->
 <div class="absolute inset-0 z-0 bg-gradient-to-br from-background/80 to-surface-variant/50"></div>
@@ -43,11 +44,11 @@
 <!-- Nombre + Apellido -->
 <div class="grid grid-cols-2 gap-md">
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="nombre">Nombre</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="nombre">First name</label>
 <input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="nombre" name="nombre" placeholder="Jane" required type="text"/>
 </div>
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="apellido">Apellido</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="apellido">Last name</label>
 <input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="apellido" name="apellido" placeholder="Doe" required type="text"/>
 </div>
 </div>
@@ -64,23 +65,22 @@
 <label class="font-label-md text-label-md text-on-tertiary-fixed" for="password">Password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline" style="font-variation-settings: 'FILL' 0;">lock</span>
-<input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary pl-[44px] pr-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="password" name="password" placeholder="••••••••" required="" type="password">
+<input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary pl-[44px] pr-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="password" name="password" placeholder="12 characters minimum" minlength="12" maxlength="128" autocomplete="new-password" required="" type="password">
 </div>
 </div>
 <!-- Confirm Password Field -->
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="confirmPassword">Confirm Password</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="confirmPassword">Confirm password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline" style="font-variation-settings: 'FILL' 0;">verified_user</span>
-<input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary pl-[44px] pr-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required type="password"/>
+<input class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary pl-[44px] pr-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="confirmPassword" name="confirmPassword" placeholder="Repeat your password" minlength="12" maxlength="128" autocomplete="new-password" required type="password"/>
 </div>
 </div>
-<!-- Tipo de cuenta -->
+<!-- Type de cuenta -->
 <div class="flex flex-col gap-xs">
-<label class="font-label-md text-label-md text-on-tertiary-fixed" for="rol">Tipo de cuenta</label>
+<label class="font-label-md text-label-md text-on-tertiary-fixed" for="rol">Account type</label>
 <select class="w-full bg-surface-container-lowest border-b-2 border-outline-variant focus:border-primary px-md py-[12px] font-body-md text-body-md text-on-surface rounded-t-DEFAULT focus:outline-none input-transition shadow-sm" id="rol" name="rol">
-<option value="HUESPED">Huésped</option>
-<option value="ADMIN">Personal / Admin</option>
+<option value="HUESPED">Guest</option>
 </select>
 </div>
 <!-- Action Button -->
@@ -100,66 +100,8 @@
 </div>
 </div>
 
-<!-- Aviso: el usuario de WildFly (para poder cancelar reservas) se crea
-     aparte, con add-user.sh. Se muestra recién después de registrarse. -->
-<div id="wildfly-note" class="hidden mt-lg bg-surface-container-lowest border border-outline-variant rounded-lg p-lg text-left">
-<h3 class="font-label-md text-label-md text-primary uppercase mb-xs">Un paso más (solo para vos, no para el usuario final)</h3>
-<p class="font-body-md text-body-md text-on-surface-variant mb-sm">
-Para que este usuario también pueda cancelar reservas (seguridad de WildFly), creá el mismo usuario en la terminal:
-</p>
-<pre id="wildfly-command" class="bg-surface-container text-on-surface font-body-md text-body-md p-md rounded-DEFAULT overflow-x-auto"></pre>
-</div>
 </main>
 
-<script src="assets/js/api.js"></script>
-<script>
-(function () {
-    var form = document.getElementById("register-form");
-    var errorBanner = document.getElementById("error-banner");
-    var submitBtn = document.getElementById("submit-btn");
-    var wildflyNote = document.getElementById("wildfly-note");
-    var wildflyCommand = document.getElementById("wildfly-command");
-
-    form.addEventListener("submit", function (ev) {
-        ev.preventDefault();
-        ocultarError(errorBanner);
-
-        var nombre = document.getElementById("nombre").value.trim();
-        var apellido = document.getElementById("apellido").value.trim();
-        var email = document.getElementById("email").value.trim();
-        var password = document.getElementById("password").value;
-        var confirmPassword = document.getElementById("confirmPassword").value;
-        var rol = document.getElementById("rol").value;
-
-        if (password !== confirmPassword) {
-            mostrarError(errorBanner, new Error("Las contraseñas no coinciden."));
-            return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Creando cuenta...";
-
-        Api.registrarUsuario({ email: email, password: password, nombre: nombre, apellido: apellido, rol: rol })
-            .then(function () {
-                // Auto-login: ya tenemos el email/contraseña recién creados.
-                return Api.loginUsuario({ email: email, password: password });
-            })
-            .then(function (usuario) {
-                Api.setSession(email, password, usuario);
-                wildflyCommand.textContent =
-                    "~/wildfly/bin/add-user.sh -a -u '" + email + "' -p '" + password + "' -g '" + rol + "' -s";
-                wildflyNote.classList.remove("hidden");
-                submitBtn.textContent = "¡Cuenta creada!";
-                setTimeout(function () {
-                    location.href = rol === "ADMIN" ? "admin-dashboard.html" : "index.html";
-                }, 4000);
-            })
-            .catch(function (err) {
-                mostrarError(errorBanner, err);
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Create Account";
-            });
-    });
-})();
-</script>
+<script src="assets/js/api.js?v=20261023-motion2"></script>
+<script src="assets/js/pages/register-1.js"></script>
 </body></html>
