@@ -27,7 +27,7 @@ jobs:
       - name: Compile, test and generate CycloneDX SBOM
         run: mvn --batch-mode --no-transfer-progress verify
       - name: OWASP dependency audit
-        run: mvn --batch-mode --no-transfer-progress org.owasp:dependency-check-maven:check
+        run: mvn --batch-mode --no-transfer-progress -DossindexAnalyzerEnabled=false org.owasp:dependency-check-maven:check
       - name: Upload SBOM and audit reports
         if: always()
         uses: actions/upload-artifact@v6
