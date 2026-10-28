@@ -19,7 +19,7 @@ embed-server --server-config=standalone-full.xml --std-out=echo
 /system-property=stayhub.canales.airbnb.webhook-secret:add(value="demo-airbnb-secret-change-me")
 /system-property=stayhub.canales.despegar.webhook-secret:add(value="demo-despegar-secret-change-me")
 
-/subsystem=elytron/key-store=StayHubLocalKS:add(path=stayhub-local.p12,relative-to=jboss.server.config.dir,type=PKCS12,credential-reference={clear-text="stayhub-local"})
+/subsystem=elytron/key-store=StayHubLocalKS:add(path=/opt/jboss/local-security/stayhub-local.p12,type=PKCS12,credential-reference={clear-text="stayhub-local"})
 /subsystem=elytron/key-manager=StayHubLocalKM:add(key-store=StayHubLocalKS,algorithm=SunX509,credential-reference={clear-text="stayhub-local"})
 /subsystem=elytron/server-ssl-context=StayHubLocalSSC:add(key-manager=StayHubLocalKM,protocols=["TLSv1.3","TLSv1.2"])
 /subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=StayHubLocalSSC)
