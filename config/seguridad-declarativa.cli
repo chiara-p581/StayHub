@@ -1,0 +1,13 @@
+# Seguridad declarativa (@RolesAllowed) con el login por sesión de StayHub.
+#
+# StayHub valida usuario y contraseña contra su propia base y guarda el rol en
+# la sesión. MecanismoSesionContenedor le pasa esa identidad al contenedor en
+# cada request. Por defecto WildFly exige que ese usuario exista también en su
+# ApplicationRealm (integrated-jaspi=true); con false acepta la identidad que
+# informa la aplicación, con los roles HUESPED o ADMIN.
+#
+# Uso (con WildFly prendido):
+#   ~/wildfly/bin/jboss-cli.sh --connect --file=config/seguridad-declarativa.cli
+# El entorno Docker ya lo aplica en docker/wildfly/configure.cli.
+/subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false)
+reload

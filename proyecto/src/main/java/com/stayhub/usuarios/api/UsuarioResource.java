@@ -1,6 +1,8 @@
 package com.stayhub.usuarios.api;
 
 import com.stayhub.seguridad.Csrf;
+import com.stayhub.seguridad.IdentidadActual;
+import com.stayhub.seguridad.SeguridadException;
 import com.stayhub.seguridad.ProteccionLogin;
 import com.stayhub.usuarios.exception.UsuarioException;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
@@ -33,6 +35,9 @@ public class UsuarioResource {
 
     @Inject
     private ProteccionLogin proteccionLogin;
+
+    @Inject
+    private IdentidadActual identidad;
 
     @POST
     public Response registrar(RegistroUsuarioRequest solicitud) {
@@ -81,13 +86,13 @@ public class UsuarioResource {
 
     @GET
     @Path("/{id}")
-    public UsuarioResponse consultar(@PathParam("id") Long id, @Context HttpServletRequest request) {
-        HttpSession sesion = request.getSession(false);
-        Long usuarioId = sesion == null ? null : (Long) sesion.getAttribute("usuarioId");
-        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
-        if (usuarioId == null || (!usuarioId.equals(id) && !"ADMIN".equals(rol))) {
-            throw new WebApplicationException("No podés consultar el perfil de otro usuario",
-                    Response.Status.FORBIDDEN);
+    public UsuarioResponse consultar(@PathParam("id") Long id) {
+        // SEC-W06 (BOLA): el perfil de otra persona responde 404, igual que un id
+        // inexistente, para no confirmar qué usuarios existen. La identidad sale de
+        // la sesión (IdentidadActual), nunca de datos que mande el cliente.
+        Long usuarioId = identidad.usuarioId();
+        if (!usuarioId.equals(id) && !identidad.admin()) {
+            throw new SeguridadException(404, "Usuario no disponible");
         }
         return servicio.buscarPorId(id);
     }

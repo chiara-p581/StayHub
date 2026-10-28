@@ -4,19 +4,19 @@ import com.stayhub.pagos.contrato.ServicioDePagos;
 import com.stayhub.pagos.dto.PagoRequest;
 import com.stayhub.pagos.dto.PagoResponse;
 import com.stayhub.pagos.dto.PagoLoteRequest;
-import com.stayhub.reservas.service.ServicioDeReservas;
-import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Context;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Controlador GRASP de Pagos: solo traduce HTTP a llamadas al servicio.
+ * Bajo acoplamiento: depende únicamente de ServicioDePagos (se quitaron las
+ * dependencias a Reservas y Usuarios que no se usaban).
+ */
 @Path("/pagos")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -24,12 +24,6 @@ public class PagoResource {
 
     @Inject
     private ServicioDePagos servicio;
-
-    @Inject
-    private ServicioDeReservas reservas;
-
-    @Inject
-    private ServicioDeUsuarios usuarios;
 
     @GET
     @Path("/mios")

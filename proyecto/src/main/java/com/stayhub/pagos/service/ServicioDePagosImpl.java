@@ -17,10 +17,26 @@ import com.stayhub.reservas.service.ServicioDeReservas;
 import java.math.BigDecimal;
 import java.util.List;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 
+/**
+ * Seguridad en capas (defensa en profundidad):
+ * 1) AutenticacionFilter exige sesión; 2) el contenedor valida el rol con
+ * {@code @RolesAllowed} (seguridad declarativa, SEC-W07); 3) IdentidadActual
+ * verifica que la reserva sea del usuario (404 si es ajena, SEC-W06).
+ * Los métodos sin anotación quedan {@code @PermitAll} porque igual validan la
+ * identidad por dentro y los usan otros componentes.
+ */
 @Stateless
+@DeclareRoles({Roles.HUESPED, Roles.ADMIN})
+@PermitAll
+@TransactionAttribute(TransactionAttributeType.REQUIRED)
 public class ServicioDePagosImpl implements ServicioDePagos {
 
     @Inject private IdentidadActual identidad;
@@ -38,6 +54,7 @@ public class ServicioDePagosImpl implements ServicioDePagos {
     private ServicioDeReservas reservas;
 
     @Override
+    @RolesAllowed(Roles.HUESPED)
     public PagoResponse procesarPago(PagoRequest solicitud) {
         identidad.exigirHuesped();
         Long usuarioId = identidad.usuarioId();
@@ -57,25 +74,11 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         Pago pago = new Pago(usuarioId, List.of(solicitud.reservaId()), solicitud.monto(), solicitud.moneda(),
                 normalizarClave(solicitud.claveIdempotencia()));
         repositorio.guardar(pago);
-
-        ResultadoCobro resultado = pasarela.cobrar(solicitud.monto(), solicitud.moneda(),
-                "reserva-" + solicitud.reservaId());
-
-        if (resultado.aprobado()) {
-            pago.aprobar(resultado.referenciaExterna());
-            repositorio.guardar(pago);
-            var confirmada = reservas.confirmarReserva(solicitud.reservaId());
-            publicadorEventos.publicarPagoAprobado(EventoPagoAprobado.desde(pago, confirmada));
-            return PagoMapper.aResponse(pago);
-        }
-
-        pago.rechazar();
-        repositorio.guardar(pago);
-        throw new PagoException(CodigoErrorPago.PAGO_RECHAZADO,
-                resultado.motivoRechazo() == null ? "La pasarela rechazó el pago" : resultado.motivoRechazo());
+        return cobrarYConfirmar(pago, "reserva-" + solicitud.reservaId());
     }
 
     @Override
+    @RolesAllowed(Roles.HUESPED)
     public PagoResponse procesarLote(PagoLoteRequest solicitud) {
         identidad.exigirHuesped();
         Long usuarioId = identidad.usuarioId();
@@ -111,18 +114,26 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         Pago pago = new Pago(usuarioId, solicitud.reservaIds(), solicitud.monto(), solicitud.moneda(),
                 normalizarClave(solicitud.claveIdempotencia()));
         repositorio.guardar(pago);
-        ResultadoCobro resultado = pasarela.cobrar(solicitud.monto(), solicitud.moneda(),
-                "checkout-" + pago.getId());
+        return cobrarYConfirmar(pago, "checkout-" + pago.getId());
+    }
+
+    /**
+     * Paso común al pago simple y al lote (antes estaba duplicado): cobra en la
+     * pasarela y, si aprueba, confirma las reservas y publica un evento por cada
+     * una. Si rechaza, deja el pago como RECHAZADO y avisa con 402.
+     * GRASP Experto: el Pago sabe sus reservas, monto y moneda.
+     */
+    private PagoResponse cobrarYConfirmar(Pago pago, String referencia) {
+        ResultadoCobro resultado = pasarela.cobrar(pago.getMonto(), pago.getMoneda(), referencia);
         if (!resultado.aprobado()) {
             pago.rechazar();
             repositorio.guardar(pago);
             throw new PagoException(CodigoErrorPago.PAGO_RECHAZADO,
                     resultado.motivoRechazo() == null ? "La pasarela rechazó el pago" : resultado.motivoRechazo());
         }
-
         pago.aprobar(resultado.referenciaExterna());
         repositorio.guardar(pago);
-        var confirmadas = solicitud.reservaIds().stream().map(reservas::confirmarReserva).toList();
+        var confirmadas = pago.getReservaIds().stream().map(reservas::confirmarReserva).toList();
         confirmadas.forEach(reserva -> publicadorEventos.publicarPagoAprobado(EventoPagoAprobado.desde(pago, reserva)));
         return PagoMapper.aResponse(pago);
     }
