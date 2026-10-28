@@ -61,7 +61,10 @@ services:
         condition: service_healthy
     ports:
       - "8443:8443"
+    volumes:
+      - wildfly_security:/opt/jboss/local-security
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  wildfly_security:

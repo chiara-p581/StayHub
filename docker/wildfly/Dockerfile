@@ -10,9 +10,10 @@ FROM quay.io/wildfly/wildfly:41.0.0.Final-jdk21
 USER root
 RUN microdnf install --best --nodocs -y curl && microdnf clean all && \
     mkdir -p /opt/jboss/wildfly/modules/org/postgresql/main && \
+    mkdir -p /opt/jboss/local-security && \
     curl --fail --location --output /opt/jboss/wildfly/modules/org/postgresql/main/postgresql.jar \
       https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.13/postgresql-42.7.13.jar && \
-    chown -R jboss:root /opt/jboss/wildfly/modules/org/postgresql
+    chown -R jboss:root /opt/jboss/wildfly/modules/org/postgresql /opt/jboss/local-security
 
 COPY --chown=jboss:root docker/wildfly/module.xml /opt/jboss/wildfly/modules/org/postgresql/main/module.xml
 COPY --chown=jboss:root docker/wildfly/configure.cli /opt/jboss/wildfly/configure.cli
@@ -20,7 +21,7 @@ COPY --chown=jboss:root docker/wildfly/load-demo.sh /opt/jboss/load-demo.sh
 
 USER jboss
 RUN keytool -genkeypair -alias stayhub-local -keyalg RSA -keysize 3072 -validity 825 \
-      -storetype PKCS12 -keystore /opt/jboss/wildfly/standalone/configuration/stayhub-local.p12 \
+      -storetype PKCS12 -keystore /opt/jboss/local-security/stayhub-local.p12 \
       -storepass stayhub-local -keypass stayhub-local \
       -dname "CN=localhost, OU=StayHub Local, O=StayHub, C=AR" \
       -ext "SAN=dns:localhost,ip:127.0.0.1" -noprompt && \

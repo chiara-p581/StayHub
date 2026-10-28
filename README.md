@@ -42,6 +42,16 @@ Esta opción levanta en contenedores la aplicación, PostgreSQL, el broker JMS
 incluido en WildFly, el mock REST de OTAs/pagos y el mock SOAP del PMS. También
 crea el esquema, usuarios locales y el catálogo mínimo de demostración.
 
+### Integración continua
+
+El workflow `StayHub CI` se ejecuta en cada push y pull request hacia
+`development` o `main`, al crear un tag `v*-testing` y manualmente desde GitHub
+Actions. En paralelo valida el backend Java, el frontend y el mock SOAP, audita
+las dependencias y luego levanta el entorno Docker para comprobar la integración
+REST, SOAP, PostgreSQL y WildFly. Los informes, binarios y logs quedan publicados
+como artefactos durante 14 días. Cada trabajo tiene un límite explícito y la
+validación completa no puede superar los 15 minutos.
+
 **Requisito:** Docker Desktop iniciado, con Docker Compose disponible. No hace
 falta instalar PostgreSQL, Maven ni WildFly en la computadora.
 
@@ -81,7 +91,10 @@ Usuarios exclusivos del entorno local:
 El certificado HTTPS es autofirmado y exclusivo del contenedor local. Durante
 el primer `start-local.cmd`, el asistente pregunta si se desea confiar en ese
 certificado para el usuario actual de Windows. Los siguientes arranques
-reconocen el mismo certificado y no vuelven a pedirlo.
+reconocen el mismo certificado y no vuelven a pedirlo. La clave se conserva en
+el volumen Docker `wildfly_security`, incluso cuando se reconstruye la imagen.
+`docker compose down --volumes` elimina también esa clave y obliga a confiar en
+el nuevo certificado la próxima vez que se inicie el entorno.
 
 Firefox no permite crear una excepción cuando el sitio usa HSTS. Si se omitió
 el paso durante el inicio, se puede ejecutar luego:

@@ -9,7 +9,7 @@ set "certificadoConfiado=%CD%\.local-demo\stayhub-local-trusted.cer"
 echo Exportando el certificado HTTPS del contenedor local...
 docker compose exec -T app keytool -exportcert -rfc ^
   -alias stayhub-local ^
-  -keystore /opt/jboss/wildfly/standalone/configuration/stayhub-local.p12 ^
+  -keystore /opt/jboss/local-security/stayhub-local.p12 ^
   -storepass stayhub-local > "%certificado%"
 if errorlevel 1 goto :error_exportar
 
