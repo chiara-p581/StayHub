@@ -16,6 +16,7 @@ class ConfiguracionCanalesTest {
         System.clearProperty("stayhub.canales.timeout.conexion.ms");
         System.clearProperty("stayhub.canales.timeout.lectura.ms");
         System.clearProperty("stayhub.canales.hosts-permitidos");
+        System.clearProperty("stayhub.canales.hosts-locales");
         System.clearProperty("stayhub.canales.permitir-http-local");
     }
 
@@ -38,6 +39,31 @@ class ConfiguracionCanalesTest {
         ConfiguracionCanales configuracion = configuracionConDns("127.0.0.1");
         assertThrows(CanalExternoException.class,
                 () -> configuracion.urlPermitida("https://api.booking.example/v1"));
+    }
+
+    @Test
+    void aceptaMockHttpDeDockerSoloConDobleOptIn() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "ota-mock");
+        System.setProperty("stayhub.canales.hosts-locales", "ota-mock");
+        System.setProperty("stayhub.canales.permitir-http-local", "true");
+        assertEquals("http://ota-mock:9080/api",
+                new ConfiguracionCanales().urlPermitida("http://ota-mock:9080/api"));
+    }
+
+    @Test
+    void conservaCompatibilidadConMockLocalExplicito() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "localhost");
+        System.setProperty("stayhub.canales.permitir-http-local", "true");
+        assertEquals("http://localhost:9091/api",
+                new ConfiguracionCanales().urlPermitida("http://localhost:9091/api"));
+    }
+
+    @Test
+    void rechazaMockHttpSinOptInExplicito() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "ota-mock");
+        System.setProperty("stayhub.canales.permitir-http-local", "true");
+        assertThrows(CanalExternoException.class,
+                () -> new ConfiguracionCanales().urlPermitida("http://ota-mock:9080/api"));
     }
 
     private ConfiguracionCanales configuracionConDns(String ip) {

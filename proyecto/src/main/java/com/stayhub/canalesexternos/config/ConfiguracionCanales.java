@@ -47,14 +47,17 @@ public class ConfiguracionCanales {
             URI uri = URI.create(valor);
             String host = uri.getHost();
             boolean localHttp = Boolean.parseBoolean(opcional("stayhub.canales.permitir-http-local"));
+            boolean hostLocalPermitido = host != null && hostsLocales().contains(host.toLowerCase());
+            boolean httpLocalAutorizado = localHttp && "http".equalsIgnoreCase(uri.getScheme())
+                    && (esLocal(host) || hostLocalPermitido);
             boolean esquemaValido = "https".equalsIgnoreCase(uri.getScheme())
-                    || (localHttp && "http".equalsIgnoreCase(uri.getScheme()) && esLocal(host));
+                    || httpLocalAutorizado;
             if (!esquemaValido || host == null || uri.getUserInfo() != null || uri.getFragment() != null
-                    || (hostBloqueado(host) && !(localHttp && "http".equalsIgnoreCase(uri.getScheme()) && esLocal(host)))
+                    || (hostBloqueado(host) && !httpLocalAutorizado)
                     || !hostsPermitidos().contains(host.toLowerCase())) {
                 throw new IllegalArgumentException();
             }
-            if (!(localHttp && "http".equalsIgnoreCase(uri.getScheme()) && esLocal(host))) {
+            if (!httpLocalAutorizado) {
                 validarDirecciones(host);
             }
             return uri.toString();
@@ -90,6 +93,13 @@ public class ConfiguracionCanales {
 
     private Set<String> hostsPermitidos() {
         String valor = requerida("stayhub.canales.hosts-permitidos");
+        return Arrays.stream(valor.split(",")).map(String::trim).map(String::toLowerCase)
+                .filter(s -> !s.isBlank()).collect(Collectors.toUnmodifiableSet());
+    }
+
+    private Set<String> hostsLocales() {
+        String valor = opcional("stayhub.canales.hosts-locales");
+        if (valor == null || valor.isBlank()) return Set.of();
         return Arrays.stream(valor.split(",")).map(String::trim).map(String::toLowerCase)
                 .filter(s -> !s.isBlank()).collect(Collectors.toUnmodifiableSet());
     }

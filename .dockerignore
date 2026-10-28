@@ -1,0 +1,8 @@
+.git
+.github
+.local-demo
+.local-security
+**/target
+**/.idea
+**/.vscode
+*.log
