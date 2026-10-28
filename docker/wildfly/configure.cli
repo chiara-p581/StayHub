@@ -1,0 +1,27 @@
+embed-server --server-config=standalone-full.xml --std-out=echo
+
+/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=org.postgresql,driver-class-name=org.postgresql.Driver,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)
+/subsystem=datasources/data-source=StayHubDS:add(jndi-name=java:/PostgresDS,driver-name=postgresql,connection-url="jdbc:postgresql://postgres:5432/stayhub",user-name=stayhub,password="stayhub_local_2026",min-pool-size=2,max-pool-size=20,enabled=true,validate-on-match=true,background-validation=false)
+
+/system-property=stayhub.ota.booking.url:add(value="http://ota-mock:9080/booking")
+/system-property=stayhub.ota.expedia.url:add(value="http://ota-mock:9080/expedia")
+/system-property=stayhub.ota.airbnb.url:add(value="http://ota-mock:9080/airbnb")
+/system-property=stayhub.ota.despegar.url:add(value="http://ota-mock:9080/despegar")
+/system-property=stayhub.pms.wsdl:add(value="http://pms-mock:9091/PmsLegacyService?wsdl")
+/system-property=stayhub.canales.hosts-permitidos:add(value="ota-mock,pms-mock")
+/system-property=stayhub.canales.hosts-locales:add(value="ota-mock,pms-mock")
+/system-property=stayhub.canales.permitir-http-local:add(value=true)
+/system-property=stayhub.pagos.pasarela.url:add(value="http://ota-mock:9080/pagos")
+/system-property=stayhub.web.base-url:add(value="https://localhost:8443/StayHub")
+/system-property=stayhub.seguridad.http-local:add(value=false)
+/system-property=stayhub.canales.booking.webhook-secret:add(value="demo-booking-secret-change-me")
+/system-property=stayhub.canales.expedia.webhook-secret:add(value="demo-expedia-secret-change-me")
+/system-property=stayhub.canales.airbnb.webhook-secret:add(value="demo-airbnb-secret-change-me")
+/system-property=stayhub.canales.despegar.webhook-secret:add(value="demo-despegar-secret-change-me")
+
+/subsystem=elytron/key-store=StayHubLocalKS:add(path=stayhub-local.p12,relative-to=jboss.server.config.dir,type=PKCS12,credential-reference={clear-text="stayhub-local"})
+/subsystem=elytron/key-manager=StayHubLocalKM:add(key-store=StayHubLocalKS,algorithm=SunX509,credential-reference={clear-text="stayhub-local"})
+/subsystem=elytron/server-ssl-context=StayHubLocalSSC:add(key-manager=StayHubLocalKM,protocols=["TLSv1.3","TLSv1.2"])
+/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=StayHubLocalSSC)
+
+stop-embedded-server

@@ -36,6 +36,87 @@ Rama por feature → merge a `development` → merge a `main`. Los Pull Requests
 
 ## Cómo levantar el entorno local
 
+### Opción recomendada: entorno completo con un comando
+
+Esta opción levanta en contenedores la aplicación, PostgreSQL, el broker JMS
+incluido en WildFly, el mock REST de OTAs/pagos y el mock SOAP del PMS. También
+crea el esquema, usuarios locales y el catálogo mínimo de demostración.
+
+**Requisito:** Docker Desktop iniciado, con Docker Compose disponible. No hace
+falta instalar PostgreSQL, Maven ni WildFly en la computadora.
+
+Desde la raíz del repositorio, en Windows PowerShell o CMD:
+
+```bat
+start-local.cmd
+```
+
+El iniciador `.cmd` funciona aunque PowerShell tenga deshabilitada la ejecución
+de scripts. Como alternativa se conserva `start-local.ps1`.
+
+En Linux o macOS:
+
+```sh
+sh ./start-local.sh
+```
+
+El primer inicio descarga y construye las imágenes, por lo que puede tardar
+varios minutos. Los siguientes inicios reutilizan la caché.
+
+| Recurso | Dirección |
+| --- | --- |
+| Aplicación | `https://localhost:8443/StayHub/index.html` |
+| API | `https://localhost:8443/StayHub/api` |
+| SOAP expuesto por StayHub | `https://localhost:8443/StayHub/soap/integracion-pms?wsdl` |
+| Mock SOAP del PMS | `http://localhost:9091/PmsLegacyService?wsdl` |
+| Salud del mock REST | `http://localhost:9080/health` |
+
+Usuarios exclusivos del entorno local:
+
+| Rol | Email | Contraseña |
+| --- | --- | --- |
+| Administrador | `admin@stayhub.local` | `StayHubDemo2026!` |
+| Huésped | `huesped@stayhub.local` | `StayHubDemo2026!` |
+
+El certificado HTTPS es autofirmado y exclusivo del contenedor local. Durante
+el primer `start-local.cmd`, el asistente pregunta si se desea confiar en ese
+certificado para el usuario actual de Windows. Los siguientes arranques
+reconocen el mismo certificado y no vuelven a pedirlo.
+
+Firefox no permite crear una excepción cuando el sitio usa HSTS. Si se omitió
+el paso durante el inicio, se puede ejecutar luego:
+
+```bat
+trust-local-certificate.cmd
+```
+
+El asistente pide confirmación antes de incorporarlo al almacén de confianza
+del usuario actual. No requiere permisos de Administrador. Después hay que
+cerrar por completo y volver a abrir Firefox. No se debe usar este certificado
+ni estas credenciales en un ambiente real.
+
+Para revisar el estado:
+
+```powershell
+docker compose ps
+docker compose logs app
+```
+
+Para detenerlo sin borrar la base local:
+
+```bat
+stop-local.cmd
+```
+
+Para reiniciar completamente los datos de prueba:
+
+```bat
+docker compose down --volumes
+start-local.cmd
+```
+
+### Opción alternativa: instalación manual
+
 Para `feature/seguridad-a`, consultar primero
 [configuración local de seguridad](docs/CONFIGURACION_LOCAL_SEGURIDAD.md):
 HTTPS usa el puerto 8080 y SOAP requiere permisos explícitos. Las URLs HTTP

@@ -1,0 +1,67 @@
+name: stayhub-local
+
+services:
+  postgres:
+    image: postgres:18.6-alpine3.24
+    environment:
+      POSTGRES_DB: stayhub
+      POSTGRES_USER: stayhub
+      POSTGRES_PASSWORD: stayhub_local_2026
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stayhub -d stayhub"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  pms-mock:
+    build:
+      context: .
+      dockerfile: docker/mocks/Dockerfile
+    command:
+      - -Dpms.url=http://0.0.0.0:9091/PmsLegacyService
+      - com.stayhub.pmslegado.PublicadorPms
+    ports:
+      - "9091:9091"
+    healthcheck:
+      test: ["CMD", "java", "-cp", "/app/mock.jar:/app/dependency/*", "com.stayhub.pmslegado.Healthcheck", "http://localhost:9091/PmsLegacyService?wsdl"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  ota-mock:
+    build:
+      context: .
+      dockerfile: docker/mocks/Dockerfile
+    command:
+      - com.stayhub.pmslegado.OtaMock
+    ports:
+      - "9080:9080"
+    healthcheck:
+      test: ["CMD", "java", "-cp", "/app/mock.jar:/app/dependency/*", "com.stayhub.pmslegado.Healthcheck", "http://localhost:9080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/wildfly/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ota-mock:
+        condition: service_healthy
+      pms-mock:
+        condition: service_healthy
+    ports:
+      - "8443:8443"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

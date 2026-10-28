@@ -8,6 +8,7 @@ import com.stayhub.hoteles.dto.TipoHabitacionResponse;
 import com.stayhub.hoteles.service.ServicioDeHoteles;
 import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
 import com.stayhub.inventarioytarifas.dto.CargaInventarioRequest;
+import com.stayhub.seguridad.Limites;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -83,7 +84,15 @@ public class DemoDataResource {
                         codigo.equals("STANDARD") ? 3 : 4, Set.of("No fumadores")));
             }
         }
-        inventario.cargarInventario(new CargaInventarioRequest(hotelId, codigo, desde, hasta,
-                5, BigDecimal.valueOf(precio), "ARS"));
+        // La API limita cada operación a 31 noches. La demo conserva seis meses
+        // de inventario, pero los carga en tramos válidos usando el servicio real.
+        LocalDate tramoDesde = desde;
+        while (tramoDesde.isBefore(hasta)) {
+            LocalDate tramoHasta = tramoDesde.plusDays(Limites.NOCHES);
+            if (tramoHasta.isAfter(hasta)) tramoHasta = hasta;
+            inventario.cargarInventario(new CargaInventarioRequest(hotelId, codigo,
+                    tramoDesde, tramoHasta, 5, BigDecimal.valueOf(precio), "ARS"));
+            tramoDesde = tramoHasta;
+        }
     }
 }

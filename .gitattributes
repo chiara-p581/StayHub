@@ -1,0 +1,13 @@
+* text=auto
+
+# Archivos ejecutados dentro de contenedores Linux.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.sql text eol=lf
+*.cli text eol=lf
+
+# Scripts nativos de Windows.
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

@@ -13,3 +13,6 @@ mail.properties
 
 # Certificados, claves, copias y configuración privada del servidor local
 .local-security/
+
+# Base PostgreSQL y secretos locales usados para la demostración sin conexión
+.local-demo/
