@@ -32,8 +32,27 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
-      - name: Compilar, ejecutar pruebas y generar WAR/SBOM
+      - name: Compilar, ejecutar pruebas, verificar cobertura (JaCoCo) y generar WAR/SBOM
         run: mvn --file proyecto/pom.xml --batch-mode --no-transfer-progress clean verify
+      - name: Resumen de cobertura de la capa de negocio
+        if: always()
+        run: |
+          csv=proyecto/target/site/jacoco/jacoco.csv
+          test -f "$csv" || { echo "Sin reporte JaCoCo" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          python3 - "$csv" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import csv, re, sys
+          rows = [r for r in csv.DictReader(open(sys.argv[1]))
+                  if re.match(r'com\.stayhub\.[^.]+\.(service|model)(\.|$)', r['PACKAGE'])
+                  or r['PACKAGE'] == 'com.stayhub.reservas.carrito']
+          def pct(c, m): return 100 * c / (c + m) if c + m else 100
+          lc = sum(int(r['LINE_COVERED']) for r in rows); lm = sum(int(r['LINE_MISSED']) for r in rows)
+          bc = sum(int(r['BRANCH_COVERED']) for r in rows); bm = sum(int(r['BRANCH_MISSED']) for r in rows)
+          print('### Cobertura JaCoCo, capa de negocio (service, model, carrito)')
+          print('| Métrica | Cobertura | Umbral |')
+          print('|---|---|---|')
+          print(f'| Líneas | {pct(lc, lm):.1f}% ({lc}/{lc + lm}) | 80% |')
+          print(f'| Ramas | {pct(bc, bm):.1f}% ({bc}/{bc + bm}) | 70% |')
+          PY
       - name: Publicar evidencias del backend
         if: always()
         uses: actions/upload-artifact@v7
@@ -41,6 +60,8 @@ jobs:
           name: backend-evidence
           path: |
             proyecto/target/surefire-reports/
+            proyecto/target/site/jacoco/
+            proyecto/target/jacoco.exec
             proyecto/target/StayHub.war
             proyecto/target/bom.json
             proyecto/target/bom.xml
