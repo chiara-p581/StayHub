@@ -24,7 +24,7 @@ jobs:
   backend:
     name: Backend Java
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v6
@@ -32,7 +32,7 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
-      - name: Compilar, ejecutar pruebas, verificar cobertura (JaCoCo) y generar WAR/SBOM
+      - name: Compilar, ejecutar pruebas, verificar cobertura (JaCoCo), mutation score (PIT) y generar WAR/SBOM
         run: mvn --file proyecto/pom.xml --batch-mode --no-transfer-progress clean verify
       - name: Resumen de cobertura de la capa de negocio
         if: always()
@@ -53,6 +53,20 @@ jobs:
           print(f'| Líneas | {pct(lc, lm):.1f}% ({lc}/{lc + lm}) | 80% |')
           print(f'| Ramas | {pct(bc, bm):.1f}% ({bc}/{bc + bm}) | 70% |')
           PY
+      - name: Resumen de mutation testing (PIT)
+        if: always()
+        run: |
+          xml=proyecto/target/pit-reports/mutations.xml
+          test -f "$xml" || { echo "Sin reporte PIT" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          python3 - "$xml" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          ms = list(ET.parse(sys.argv[1]).getroot())
+          killed = sum(1 for m in ms if m.get('status') in ('KILLED', 'TIMED_OUT'))
+          print('### Mutation score PIT, capa de negocio (service, model, carrito)')
+          print('| Mutantes | Muertos | Sobrevivientes | Mutation score | Umbral |')
+          print('|---|---|---|---|---|')
+          print(f'| {len(ms)} | {killed} | {len(ms) - killed} | {100 * killed / len(ms):.1f}% | 60% |')
+          PY
       - name: Publicar evidencias del backend
         if: always()
         uses: actions/upload-artifact@v7
@@ -62,6 +76,7 @@ jobs:
             proyecto/target/surefire-reports/
             proyecto/target/site/jacoco/
             proyecto/target/jacoco.exec
+            proyecto/target/pit-reports/
             proyecto/target/StayHub.war
             proyecto/target/bom.json
             proyecto/target/bom.xml
