@@ -24,4 +24,7 @@ embed-server --server-config=standalone-full.xml --std-out=echo
 /subsystem=elytron/server-ssl-context=StayHubLocalSSC:add(key-manager=StayHubLocalKM,protocols=["TLSv1.3","TLSv1.2"])
 /subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=StayHubLocalSSC)
 
+# Seguridad declarativa (@RolesAllowed) con el login por sesión: ver config/seguridad-declarativa.cli
+/subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false)
+
 stop-embedded-server

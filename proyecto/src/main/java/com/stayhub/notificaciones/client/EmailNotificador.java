@@ -1,6 +1,7 @@
 package com.stayhub.notificaciones.client;
 
 import com.stayhub.notificaciones.config.ConfiguracionMail;
+import com.stayhub.notificaciones.dto.CanalNotificacion;
 import com.stayhub.notificaciones.dto.SolicitudNotificacionDTO;
 import com.stayhub.notificaciones.service.PlantillaEmail;
 
@@ -24,6 +25,11 @@ public class EmailNotificador implements NotificadorCanal {
 
     @Inject
     private ConfiguracionMail configuracion;
+
+    @Override
+    public CanalNotificacion canal() {
+        return CanalNotificacion.EMAIL;
+    }
 
     @Override
     public void enviar(SolicitudNotificacionDTO solicitud) {

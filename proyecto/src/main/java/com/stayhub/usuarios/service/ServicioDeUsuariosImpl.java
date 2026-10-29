@@ -16,11 +16,21 @@ import com.stayhub.usuarios.messaging.TipoEventoPassword;
 import com.stayhub.usuarios.model.Usuario;
 import com.stayhub.usuarios.repository.UsuarioRepository;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import java.time.LocalDateTime;
 
+/**
+ * Registro, login y recuperación de contraseña son públicos ({@code @PermitAll}):
+ * se usan sin sesión. Editar el perfil exige un usuario autenticado con rol
+ * válido, y lo controla el contenedor ({@code @RolesAllowed}, SEC-W07).
+ */
 @Stateless
+@DeclareRoles({Roles.HUESPED, Roles.ADMIN})
+@PermitAll
 public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
     private static final int PASSWORD_MINIMA = 12;
     private static final int PASSWORD_MAXIMA = 128;
@@ -97,6 +107,7 @@ public class ServicioDeUsuariosImpl implements ServicioDeUsuarios {
     }
 
     @Override
+    @RolesAllowed({Roles.HUESPED, Roles.ADMIN})
     public UsuarioResponse actualizarPerfil(Long id, ActualizacionUsuarioRequest solicitud) {
         if (solicitud == null) throw new SeguridadException(400, "Perfil requerido");
         Limites.email(solicitud.email()); Limites.texto(solicitud.nombre(), 80, true); Limites.texto(solicitud.apellido(), 80, true); Limites.texto(solicitud.password(), 1024, false);

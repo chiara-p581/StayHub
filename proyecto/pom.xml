@@ -75,6 +75,94 @@
           </plugin>
 
           <plugin>
+              <groupId>org.jacoco</groupId>
+              <artifactId>jacoco-maven-plugin</artifactId>
+              <version>0.8.13</version>
+              <executions>
+                  <execution>
+                      <id>prepare-agent</id>
+                      <goals><goal>prepare-agent</goal></goals>
+                  </execution>
+                  <execution>
+                      <id>report</id>
+                      <phase>test</phase>
+                      <goals><goal>report</goal></goals>
+                  </execution>
+                  <execution>
+                      <id>check</id>
+                      <phase>verify</phase>
+                      <goals><goal>check</goal></goals>
+                      <configuration>
+                          <!-- Capa de negocio/dominio: servicios, modelo y carrito.
+                               Quedan fuera API REST, DTO, repositorios JPA, clientes,
+                               mensajería, config, seguridad HTTP y datos de demo. -->
+                          <includes>
+                              <include>com/stayhub/*/service/**</include>
+                              <include>com/stayhub/*/model/**</include>
+                              <include>com/stayhub/reservas/carrito/**</include>
+                          </includes>
+                          <rules>
+                              <rule>
+                                  <element>BUNDLE</element>
+                                  <limits>
+                                      <limit>
+                                          <counter>LINE</counter>
+                                          <value>COVEREDRATIO</value>
+                                          <minimum>0.80</minimum>
+                                      </limit>
+                                      <limit>
+                                          <counter>BRANCH</counter>
+                                          <value>COVEREDRATIO</value>
+                                          <minimum>0.70</minimum>
+                                      </limit>
+                                  </limits>
+                              </rule>
+                          </rules>
+                      </configuration>
+                  </execution>
+              </executions>
+          </plugin>
+
+          <plugin>
+              <groupId>org.pitest</groupId>
+              <artifactId>pitest-maven</artifactId>
+              <version>1.19.1</version>
+              <dependencies>
+                  <dependency>
+                      <groupId>org.pitest</groupId>
+                      <artifactId>pitest-junit5-plugin</artifactId>
+                      <version>1.2.2</version>
+                  </dependency>
+              </dependencies>
+              <configuration>
+                  <!-- Mismo alcance de dominio/negocio que JaCoCo -->
+                  <targetClasses>
+                      <param>com.stayhub.*.service.*</param>
+                      <param>com.stayhub.*.model.*</param>
+                      <param>com.stayhub.reservas.carrito.*</param>
+                  </targetClasses>
+                  <targetTests>
+                      <param>com.stayhub.*</param>
+                  </targetTests>
+                  <mutationThreshold>60</mutationThreshold>
+                  <threads>2</threads>
+                  <timeoutConstant>8000</timeoutConstant>
+                  <outputFormats>
+                      <outputFormat>HTML</outputFormat>
+                      <outputFormat>XML</outputFormat>
+                  </outputFormats>
+                  <timestampedReports>false</timestampedReports>
+              </configuration>
+              <executions>
+                  <execution>
+                      <id>mutation-testing</id>
+                      <phase>verify</phase>
+                      <goals><goal>mutationCoverage</goal></goals>
+                  </execution>
+              </executions>
+          </plugin>
+
+          <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-war-plugin</artifactId>
               <version>3.4.0</version>
