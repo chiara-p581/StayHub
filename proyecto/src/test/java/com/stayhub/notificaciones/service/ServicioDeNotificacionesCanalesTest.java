@@ -1,0 +1,22 @@
+package com.stayhub.notificaciones.service;
+
+import com.stayhub.notificaciones.client.*;
+import com.stayhub.notificaciones.dto.*;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class ServicioDeNotificacionesCanalesTest {
+    ServicioDeNotificacionesImpl servicio; EmailNotificador email; SmsNotificador sms; PushNotificador push;
+    @BeforeEach void preparar(){servicio=new ServicioDeNotificacionesImpl();email=mock(EmailNotificador.class);sms=mock(SmsNotificador.class);push=mock(PushNotificador.class);servicio.emailNotificador=email;servicio.smsNotificador=sms;servicio.pushNotificador=push;}
+    SolicitudNotificacionDTO solicitud(CanalNotificacion canal,String destino){return new SolicitudNotificacionDTO(destino,TipoEvento.RECORDATORIO,canal,"QA","mensaje");}
+    @Test void seleccionaUnicamenteElAdaptadorDelCanalPedido(){
+        servicio.enviar(solicitud(CanalNotificacion.EMAIL,"qa-email@test.com"));servicio.enviar(solicitud(CanalNotificacion.SMS,"qa-sms"));servicio.enviar(solicitud(CanalNotificacion.PUSH,"qa-push"));
+        verify(email).enviar(any());verify(sms).enviar(any());verify(push).enviar(any());
+    }
+    @Test void proveedorCaidoSeTraduceYNoSeInformaExito(){
+        doThrow(new IllegalStateException("smtp fuera de servicio")).when(email).enviar(any());
+        assertThrows(RuntimeException.class,()->servicio.enviar(solicitud(CanalNotificacion.EMAIL,"qa-falla@test.com")));
+        verifyNoInteractions(sms,push);
+    }
+}

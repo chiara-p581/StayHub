@@ -49,4 +49,9 @@ class ResolucionAdminTest {
         when(cupo.crearHold(33L,"SUITE",1,desde,hasta)).thenThrow(new SinDisponibilidadException("Sin cupo"));
         var r=servicio.resolverConflicto(solicitud());assertEquals(EstrategiaResolucion.COMPENSACION,r.estrategia());verify(cupo,never()).confirmarHold(any());
     }
+    @Test void conflictoIncompletoSeRechazaSinPersistirNiConsultarInventario() {
+        var invalido=new ConflictoReservaDTO(null,33L,"STANDARD",1,desde,hasta,"BOOKING","QA",null);
+        assertThrows(RuntimeException.class,()->servicio.resolverConflicto(invalido));
+        verifyNoInteractions(lectura,cupo,repo,notificaciones);
+    }
 }
