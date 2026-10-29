@@ -9,3 +9,9 @@ description = "Clave HMAC ficticia usada como fixture en el test de firma de web
 condition = "AND"
 paths = ['''proyecto/src/test/java/com/stayhub/seguridad/AutenticacionWebhookOtaTest\.java''']
 regexes = ['''0123456789abcdef0123456789abcdef''']
+
+[[allowlists]]
+description = "Vector de prueba público del RFC 6238 (TOTP): Base32 de '12345678901234567890'. No es un secreto"
+condition = "AND"
+paths = ['''proyecto/src/test/java/com/stayhub/seguridad/MfaTotpTest\.java''']
+regexes = ['''GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ''']

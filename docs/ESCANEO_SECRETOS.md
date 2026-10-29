@@ -24,11 +24,11 @@ gitleaks dir --config .gitleaks.toml --redact -v .
 
 ## Resultado de la revisión (2026-10-28)
 
-Historial: 151 commits (87 con diff, el resto son merges sin cambios propios), todas las ramas.
+Historial de todas las ramas: 99 commits con diff escaneados (los merges sin cambios propios no tienen contenido que escanear).
 
 | Escaneo | Resultado |
 |---|---|
-| gitleaks sobre historial, sin config propia | 1 hallazgo (ver abajo) |
+| gitleaks sobre historial, sin config propia | 2 hallazgos, ambos falsos positivos (ver abajo) |
 | gitleaks sobre historial, con `.gitleaks.toml` | 0 hallazgos |
 | gitleaks sobre el árbol actual | 0 hallazgos |
 | Archivos `.pem/.p12/.jks/.key/.crt/.env/mail.properties` en cualquier commit | Ninguno |
@@ -43,6 +43,15 @@ Historial: 151 commits (87 con diff, el resto son merges sin cambios propios), t
 - **Revocación:** no aplica, no hay nada que rotar.
 - **Eliminación del historial:** no se reescribió. Sería destructivo (cambia todos los hashes de commit, obliga a un force-push y rompe el trabajo del resto del equipo) para eliminar un valor que no es secreto.
 - **Tratamiento:** excepción acotada a ese archivo y ese valor en `.gitleaks.toml`. Cualquier otro hallazgo sigue haciendo fallar el pipeline.
+
+### Hallazgo 2: vector de prueba RFC 6238 (falso positivo)
+
+- Regla `generic-api-key`, [MfaTotpTest.java:12](../proyecto/src/test/java/com/stayhub/seguridad/MfaTotpTest.java#L12), commit `c0f4b08` (rama `feature/seguridad-a`). Lo detectó el primer run del job en GitHub Actions, con 99 commits.
+- `GEZDGNBVGY3TQOJQ...` es el Base32 de `12345678901234567890`, el secreto de los vectores de prueba publicados en el RFC 6238. El test lo usa para comparar contra códigos TOTP conocidos. No protege ninguna cuenta.
+- **Revocación y eliminación del historial:** no aplican, por las mismas razones que el hallazgo 1.
+- **Tratamiento:** segunda excepción acotada a ese archivo y ese valor en `.gitleaks.toml`.
+
+Criterio para futuras excepciones: solo valores públicos o inventados que viven en tests, siempre acotados por archivo y valor, nunca por regla completa.
 
 ## Credenciales de demostración presentes en el repo (decisión consciente)
 
@@ -59,5 +68,5 @@ Para producción: inyectarlos desde variables de entorno o un gestor de secretos
 
 ## Pendiente de verificación
 
-- El job `secrets-scan` se probó con el mismo binario en local, pero todavía no corrió en GitHub Actions (no hay Docker en la máquina de desarrollo). Link al run en verde: _completar tras el primer push_.
+- El job `secrets-scan` ya corrió en GitHub Actions y cortó correctamente ante el hallazgo 2, lo que confirma que el control funciona. Falta el run en verde con la excepción incluida. Link: _completar tras el próximo push_.
 - Si en el futuro se detecta un secreto real: revocarlo primero en el proveedor, después eliminarlo del historial con `git filter-repo` coordinando con el equipo, y recién ahí actualizar este documento.
