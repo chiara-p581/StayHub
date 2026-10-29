@@ -7,6 +7,8 @@ import com.stayhub.reservas.repository.*;
 import com.stayhub.pagos.repository.PagoRepository;
 import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
 import com.stayhub.inventarioytarifas.dto.TarifaDTO;
+import com.stayhub.canalesexternos.contrato.interno.SolicitudReserva;
+import com.stayhub.canalesexternos.dto.HuespedDTO;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.UsuarioResponse;
 import jakarta.enterprise.inject.Instance;
@@ -76,6 +78,22 @@ class ServicioDeReservasImplTest {
         var respuesta=servicio.crearReserva(request);assertEquals("real@mail.com",respuesta.huespedEmail());assertEquals("Real",respuesta.huespedNombre());assertEquals(new BigDecimal("300000"),respuesta.precioTotal());assertEquals("ARS",respuesta.moneda());
         verify(repo).guardar(argThat(r->r.getUsuarioId().equals(1L)));
     }
+    @Test void crearReservaValidaCalculaPrecioRetieneCupoYPersisteUnaVez() {
+        var request=new ReservaRequest(1L,"DOBLE",2,desde,hasta,"Ignorado","Ignorado","otro@mail.com","123",BigDecimal.ZERO,"USD");
+        var respuesta=servicio.crearReserva(request);
+        assertEquals("PENDIENTE",respuesta.estado());assertEquals(new BigDecimal("300000"),respuesta.precioTotal());assertEquals("ARS",respuesta.moneda());
+        verify(cupo).crearHold(1L,"DOBLE",2,desde,hasta);verify(repo,times(1)).guardar(any());
+    }
+    @Test void fechasInvertidasYCantidadCeroSeRechazanAntesDeRetener() {
+        assertThrows(SeguridadException.class,()->servicio.crearReserva(new ReservaRequest(1L,"DOBLE",1,hasta,desde,null,null,null,"123",null,null)));
+        assertThrows(SeguridadException.class,()->servicio.crearReserva(new ReservaRequest(1L,"DOBLE",0,desde,hasta,null,null,null,"123",null,null)));
+        verifyNoInteractions(cupo);verify(repo,never()).guardar(any());
+    }
+    @Test void faltaDeCupoNoConfirmaNiDejaDescuentoParcial() {
+        when(cupo.crearHold(any(),any(),anyInt(),any(),any())).thenThrow(new SinDisponibilidadException("sin cupo"));
+        var respuesta=servicio.crearReserva(new ReservaRequest(1L,"DOBLE",1,desde,hasta,null,null,null,"123",null,null));
+        assertEquals("RECHAZADA",respuesta.estado());verify(cupo,never()).confirmarHold(any());verify(repo).guardar(any());
+    }
     @Test void cuotaDePendientesCortaAntesDeReservarCupo() {
         when(repo.contarPendientesPorUsuario(1L)).thenReturn(10L);
         assertThrows(SeguridadException.class,()->servicio.crearReserva(new ReservaRequest(1L,"DOBLE",1,desde,hasta,null,null,null,"123",null,null)));verifyNoInteractions(cupo);
@@ -89,5 +107,21 @@ class ServicioDeReservasImplTest {
     @Test void pagoYModificacionNoPuedenReactivarReservaConfirmada() {
         Reserva r=reserva(1);r.confirmar("hold-1");assertThrows(SeguridadException.class,()->servicio.consultarParaPago(7L));
         var cambio=new ReservaRequest(1L,"DOBLE",1,desde,hasta,null,null,null,null,BigDecimal.ONE,"ARS");assertThrows(SeguridadException.class,()->servicio.modificarReserva(7L,cambio));verifyNoInteractions(cupo);
+    }
+    SolicitudReserva externa(String referencia) {
+        return new SolicitudReserva(referencia,"BOOKING",1L,desde,hasta,"DOBLE",1,new HuespedDTO("Ana","Paz","ota@test.com","123"),new BigDecimal("150000"),"ARS");
+    }
+    @Test void altaOtaValidaEsIdempotenteYConfirmaUnaSolaReserva() {
+        when(repo.buscarPorCanalYReferencia("BOOKING","ota-1")).thenReturn(Optional.empty());
+        var resultado=servicio.crearDesdeCanal(externa("ota-1"));assertEquals("CONFIRMADA",resultado.estado());
+        verify(cupo).confirmarHold("hold-1");verify(repo,times(1)).guardar(any());
+    }
+    @Test void modificacionYCancelacionOtaConservanReferenciaYNoRevivenCancelada() {
+        Reserva r=new Reserva("BOOKING","ota-2",1L,"DOBLE",1,desde,hasta,new Huesped("Ana","Paz","ota@test.com","123"),new BigDecimal("150000"),"ARS");
+        r.iniciarHold("hold-viejo");r.confirmar("hold-viejo");when(repo.buscarPorCanalYReferencia("BOOKING","ota-2")).thenReturn(Optional.of(r));
+        when(cupo.reemplazarHold(any(),any(),any(),anyInt(),any(),any())).thenReturn("hold-nuevo");
+        var modificada=servicio.modificarDesdeCanal(externa("ota-2"));assertEquals("CONFIRMADA",modificada.estado());assertEquals("ota-2",r.getReferenciaExterna());
+        var cancelada=servicio.cancelarDesdeCanal("BOOKING","ota-2");assertEquals("CANCELADA",cancelada.estado());assertEquals("ota-2",r.getReferenciaExterna());
+        verify(cupo).liberarHold("hold-nuevo");
     }
 }

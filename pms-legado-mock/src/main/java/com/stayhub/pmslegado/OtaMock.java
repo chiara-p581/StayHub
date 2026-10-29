@@ -38,6 +38,8 @@ public final class OtaMock {
         }
         String respuesta = "{\"exitoso\":true,\"ruta\":\""
                 + intercambio.getRequestURI().getPath().replace("\"", "") + "\",\"bytes\":" + cuerpo.length + "}";
+        System.out.println("[OTA] Sincronización recibida: " + metodo + " "
+                + intercambio.getRequestURI().getPath() + " (" + cuerpo.length + " bytes)");
         responder(intercambio, 200, respuesta);
     }
 

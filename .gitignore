@@ -10,6 +10,8 @@ mail.properties
 !.env.example
 # Herramientas locales para generar CSS y probar seguridad de UI
 **/node_modules/
+e2e/playwright-report/
+e2e/test-results/
 
 # Certificados, claves, copias y configuración privada del servidor local
 .local-security/

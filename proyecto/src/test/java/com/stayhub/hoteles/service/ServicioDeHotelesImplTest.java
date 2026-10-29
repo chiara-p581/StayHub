@@ -50,6 +50,15 @@ class ServicioDeHotelesImplTest {
     }
 
     @Test
+    void administradorPuedeCrearYModificarHotelConDatosValidos() {
+        var creado = servicio.crearHotel(new HotelRequest("  Hotel QA  ", " Calle 10 ", " Buenos Aires ", " Argentina ", " prueba ", Set.of("WiFi")));
+        assertEquals("Hotel QA", creado.nombre());assertEquals("Buenos Aires", creado.ciudad());assertNotNull(repositorio.ultimoHotel);
+        conId(repositorio.ultimoHotel, 99L);repositorio.hoteles.put(99L, repositorio.ultimoHotel);
+        var modificado = servicio.modificarHotel(99L, new HotelRequest("Hotel QA renovado", "Calle 11", "Córdoba", "Argentina", "actualizado", Set.of("WiFi","Pileta")));
+        assertEquals("Hotel QA renovado", modificado.nombre());assertEquals("Córdoba", servicio.consultarHotel(99L).ciudad());
+    }
+
+    @Test
     void traduceLaCarreraDeCodigoDuplicadoAConflictoDeDominio() {
         hotelActivo(1L);
         repositorio.errorAlSincronizar = violacionUnicaPostgres();
@@ -178,10 +187,12 @@ class ServicioDeHotelesImplTest {
         private final Map<Long, TipoHabitacion> tipos = new LinkedHashMap<>();
         private final Map<Long, Habitacion> habitaciones = new LinkedHashMap<>();
         private Habitacion ultimaHabitacion;
+        private Hotel ultimoHotel;
         private RuntimeException errorAlSincronizar;
         private int sincronizaciones;
 
         @Override public Hotel guardar(Hotel hotel) {
+            ultimoHotel = hotel;
             if (hotel.getId() != null) hoteles.put(hotel.getId(), hotel);
             return hotel;
         }

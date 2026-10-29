@@ -209,6 +209,21 @@ jobs:
           curl --fail --silent --show-error http://localhost:9091/PmsLegacyService?wsdl > ci-evidence/pms.wsdl
           curl --insecure --fail --silent --show-error https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
           jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Instalar Playwright E2E
+        working-directory: e2e
+        run: npm ci
+      - name: Ejecutar cinco recorridos críticos E2E
+        working-directory: e2e
+        env:
+          CI: "true"
+          STAYHUB_BASE_URL: https://localhost:8443/StayHub
+          STAYHUB_DOCKER_VERIFY: "true"
+        run: npm test
       - name: Guardar logs de los contenedores
         if: always()
         run: |
@@ -220,6 +235,16 @@ jobs:
         with:
           name: integration-evidence
           path: ci-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Publicar evidencias E2E
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-evidence
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
           if-no-files-found: warn
           retention-days: 14
       - name: Apagar el entorno
