@@ -124,6 +124,36 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  secrets-scan:
+    name: Escaneo de secretos (historial completo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Escanear todos los commits de todas las ramas con gitleaks
+        run: |
+          mkdir -p ci-evidence
+          docker run --rm --volume "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            git /repo --config /repo/.gitleaks.toml --log-opts="--all" --redact --verbose \
+            --report-format json --report-path /repo/ci-evidence/gitleaks-report.json
+      - name: Escanear también el árbol de trabajo actual
+        run: |
+          docker run --rm --volume "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            dir /repo --config /repo/.gitleaks.toml --redact --verbose \
+            --report-format json --report-path /repo/ci-evidence/gitleaks-tree-report.json
+      - name: Publicar reporte de secretos
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: secrets-evidence
+          path: |
+            ci-evidence/gitleaks-report.json
+            ci-evidence/gitleaks-tree-report.json
+          if-no-files-found: warn
+          retention-days: 14
+
   integration-smoke:
     name: Integración Docker
     runs-on: ubuntu-latest
