@@ -24,11 +24,11 @@ gitleaks dir --config .gitleaks.toml --redact -v .
 
 ## Resultado de la revisión (2026-10-28)
 
-Historial de todas las ramas: 99 commits con diff escaneados (los merges sin cambios propios no tienen contenido que escanear).
+Historial de todas las ramas: 102 commits con diff escaneados (última revisión) (los merges sin cambios propios no tienen contenido que escanear).
 
 | Escaneo | Resultado |
 |---|---|
-| gitleaks sobre historial, sin config propia | 2 hallazgos, ambos falsos positivos (ver abajo) |
+| gitleaks sobre historial, sin config propia | 3 hallazgos, todos falsos positivos (ver abajo) |
 | gitleaks sobre historial, con `.gitleaks.toml` | 0 hallazgos |
 | gitleaks sobre el árbol actual | 0 hallazgos |
 | Archivos `.pem/.p12/.jks/.key/.crt/.env/mail.properties` en cualquier commit | Ninguno |
@@ -50,6 +50,13 @@ Historial de todas las ramas: 99 commits con diff escaneados (los merges sin cam
 - `GEZDGNBVGY3TQOJQ...` es el Base32 de `12345678901234567890`, el secreto de los vectores de prueba publicados en el RFC 6238. El test lo usa para comparar contra códigos TOTP conocidos. No protege ninguna cuenta.
 - **Revocación y eliminación del historial:** no aplican, por las mismas razones que el hallazgo 1.
 - **Tratamiento:** segunda excepción acotada a ese archivo y ese valor en `.gitleaks.toml`.
+
+### Hallazgo 3: contraseña débil usada como entrada inválida (falso positivo)
+
+- Regla `generic-api-key`, [ServicioDeUsuariosCoberturaTest.java:499](../proyecto/src/test/java/com/stayhub/usuarios/service/ServicioDeUsuariosCoberturaTest.java#L499), commit `dc40a40` (tests de cobertura JaCoCo). Lo detectó el job en GitHub Actions, con 102 commits.
+- `qwertyuiop12` es una contraseña débil que el test le pasa a `resetearPassword` para comprobar que el servicio la rechaza. No corresponde a ninguna cuenta.
+- **Revocación y eliminación del historial:** no aplican, por las mismas razones que el hallazgo 1.
+- **Tratamiento:** tercera excepción acotada a ese archivo y ese valor en `.gitleaks.toml`.
 
 Criterio para futuras excepciones: solo valores públicos o inventados que viven en tests, siempre acotados por archivo y valor, nunca por regla completa.
 
