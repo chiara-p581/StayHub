@@ -66,7 +66,13 @@ Gitleaks no las marca, pero un revisor las puede ver. Existen para que `docker c
 
 Para producción: inyectarlos desde variables de entorno o un gestor de secretos y rotarlos. Los secretos reales (correo SMTP, TLS) ya están fuera del repo: `mail.properties`, `.env*`, `.local-security/` y `.local-demo/` están en `.gitignore`, y la contraseña del keystore TLS se genera aleatoriamente en `configurar-seguridad-local.py`.
 
-## Pendiente de verificación
+## Verificación en CI
 
-- El job `secrets-scan` ya corrió en GitHub Actions y cortó correctamente ante el hallazgo 2, lo que confirma que el control funciona. Falta el run en verde con la excepción incluida. Link: _completar tras el próximo push_.
-- Si en el futuro se detecta un secreto real: revocarlo primero en el proveedor, después eliminarlo del historial con `git filter-repo` coordinando con el equipo, y recién ahí actualizar este documento.
+- El primer run del job `secrets-scan` cortó ante el hallazgo 2, lo que confirmó que el control falla cuando debe.
+- Con las excepciones incluidas (commit `f928a91`), el job quedó en verde: 0 hallazgos en el historial y en el árbol. Los reportes están en el artefacto `secrets-evidence` del run.
+- Link al run en verde (PR #67): https://github.com/chiara-p581/StayHub/actions/runs/40797406636/job/123197119416?pr=67
+- Lista de runs del workflow: https://github.com/chiara-p581/StayHub/actions/workflows/security.yml
+- Antes de crear el tag `v1.0-testing`, confirmar que el run sobre `main` esté en verde (G3 y G6).
+
+## Si aparece un secreto real
+- Revocarlo primero en el proveedor, después eliminarlo del historial con `git filter-repo` coordinando con el equipo, y recién ahí actualizar este documento.
