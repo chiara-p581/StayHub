@@ -59,7 +59,7 @@ unicidad de email, hashing), resuelto con JPA por `UsuarioRepositoryJpa`.
 Con el WAR `StayHub.war`, la URL base predeterminada es:
 
 ```text
-http://localhost:8080/StayHub/api/usuarios
+https://localhost:8080/StayHub/api/usuarios
 ```
 
 | Método | Ruta | Resultado |

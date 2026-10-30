@@ -143,7 +143,9 @@ error estable y no ve excepciones internas.
 
 ## 9. API y evidencia de prueba
 
-La base local es `http://localhost:8080/StayHub/api/hoteles`. La API contiene quince operaciones
+La base del entorno Docker es `https://localhost:8443/StayHub/api/hoteles`; en un WildFly manual
+configurado con `config/configurar-seguridad-local.py` es
+`https://localhost:8080/StayHub/api/hoteles`. La API contiene quince operaciones
 REST para hoteles, tipos y habitaciones. Los listados excluyen elementos inactivos por defecto y las
 consultas directas los conservan visibles como evidencia histórica.
 

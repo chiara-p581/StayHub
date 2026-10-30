@@ -29,7 +29,7 @@ consumidor se revierte y el broker reintenta, sin bloquear la API.
 Enfoque **code-first**: la clase anotada es el contrato y WildFly genera el WSDL en
 
 ```
-http://localhost:8080/StayHub/soap/integracion-pms?wsdl
+https://localhost:8080/StayHub/soap/integracion-pms?wsdl
 ```
 
 - Namespace: `http://soap.stayhub.com/integracion-pms`

@@ -11,7 +11,7 @@ Plataforma de reservas de hotel desarrollada como Trabajo Práctico de **Desarro
 | `ServicioDeReservas` | Ciclo de vida de una reserva (crear, confirmar, modificar, cancelar) |
 | `ServicioDeCanalesExternos` | Integración con OTAs (Booking, Expedia, Airbnb, Despegar) vía REST y con el PMS legado vía SOAP |
 | `ServicioDePagos` | Procesamiento de pagos asociados a una reserva |
-| `ServicioDeOverbooking` | Resolución asincrónica de conflictos de sobreventa |
+| `ServicioDeOverbooking` | Resolución síncrona de conflictos de sobreventa y notificación asíncrona del resultado |
 | `ServicioDeNotificaciones` | Envío de notificaciones (email/SMS/push) |
 | `ServicioDeUsuarios` | Gestión de usuarios con dos roles: **Huésped** y **Administrador** |
 | `IntegracionPms` (fachada SOAP) | Servicio web SOAP que StayHub expone al PMS legado del hotel (reservas, llegadas, disponibilidad y tarifas) |
@@ -198,13 +198,13 @@ Ver [`pms-legado-mock/README.md`](pms-legado-mock/README.md).
 ### 5. Base URL de la API
 
 ```
-http://localhost:8080/StayHub/api
+https://localhost:8080/StayHub/api
 ```
 
 ### 6. Servicio SOAP para el PMS legado
 
 ```
-http://localhost:8080/StayHub/soap/integracion-pms?wsdl
+https://localhost:8080/StayHub/soap/integracion-pms?wsdl
 ```
 
 Ver [`proyecto/src/main/java/com/stayhub/integracionpms/README.md`](proyecto/src/main/java/com/stayhub/integracionpms/README.md) y [`docs/entrega-4/integracion-soap-pms.md`](docs/entrega-4/integracion-soap-pms.md).
@@ -216,6 +216,9 @@ Las colecciones para probar cada componente están en [`postman/`](postman/), ju
 ## Documentación técnica
 
 En [`docs/`](docs/) se encuentra la documentación de arquitectura por componente.
+El alcance funcional vigente, las funciones simuladas y las diferencias entre
+los modos Docker y WildFly manual se consolidan en
+[`docs/ALCANCE_FUNCIONAL_Y_COHERENCIA.md`](docs/ALCANCE_FUNCIONAL_Y_COHERENCIA.md).
 
 ## Enlaces y recursos del proyecto
 
