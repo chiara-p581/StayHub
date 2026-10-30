@@ -44,8 +44,14 @@ jobs:
     name: Backend Java
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # SonarCloud necesita el historial para atribuir código nuevo
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -86,6 +92,41 @@ jobs:
           print('|---|---|---|---|---|')
           print(f'| {len(ms)} | {killed} | {len(ms) - killed} | {100 * killed / len(ms):.1f}% | 60% |')
           PY
+      - name: Aviso si SonarCloud no está configurado
+        if: env.SONAR_TOKEN == '' || env.SONAR_ORGANIZATION == '' || env.SONAR_PROJECT_KEY == ''
+        run: |
+          echo "::warning title=SonarCloud sin configurar::Faltan el secreto SONAR_TOKEN o las variables SONAR_ORGANIZATION y SONAR_PROJECT_KEY. Se omite el análisis estático y el Quality Gate."
+          echo "### SonarCloud: análisis omitido (falta configuración)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Análisis estático y Quality Gate (SonarCloud)
+        if: env.SONAR_TOKEN != '' && env.SONAR_ORGANIZATION != '' && env.SONAR_PROJECT_KEY != ''
+        run: |
+          mvn --file proyecto/pom.xml --batch-mode --no-transfer-progress \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
+            -Dsonar.organization="$SONAR_ORGANIZATION" \
+            -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
+            -Dsonar.qualitygate.wait=true \
+            -Dsonar.qualitygate.timeout=300
+      - name: Guardar estado del Quality Gate
+        if: always() && env.SONAR_TOKEN != '' && env.SONAR_ORGANIZATION != '' && env.SONAR_PROJECT_KEY != ''
+        run: |
+          mkdir -p proyecto/target/sonar-evidence
+          report=proyecto/target/sonar/report-task.txt
+          test -f "$report" || { echo "Sin report-task.txt: el análisis no llegó a publicarse" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          cp "$report" proyecto/target/sonar-evidence/report-task.txt
+          ce_url=$(grep '^ceTaskUrl=' "$report" | cut -d= -f2-)
+          dash=$(grep '^dashboardUrl=' "$report" | cut -d= -f2-)
+          analysis=$(curl -sS -u "$SONAR_TOKEN:" "$ce_url" | jq -r '.task.analysisId // empty')
+          test -n "$analysis" || { echo "Sin analysisId" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          curl -sS -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/qualitygates/project_status?analysisId=$analysis" \
+            | tee proyecto/target/sonar-evidence/quality-gate.json > /dev/null
+          {
+            echo "### Quality Gate de SonarCloud"
+            echo "Estado: **$(jq -r '.projectStatus.status' proyecto/target/sonar-evidence/quality-gate.json)**, [ver dashboard]($dash)"
+            echo
+            echo "| Condición | Estado | Valor | Umbral |"
+            echo "|---|---|---|---|"
+            jq -r '.projectStatus.conditions[] | "| \(.metricKey) | \(.status) | \(.actualValue // "-") | \(.errorThreshold) |"' proyecto/target/sonar-evidence/quality-gate.json
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Publicar evidencias del backend
         if: always()
         uses: actions/upload-artifact@v7
@@ -96,6 +137,7 @@ jobs:
             proyecto/target/site/jacoco/
             proyecto/target/jacoco.exec
             proyecto/target/pit-reports/
+            proyecto/target/sonar-evidence/
             proyecto/target/StayHub.war
             proyecto/target/bom.json
             proyecto/target/bom.xml

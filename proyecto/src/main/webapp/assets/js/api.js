@@ -173,10 +173,20 @@ const Api = (() => {
         return items;
     }
 
+    var localIdCounter = 0;
+    function localRandomHex() {
+        var cryptoApi = typeof window !== "undefined" ? (window.crypto || window.msCrypto) : null;
+        if (cryptoApi && cryptoApi.getRandomValues) {
+            return cryptoApi.getRandomValues(new Uint32Array(1))[0].toString(16);
+        }
+        localIdCounter += 1;
+        return localIdCounter.toString(16);
+    }
+
     function addLocalCartItem(item) {
         var items = localCart();
         if (items.length >= 10) throw new Error("The cart supports at most 10 bookings.");
-        items.push(Object.assign({ itemId: Date.now() + "-" + Math.random().toString(16).slice(2) }, item));
+        items.push(Object.assign({ itemId: Date.now() + "-" + localRandomHex() }, item));
         return saveLocalCart(items);
     }
 

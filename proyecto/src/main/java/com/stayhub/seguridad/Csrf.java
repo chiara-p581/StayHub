@@ -8,9 +8,11 @@ import java.util.Base64;
 
 public final class Csrf {
     private static final SecureRandom RANDOM = new SecureRandom();
+    /** Evita que dos pedidos simultáneos de una misma sesión generen tokens distintos. */
+    private static final Object CANDADO = new Object();
     private Csrf() {}
     public static String token(HttpSession sesion) {
-        synchronized (sesion) {
+        synchronized (CANDADO) {
             String token = (String) sesion.getAttribute("csrfToken");
             if (token == null) {
                 byte[] bytes = new byte[32]; RANDOM.nextBytes(bytes);

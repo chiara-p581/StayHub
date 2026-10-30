@@ -11,6 +11,12 @@ paths = ['''proyecto/src/test/java/com/stayhub/seguridad/AutenticacionWebhookOta
 regexes = ['''0123456789abcdef0123456789abcdef''']
 
 [[allowlists]]
+description = "curl -u con la variable de entorno SONAR_TOKEN: es una referencia, no un valor literal (el token real vive en el secreto de GitHub)"
+condition = "AND"
+paths = ['''\.github/workflows/security\.yml''', '''sonar/crear-quality-gate\.sh''']
+regexes = ['''\$\{?SONAR_TOKEN\}?:''']
+
+[[allowlists]]
 description = "Contraseña débil usada como entrada inválida que el servicio debe rechazar en el test de reseteo (no es una credencial)"
 condition = "AND"
 paths = ['''proyecto/src/test/java/com/stayhub/usuarios/service/ServicioDeUsuariosCoberturaTest\.java''']

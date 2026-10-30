@@ -81,7 +81,7 @@ class ServicioDeReservasCanalTest {
         verify(repo).guardar(argThat(r -> r.getEstado() == EstadoReserva.CONFIRMADA
                 && "hold-1".equals(r.getHoldId())
                 && "BOOKING".equals(r.getCanal()) && "REF-1".equals(r.getReferenciaExterna())
-                && new BigDecimal("1000.50").equals(r.getPrecioTotal())));
+                && r.getPrecioTotal() != null && new BigDecimal("1000.50").compareTo(r.getPrecioTotal()) == 0));
     }
 
     @Test void crearDesdeCanalDuplicadoDevuelveElEstadoActualSinTocarCupo() {
