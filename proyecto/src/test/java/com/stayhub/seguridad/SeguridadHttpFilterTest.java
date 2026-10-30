@@ -27,7 +27,9 @@ class SeguridadHttpFilterTest {
     }
     @Test void httpNoAccedeAContenidoProtegido() throws Exception {
         when(req.isSecure()).thenReturn(false);filtro.doFilter(req,res,chain);verify(res).setStatus(426);verifyNoInteractions(chain);
-        assertTrue(body.toString().contains("correlationId"));
+        verify(res).setContentType("application/problem+json;charset=UTF-8");
+        assertTrue(body.toString().contains("correlationId"));assertTrue(body.toString().contains("\"status\":426"));
+        assertTrue(body.toString().contains("\"type\":\"urn:stayhub:problem:solicitud-rechazada\""));
     }
     @Test void solicitudSeguraIncluyeCabeceras() throws Exception {
         filtro.doFilter(req,res,chain);verify(chain).doFilter(req,res);verify(res).setHeader(eq("Content-Security-Policy"),contains("script-src 'self'"));verify(res).setHeader("Strict-Transport-Security","max-age=31536000; includeSubDomains");

@@ -84,17 +84,17 @@ public class SeguridadHttpFilter implements Filter {
             AuditoriaSeguridad.registrar(request, "SOLICITUD_RECHAZADA", "RECHAZADO", ruta,
                     "HTTP_" + ex.getEstado());
             if (!response.isCommitted()) {
-                response.setStatus(ex.getEstado()); response.setContentType("application/json;charset=UTF-8");
+                response.setStatus(ex.getEstado()); response.setContentType("application/problem+json;charset=UTF-8");
                 if (ex.getEstado() == 429) response.setHeader("Retry-After", "900");
-                response.getWriter().write(AuditoriaSeguridad.respuesta("SOLICITUD_RECHAZADA",
-                        ex.getMessage(), AuditoriaSeguridad.correlationId(request)));
+                response.getWriter().write(AuditoriaSeguridad.respuestaProblema(ex.getEstado(), "SOLICITUD_RECHAZADA",
+                        ex.getMessage(), ruta, AuditoriaSeguridad.correlationId(request)));
             }
         } catch (RuntimeException ex) {
             AuditoriaSeguridad.error(request, ex);
             if (response.isCommitted()) throw ex;
-            response.setStatus(500); response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write(AuditoriaSeguridad.respuesta("ERROR_INTERNO",
-                    "An unexpected error occurred.", AuditoriaSeguridad.correlationId(request)));
+            response.setStatus(500); response.setContentType("application/problem+json;charset=UTF-8");
+            response.getWriter().write(AuditoriaSeguridad.respuestaProblema(500, "ERROR_INTERNO",
+                    "An unexpected error occurred.", ruta, AuditoriaSeguridad.correlationId(request)));
         } finally {
             if (adquirido) concurrentes.release();
         }
