@@ -1,0 +1,2500 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "StayHub REST API",
+    "version": "1.0.0",
+    "description": "Contrato generado desde los recursos JAX-RS versionados."
+  },
+  "servers": [
+    {
+      "url": "https://localhost:8443/StayHub"
+    }
+  ],
+  "paths": {
+    "/api/canales-externos/disponibilidad": {
+      "get": {
+        "operationId": "CanalExterno_consultar",
+        "tags": [
+          "canalesexternos"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+      }
+    },
+    "/api/canales-externos/otas/{canal}/reservas": {
+      "post": {
+        "operationId": "CanalExterno_recibir",
+        "tags": [
+          "canalesexternos"
+        ],
+        "parameters": [
+          {
+            "name": "canal",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+      }
+    },
+    "/api/canales-externos/otas/{canal}/reservas/{idExterno}": {
+      "delete": {
+        "operationId": "CanalExterno_cancelar",
+        "tags": [
+          "canalesexternos"
+        ],
+        "parameters": [
+          {
+            "name": "canal",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idExterno",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+      },
+      "put": {
+        "operationId": "CanalExterno_modificar",
+        "tags": [
+          "canalesexternos"
+        ],
+        "parameters": [
+          {
+            "name": "canal",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idExterno",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+      }
+    },
+    "/api/canales-externos/otas/{canal}/sincronizaciones": {
+      "post": {
+        "operationId": "CanalExterno_sincronizarOta",
+        "tags": [
+          "canalesexternos"
+        ],
+        "parameters": [
+          {
+            "name": "canal",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+      }
+    },
+    "/api/canales-externos/pms/sincronizaciones": {
+      "post": {
+        "operationId": "CanalExterno_sincronizarPms",
+        "tags": [
+          "canalesexternos"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+      }
+    },
+    "/api/carrito": {
+      "delete": {
+        "operationId": "Carrito_vaciar",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+      },
+      "get": {
+        "operationId": "Carrito_resumen",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+      }
+    },
+    "/api/carrito/confirmar": {
+      "post": {
+        "operationId": "Carrito_confirmar",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+      }
+    },
+    "/api/carrito/fechas": {
+      "post": {
+        "operationId": "Carrito_seleccionarFechas",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+      }
+    },
+    "/api/carrito/hotel": {
+      "post": {
+        "operationId": "Carrito_seleccionarHotel",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+      }
+    },
+    "/api/carrito/huesped": {
+      "post": {
+        "operationId": "Carrito_seleccionarHuesped",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+      }
+    },
+    "/api/catalogo-canales/ofertas": {
+      "get": {
+        "operationId": "CatalogoCanales_listar",
+        "tags": [
+          "canalesexternos"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CatalogoCanalesResource.java"
+      }
+    },
+    "/api/demo/cargar": {
+      "post": {
+        "operationId": "DemoData_cargar",
+        "tags": [
+          "stayhub"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/demo/DemoDataResource.java"
+      }
+    },
+    "/api/hoteles": {
+      "get": {
+        "operationId": "Hotel_listar",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "post": {
+        "operationId": "Hotel_crear",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      }
+    },
+    "/api/hoteles/{hotelId}/habitaciones": {
+      "get": {
+        "operationId": "Hotel_listarHabitaciones",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "post": {
+        "operationId": "Hotel_crearHabitacion",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      }
+    },
+    "/api/hoteles/{hotelId}/habitaciones/{habitacionId}": {
+      "delete": {
+        "operationId": "Hotel_eliminarHabitacion",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "habitacionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "get": {
+        "operationId": "Hotel_consultarHabitacion",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "habitacionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "put": {
+        "operationId": "Hotel_modificarHabitacion",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "habitacionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      }
+    },
+    "/api/hoteles/{hotelId}/tipos-habitacion": {
+      "get": {
+        "operationId": "Hotel_listarTipos",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "post": {
+        "operationId": "Hotel_crearTipo",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      }
+    },
+    "/api/hoteles/{hotelId}/tipos-habitacion/{tipoId}": {
+      "delete": {
+        "operationId": "Hotel_eliminarTipo",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "get": {
+        "operationId": "Hotel_consultarTipo",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "put": {
+        "operationId": "Hotel_modificarTipo",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      }
+    },
+    "/api/hoteles/{id}": {
+      "delete": {
+        "operationId": "Hotel_eliminar",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "get": {
+        "operationId": "Hotel_consultar",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      },
+      "put": {
+        "operationId": "Hotel_modificar",
+        "tags": [
+          "hoteles"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+      }
+    },
+    "/api/inventario-tarifas/cargas": {
+      "post": {
+        "operationId": "Inventario_cargar",
+        "tags": [
+          "inventarioytarifas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/inventarioytarifas/api/InventarioResource.java"
+      }
+    },
+    "/api/inventario-tarifas/disponibilidad": {
+      "get": {
+        "operationId": "Inventario_disponibilidad",
+        "tags": [
+          "inventarioytarifas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/inventarioytarifas/api/InventarioResource.java"
+      }
+    },
+    "/api/inventario-tarifas/tarifas": {
+      "get": {
+        "operationId": "Inventario_tarifas",
+        "tags": [
+          "inventarioytarifas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/inventarioytarifas/api/InventarioResource.java"
+      }
+    },
+    "/api/notificaciones/enviar": {
+      "post": {
+        "operationId": "Notificaciones_enviar",
+        "tags": [
+          "notificaciones"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/notificaciones/api/NotificacionesResource.java"
+      }
+    },
+    "/api/overbooking/resolver": {
+      "post": {
+        "operationId": "Overbooking_resolver",
+        "tags": [
+          "servicioDeOverbooking"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/servicioDeOverbooking/api/OverbookingResource.java"
+      }
+    },
+    "/api/pagos": {
+      "post": {
+        "operationId": "Pago_procesar",
+        "tags": [
+          "pagos"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
+      }
+    },
+    "/api/pagos/{id}": {
+      "get": {
+        "operationId": "Pago_consultar",
+        "tags": [
+          "pagos"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
+      }
+    },
+    "/api/pagos/lote": {
+      "post": {
+        "operationId": "Pago_procesarLote",
+        "tags": [
+          "pagos"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
+      }
+    },
+    "/api/pagos/mios": {
+      "get": {
+        "operationId": "Pago_listarMios",
+        "tags": [
+          "pagos"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
+      }
+    },
+    "/api/reservas": {
+      "get": {
+        "operationId": "Reserva_listarPorHotel",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+      },
+      "post": {
+        "operationId": "Reserva_crear",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+      }
+    },
+    "/api/reservas/{id}": {
+      "delete": {
+        "operationId": "Reserva_cancelar",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+      },
+      "get": {
+        "operationId": "Reserva_consultar",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+      },
+      "put": {
+        "operationId": "Reserva_modificar",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+      }
+    },
+    "/api/reservas/{id}/confirmacion": {
+      "post": {
+        "operationId": "Reserva_confirmar",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+      }
+    },
+    "/api/reservas/mias": {
+      "get": {
+        "operationId": "Reserva_listarMias",
+        "tags": [
+          "reservas"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+      }
+    },
+    "/api/saludo": {
+      "get": {
+        "operationId": "Saludo_saludar",
+        "tags": [
+          "com"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/SaludoResource.java"
+      }
+    },
+    "/api/seguridad/csrf": {
+      "get": {
+        "operationId": "Seguridad_token",
+        "tags": [
+          "stayhub"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/seguridad/SeguridadResource.java"
+      }
+    },
+    "/api/usuarios": {
+      "post": {
+        "operationId": "Usuario_registrar",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/{id}": {
+      "get": {
+        "operationId": "Usuario_consultar",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/login": {
+      "post": {
+        "operationId": "Usuario_login",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/me": {
+      "put": {
+        "operationId": "Usuario_actualizarMiPerfil",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/recuperar-password": {
+      "post": {
+        "operationId": "Usuario_recuperar",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/resetear-password": {
+      "post": {
+        "operationId": "Usuario_resetear",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/sesion": {
+      "delete": {
+        "operationId": "Usuario_cerrarSesion",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente"
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticación requerida"
+          },
+          "403": {
+            "description": "Operación no autorizada"
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "required": [
+          "status",
+          "title"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

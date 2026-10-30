@@ -21,6 +21,25 @@ env:
   JAVA_VERSION: "17"
 
 jobs:
+  api-contracts:
+    name: Contratos REST y colecciones Postman
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Generar y verificar OpenAPI y colecciones
+        run: npm --prefix contracts run verify
+      - name: Publicar contrato OpenAPI
+        uses: actions/upload-artifact@v7
+        with:
+          name: api-contracts
+          path: contracts/openapi/stayhub-openapi.json
+          if-no-files-found: error
+          retention-days: 14
+
   backend:
     name: Backend Java
     runs-on: ubuntu-latest
@@ -209,6 +228,14 @@ jobs:
           curl --fail --silent --show-error http://localhost:9091/PmsLegacyService?wsdl > ci-evidence/pms.wsdl
           curl --insecure --fail --silent --show-error https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
           jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json
+          node contracts/verify-wsdl.mjs ci-evidence/pms.wsdl
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Ejecutar colección de Canales Externos con Newman
+        run: |
+          npx --yes newman@6.2.1 run postman/StayHub-ServicioDeCanalesExternos.postman_collection.json \
+            --insecure --reporters cli,junit --reporter-junit-export ci-evidence/newman-canales.xml
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
