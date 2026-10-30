@@ -1,5 +1,8 @@
 package com.stayhub.reservas.model;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * Ciclo de vida de una reserva dentro de StayHub.
  *
@@ -19,5 +22,24 @@ public enum EstadoReserva {
     CONFIRMADA,
     MODIFICADA,
     CANCELADA,
-    RECHAZADA
+    RECHAZADA;
+
+    /**
+     * Tabla única del ciclo de vida. Las repeticiones idempotentes se resuelven
+     * en el servicio y no se consideran una transición de estado.
+     */
+    public boolean permiteTransicionA(EstadoReserva destino) {
+        if (destino == null || destino == this) return false;
+        return transicionesPermitidas().contains(destino);
+    }
+
+    public Set<EstadoReserva> transicionesPermitidas() {
+        return switch (this) {
+            case PENDIENTE -> EnumSet.of(CONFIRMADA, MODIFICADA, CANCELADA, RECHAZADA);
+            case CONFIRMADA -> EnumSet.of(MODIFICADA, CANCELADA);
+            case MODIFICADA -> EnumSet.of(PENDIENTE, CONFIRMADA, CANCELADA, RECHAZADA);
+            case RECHAZADA -> EnumSet.of(MODIFICADA, CANCELADA);
+            case CANCELADA -> EnumSet.noneOf(EstadoReserva.class);
+        };
+    }
 }

@@ -239,7 +239,7 @@ class ServicioDeReservasDirectaTest {
     }
 
     @Test void confirmarReservaYaConfirmadaEsIdempotente() throws Exception {
-        Reserva r = reserva(1, "hold-1");
+        Reserva r = reserva(1, null);
         r.confirmar("hold-1");
         when(pagos.existeAprobadoParaReserva(7L)).thenReturn(true);
         assertEquals("CONFIRMADA", servicio.confirmarReserva(7L).estado());
@@ -294,6 +294,17 @@ class ServicioDeReservasDirectaTest {
         assertEquals(404, assertThrows(SeguridadException.class, () -> servicio.cancelarReserva(55L)).getEstado());
     }
 
+    @Test void cancelarReservaRechazadaLaCierraSinIntentarLiberarUnHoldAusente() throws Exception {
+        Reserva r = reserva(1, null);
+        r.rechazar();
+
+        assertEquals("CANCELADA", servicio.cancelarReserva(7L).estado());
+
+        assertEquals(EstadoReserva.CANCELADA, r.getEstado());
+        verify(cupo, never()).liberarHold(any());
+        verify(repo).guardar(r);
+    }
+
     // ---------------- modificarReserva ----------------
 
     @Test void modificarReservaPendienteConHoldReemplazaElHoldYRecalculaElPrecio() throws Exception {
@@ -343,15 +354,19 @@ class ServicioDeReservasDirectaTest {
     }
 
     @Test void modificarReservaCanceladaORechazadaEsTransicionInvalida() throws Exception {
-        Reserva r = reserva(1, "hold-1");
-        r.cancelar();
+        Reserva cancelada = reserva(1, "hold-1");
+        cancelada.cancelar();
         var e1 = assertThrows(ReservaException.class, () -> servicio.modificarReserva(7L, cambio("DOBLE", 1, desde, hasta, BigDecimal.ONE, "ARS")));
         assertEquals(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA, e1.getCodigo());
         assertTrue(e1.getMessage().contains("CANCELADA"));
-        r.rechazar();
+
+        Reserva rechazada = reserva(1, "hold-1");
+        rechazada.rechazar();
         var e2 = assertThrows(ReservaException.class, () -> servicio.modificarReserva(7L, cambio("DOBLE", 1, desde, hasta, BigDecimal.ONE, "ARS")));
         assertEquals(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA, e2.getCodigo());
         assertTrue(e2.getMessage().contains("RECHAZADA"));
+        assertEquals(EstadoReserva.CANCELADA, cancelada.getEstado());
+        assertEquals(EstadoReserva.RECHAZADA, rechazada.getEstado());
         verifyNoInteractions(cupo);
     }
 

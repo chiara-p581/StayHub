@@ -1,5 +1,7 @@
 package com.stayhub.reservas.model;
 
+import com.stayhub.reservas.exception.CodigoErrorReserva;
+import com.stayhub.reservas.exception.ReservaException;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -114,36 +116,45 @@ public class Reserva {
 
     /** Se retuvo el cupo pero todavía no se confirmó (flujo de reserva directa con hold). */
     public void iniciarHold(String holdId) {
+        transicionarA(EstadoReserva.PENDIENTE);
         this.holdId = holdId;
-        this.estado = EstadoReserva.PENDIENTE;
         this.fechaActualizacion = LocalDateTime.now();
     }
 
     public void confirmar(String holdConfirmadoId) {
+        transicionarA(EstadoReserva.CONFIRMADA);
         this.holdId = holdConfirmadoId;
-        this.estado = EstadoReserva.CONFIRMADA;
         this.fechaActualizacion = LocalDateTime.now();
     }
 
     public void rechazar() {
-        this.estado = EstadoReserva.RECHAZADA;
+        transicionarA(EstadoReserva.RECHAZADA);
         this.fechaActualizacion = LocalDateTime.now();
     }
 
     public void cancelar() {
-        this.estado = EstadoReserva.CANCELADA;
+        transicionarA(EstadoReserva.CANCELADA);
         this.fechaActualizacion = LocalDateTime.now();
     }
 
     public void actualizarDatos(LocalDate checkIn, LocalDate checkOut, String tipoHabitacion,
                                  int cantidadHabitaciones, BigDecimal precioTotal) {
+        transicionarA(EstadoReserva.MODIFICADA);
         this.checkIn = checkIn;
         this.checkOut = checkOut;
         this.tipoHabitacion = tipoHabitacion;
         this.cantidadHabitaciones = cantidadHabitaciones;
         this.precioTotal = precioTotal;
-        this.estado = EstadoReserva.MODIFICADA;
         this.fechaActualizacion = LocalDateTime.now();
+    }
+
+    private void transicionarA(EstadoReserva destino) {
+        if (estado == destino) return;
+        if (!estado.permiteTransicionA(destino)) {
+            throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
+                    "No se puede cambiar una reserva de " + estado + " a " + destino);
+        }
+        estado = destino;
     }
 
     // --- getters (sin setters sueltos, para que los cambios de estado pasen
