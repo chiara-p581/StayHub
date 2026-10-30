@@ -92,7 +92,7 @@ test.describe.serial("KAN-100 — matriz de seguridad en vivo", () => {
   test("inyección SQL en un identificador se rechaza como entrada inválida", async () => {
     const response = await apiA.get("api/hoteles/1%20OR%201%3D1");
     expect([400, 404]).toContain(response.status());
-    expect(response.headers()["content-type"]).toContain("application/json");
+    expect(response.headers()["content-type"]).toMatch(/^application\/(problem\+)?json(?:;|$)/);
   });
 
   test("XSS: toda escritura HTML dinámica pasa por el sanitizador local", async () => {

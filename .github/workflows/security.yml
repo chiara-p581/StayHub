@@ -217,13 +217,36 @@ jobs:
       - name: Instalar Playwright E2E
         working-directory: e2e
         run: npm ci
-      - name: Ejecutar cinco recorridos críticos E2E
+      - name: Ejecutar recorridos E2E aislando los límites de seguridad
         working-directory: e2e
         env:
           CI: "true"
           STAYHUB_BASE_URL: https://localhost:8443/StayHub
           STAYHUB_DOCKER_VERIFY: "true"
-        run: npm test
+        run: |
+          set -euo pipefail
+          esperar_app() {
+            for intento in $(seq 1 60); do
+              if curl --insecure --fail --silent --output /dev/null \
+                  https://localhost:8443/StayHub/index.html; then
+                return 0
+              fi
+              sleep 2
+            done
+            echo "StayHub no volvió a estar disponible" >&2
+            return 1
+          }
+
+          npx playwright test tests/stayhub-critical.spec.cjs
+          docker compose --project-directory .. restart app
+          esperar_app
+
+          npx playwright test tests/session-security.spec.cjs
+          docker compose --project-directory .. restart app
+          esperar_app
+
+          # Esta suite agota intencionalmente el límite de login, por eso va última.
+          npx playwright test tests/live-security-matrix.spec.cjs
       - name: Guardar logs de los contenedores
         if: always()
         run: |
