@@ -10,14 +10,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 @ApplicationScoped
 public class ConfiguracionCanales {
-    private static final long TIMEOUT_CONEXION_PREDETERMINADO_MS = 3_000;
-    private static final long TIMEOUT_LECTURA_PREDETERMINADO_MS = 10_000;
+    private static final long TIMEOUT_CONEXION_PREDETERMINADO_MS = 750;
+    private static final long TIMEOUT_LECTURA_PREDETERMINADO_MS = 1_500;
 
     public String urlOta(Canal canal) { return urlPermitida(requerida("stayhub.ota." + canal.name().toLowerCase() + ".url")); }
     public String tokenOta(Canal canal) { return opcional("stayhub.ota." + canal.name().toLowerCase() + ".token"); }
     public String wsdlPms() { return urlPermitida(requerida("stayhub.pms.wsdl")); }
-    public long timeoutConexionMs() { return enteroAcotado("stayhub.canales.timeout.conexion.ms", TIMEOUT_CONEXION_PREDETERMINADO_MS, 3_000); }
-    public long timeoutLecturaMs() { return enteroAcotado("stayhub.canales.timeout.lectura.ms", TIMEOUT_LECTURA_PREDETERMINADO_MS, 10_000); }
+    public String endpointPms() {
+        URI wsdl = URI.create(wsdlPms());
+        try {
+            return new URI(wsdl.getScheme(), null, wsdl.getHost(), wsdl.getPort(),
+                    wsdl.getPath(), null, null).toString();
+        } catch (java.net.URISyntaxException ex) {
+            throw new CanalExternoException(CodigoErrorCanal.SOLICITUD_INVALIDA,
+                    "La URL del PMS no permite derivar un endpoint SOAP válido", ex);
+        }
+    }
+    public long timeoutConexionMs() { return enteroAcotado("stayhub.canales.timeout.conexion.ms", TIMEOUT_CONEXION_PREDETERMINADO_MS, 750); }
+    public long timeoutLecturaMs() { return enteroAcotado("stayhub.canales.timeout.lectura.ms", TIMEOUT_LECTURA_PREDETERMINADO_MS, 1_500); }
     private String requerida(String clave) {
         String valor = opcional(clave);
         if (valor == null || valor.isBlank()) throw new CanalExternoException(

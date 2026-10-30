@@ -17,7 +17,11 @@ function isoDate(days) {
 }
 
 function docker(...args) {
-  return execFileSync("docker", ["compose", ...args], { cwd: repo, encoding: "utf8" });
+  return execFileSync("docker", ["compose", ...args], {
+    cwd: repo,
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024
+  });
 }
 
 function dbScalar(sql) {
@@ -83,7 +87,7 @@ function signWebhook(method, route, body) {
 }
 
 async function expectLog(service, pattern) {
-  await expect.poll(() => docker("logs", "--no-color", service), { timeout: 30_000 }).toContain(pattern);
+  await expect.poll(() => docker("logs", "--no-color", "--tail", "1000", service), { timeout: 30_000 }).toContain(pattern);
 }
 
 test.describe("StayHub — cinco recorridos críticos", () => {
@@ -218,7 +222,7 @@ test.describe("StayHub — cinco recorridos críticos", () => {
     expect(result.tipoHabitacionAlternativa).toBe("SUITE");
     if (dockerVerification) {
       expect(dbScalar(`SELECT estrategia_aplicada || ':' || resuelto FROM conflicto_overbooking WHERE id=${Number(result.conflictoId)}`)).toBe("REUBICACION:true");
-      await expect.poll(() => docker("logs", "--no-color", "app"), { timeout: 30_000 }).toMatch(/overbooking|notificaci[oó]n/i);
+      await expect.poll(() => docker("logs", "--no-color", "--tail", "1000", "app"), { timeout: 30_000 }).toMatch(/overbooking|notificaci[oó]n/i);
     }
   });
 });

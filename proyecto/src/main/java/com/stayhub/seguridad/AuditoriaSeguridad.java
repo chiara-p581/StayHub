@@ -94,8 +94,22 @@ public final class AuditoriaSeguridad {
         registrarUnaVez(request, accion, estado < 400 ? "EXITO" : "RECHAZADO", ruta, "HTTP_" + estado);
     }
 
-    public static String respuesta(String codigo, String mensaje, String correlationId) {
-        return json("codigo", codigo, "mensaje", mensaje, "correlationId", correlationId);
+    public static String respuestaProblema(int estado, String codigo, String mensaje,
+                                           String instancia, String correlationId) {
+        boolean interno = estado >= 500;
+        String codigoSeguro = interno || codigo == null || !codigo.matches("[A-Z][A-Z0-9_]{0,63}")
+                ? (interno ? "ERROR_INTERNO" : "HTTP_" + estado) : codigo;
+        String detalle = interno ? "Ocurrió un error interno. Intentá nuevamente más tarde." : mensaje;
+        String ruta = instancia == null || instancia.isBlank() ? "/" : instancia;
+        return "{\"type\":\"urn:stayhub:problem:" + escape(codigoSeguro.toLowerCase(Locale.ROOT).replace('_', '-'))
+                + "\",\"title\":\"" + escape(sanitizar(RespuestaSeguraFilter.titulo(estado)))
+                + "\",\"status\":" + estado
+                + ",\"detail\":\"" + escape(sanitizar(detalle))
+                + "\",\"instance\":\"" + escape(sanitizar(ruta))
+                + "\",\"codigo\":\"" + escape(codigoSeguro)
+                + "\",\"mensaje\":\"" + escape(sanitizar(detalle))
+                + "\",\"correlationId\":\"" + escape(sanitizar(correlationId))
+                + "\",\"timestamp\":\"" + Instant.now() + "\"}";
     }
 
     private static String huella(String valor) {

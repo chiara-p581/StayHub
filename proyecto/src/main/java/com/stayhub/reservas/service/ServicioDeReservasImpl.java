@@ -132,6 +132,8 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
                 return ReservaMapper.aResultadoOperacion(reserva);
             }
 
+            exigirTransicion(reserva, EstadoReserva.CANCELADA);
+
             liberarHoldSiExiste(reserva);
             reserva.cancelar();
             repositorio.guardar(reserva);
@@ -198,6 +200,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             // liberación del hold (mismo criterio que cancelarDesdeCanal).
             return ReservaMapper.aResponse(reserva);
         }
+        exigirTransicion(reserva, EstadoReserva.CANCELADA);
         liberarHoldSiExiste(reserva);
         reserva.cancelar();
         repositorio.guardar(reserva);
@@ -346,6 +349,13 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     private void liberarHoldSiExiste(Reserva reserva) {
         if (reserva.getHoldId() != null) {
             disponibilidad().liberarHold(reserva.getHoldId());
+        }
+    }
+
+    private void exigirTransicion(Reserva reserva, EstadoReserva destino) {
+        if (!reserva.getEstado().permiteTransicionA(destino)) {
+            throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
+                    "No se puede cambiar una reserva de " + reserva.getEstado() + " a " + destino);
         }
     }
 

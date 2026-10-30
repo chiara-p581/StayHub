@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  * JAX-WS usa arg0, arg1, arg2 en los dos lados.
  *
  * Para demostrar el manejo de timeouts se puede simular un PMS lento con
- * -Dpms.demora.ms=20000 (el cliente corta a los 15 s por defecto).
+ * -Dpms.demora.ms=6000 (cada intento del cliente corta a los 1,5 s).
  */
 @WebService(
         name = "PmsLegacyPort",

@@ -27,7 +27,9 @@ class SeguridadHttpFilterTest {
     }
     @Test void httpNoAccedeAContenidoProtegido() throws Exception {
         when(req.isSecure()).thenReturn(false);filtro.doFilter(req,res,chain);verify(res).setStatus(426);verifyNoInteractions(chain);
-        assertTrue(body.toString().contains("correlationId"));
+        verify(res).setContentType("application/problem+json;charset=UTF-8");
+        assertTrue(body.toString().contains("correlationId"));assertTrue(body.toString().contains("\"status\":426"));
+        assertTrue(body.toString().contains("\"type\":\"urn:stayhub:problem:solicitud-rechazada\""));
     }
     @Test void solicitudSeguraIncluyeCabeceras() throws Exception {
         filtro.doFilter(req,res,chain);verify(chain).doFilter(req,res);verify(res).setHeader(eq("Content-Security-Policy"),contains("script-src 'self'"));verify(res).setHeader("Strict-Transport-Security","max-age=31536000; includeSubDomains");
@@ -64,6 +66,18 @@ class SeguridadHttpFilterTest {
         try {
             when(req.getRequestURI()).thenReturn("/soap/integracion-pms");when(req.getAttribute("jakarta.servlet.request.X509Certificate")).thenReturn(new X509Certificate[]{cert});filtro.doFilter(req,res,chain);
             verify(req).setAttribute(IdentidadActual.PMS_HOTELES,java.util.Set.of(1L,2L));verify(chain).doFilter(req,res);
+        } finally {System.clearProperty("stayhub.pms.certificado-sha256");System.clearProperty("stayhub.pms.hoteles");}
+    }
+    @Test void soapAutenticadoConDtdSeRechazaAntesDeLlegarAlEndpoint() throws Exception {
+        byte[] certBytes="cert-prueba-xxe".getBytes(StandardCharsets.UTF_8);var cert=mock(X509Certificate.class);when(cert.getEncoded()).thenReturn(certBytes);
+        System.setProperty("stayhub.pms.certificado-sha256",HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(certBytes)));System.setProperty("stayhub.pms.hoteles","1");
+        try {
+            when(req.getRequestURI()).thenReturn("/soap/integracion-pms");when(req.getMethod()).thenReturn("POST");
+            when(req.getAttribute("jakarta.servlet.request.X509Certificate")).thenReturn(new X509Certificate[]{cert});
+            cuerpo("<!DOCTYPE x [<!ENTITY archivo SYSTEM 'file:///etc/passwd'>]><x>&archivo;</x>");
+            when(req.getContentType()).thenReturn("text/xml");
+            filtro.doFilter(req,res,chain);
+            verify(res).setStatus(400);verifyNoInteractions(chain);assertFalse(body.toString().contains("root:"));
         } finally {System.clearProperty("stayhub.pms.certificado-sha256");System.clearProperty("stayhub.pms.hoteles");}
     }
     @Test void contenidoGrandeRechazadoAntesDelParser() throws Exception {
