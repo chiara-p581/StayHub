@@ -225,10 +225,10 @@ jobs:
           mkdir -p ci-evidence
           docker compose exec -T app /opt/jboss/load-demo.sh | tee ci-evidence/demo-load.log
           curl --fail --silent --show-error http://localhost:9080/health | tee ci-evidence/ota-health.txt
-          curl --fail --silent --show-error http://localhost:9091/PmsLegacyService?wsdl > ci-evidence/pms.wsdl
+          curl --fail --silent --show-error http://localhost:9091/PmsLegacyService?wsdl > ci-evidence/pms-mock.wsdl
           curl --insecure --fail --silent --show-error https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
           jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json
-          node contracts/verify-wsdl.mjs ci-evidence/pms.wsdl
+          node contracts/verify-wsdl.mjs ci-evidence/pms-mock.wsdl sincronizarInventario
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
