@@ -42,3 +42,19 @@ La cuenta de la aplicación sólo necesita permisos DML sobre el esquema ya migr
 ## Auditoría y errores (SEC-13)
 
 Toda respuesta REST de error pasa por `RespuestaSeguraFilter`: agrega correlación, evita caché, registra una decisión estructurada una sola vez y reemplaza cualquier cuerpo 5xx por un mensaje genérico. Los logs no incluyen cuerpos, contraseñas, tokens, PAN/CVV ni mensajes arbitrarios de excepciones. `config/seguridad-a-logging.cli` separa auditoría y errores en archivos rotados de hasta 10 MiB con 14 respaldos. El acceso, envío y retención posterior de esos archivos debe ajustarse a la política del ambiente.
+
+## Seguridad de sesiones (KAN-101)
+
+StayHub no usa JWT: la autenticación del navegador se implementa con una sesión HTTP
+administrada por WildFly. Por eso los casos de alteración de firma o claims de un JWT no
+aplican literalmente; se cubren sus riesgos equivalentes sobre `JSESSIONID`.
+
+La cookie se limita al canal HTTPS, es `HttpOnly`, usa `SameSite=Lax` y no admite el id de
+sesión en la URL. El login invalida cualquier sesión anterior, crea una nueva y rota su
+identificador; el logout la invalida. La inactividad vence a los 15 minutos y existe además
+un límite absoluto de ocho horas validado en cada request autenticada. Las mutaciones usan
+un token CSRF asociado a esa misma sesión.
+
+La suite automatizada verifica cookie manipulada, rotación al iniciar sesión, reutilización
+posterior al logout, aislamiento entre usuarios y vencimiento absoluto. Una sesión inválida,
+ausente o expirada recibe HTTP 401 sin revelar datos internos.
