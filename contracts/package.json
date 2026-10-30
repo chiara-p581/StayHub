@@ -1,0 +1,10 @@
+{
+  "name": "stayhub-api-contracts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node generate-openapi.mjs",
+    "verify": "node generate-openapi.mjs && node verify-contracts.mjs",
+    "verify:wsdl": "node verify-wsdl.mjs"
+  }
+}

@@ -1,9 +1,9 @@
 # Colecciones de Postman — StayHub
 
-Base URL usada por todas las colecciones:
+Base URL recomendada para Docker Compose:
 
 ```
-http://localhost:8080/StayHub/api
+https://localhost:8443/StayHub/api
 ```
 
 ## Colecciones disponibles
@@ -13,9 +13,16 @@ http://localhost:8080/StayHub/api
 | `StayHub-ServicioDeHoteles.postman_collection.json` | ServicioDeHoteles |
 | `StayHub-InventarioYTarifas.postman_collection.json` | ServicioDeInventarioYTarifas |
 | `StayHub-ServicioDeReservas.postman_collection.json` | ServicioDeReservas (incluye Carrito de reserva y la seguridad por dueño) |
-| `Stayhub pagos.postman collection.json` | ServicioDePagos |
-| `Stayhub usuarios.postman.collection.json` | ServicioDeUsuarios |
+| `StayHub-ServicioDePagos.postman_collection.json` | ServicioDePagos |
+| `StayHub-ServicioDeUsuarios.postman_collection.json` | ServicioDeUsuarios |
+| `StayHub-ServicioDeNotificaciones.postman_collection.json` | ServicioDeNotificaciones |
+| `StayHub-ServicioDeOverbooking.postman_collection.json` | ServicioDeOverbooking |
+| `StayHub-ServicioDeCanalesExternos.postman_collection.json` | ServicioDeCanalesExternos y catálogo multicanal |
 | `StayHub-IntegracionPmsSOAP.postman_collection.json` | Servicio SOAP expuesto al PMS legado (base `https://localhost:8080/StayHub/soap/integracion-pms`, no usa `/api`) |
+
+El pipeline ejecuta la colección de Canales Externos con Newman y publica el reporte JUnit. El contrato
+OpenAPI se genera y valida con `npm --prefix contracts run verify`; cualquier endpoint JAX-RS nuevo queda
+incorporado automáticamente y se conserva como evidencia de CI.
 
 ## Configuración necesaria para probar Canales Externos (sincronización OTA/PMS)
 
