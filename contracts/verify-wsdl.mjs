@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 const file = process.argv[2];
 if (!file) throw new Error("Uso: node verify-wsdl.mjs <archivo.wsdl>");
 const wsdl = await readFile(file, "utf8");
-const operations = ["consultarReserva", "listarLlegadas", "cancelarReserva", "consultarDisponibilidad", "consultarTarifas"];
+const defaultOperations = ["consultarReserva", "listarLlegadas", "cancelarReserva", "consultarDisponibilidad", "consultarTarifas"];
+const operations = process.argv.slice(3).length ? process.argv.slice(3) : defaultOperations;
 for (const operation of operations) {
   const expression = new RegExp(`<[^>]*operation[^>]+name=["']${operation}["']`, "i");
   if (!expression.test(wsdl)) throw new Error(`El WSDL no publica la operación ${operation}.`);
