@@ -24,11 +24,11 @@ gitleaks dir --config .gitleaks.toml --redact -v .
 
 ## Resultado de la revisión (2026-10-28)
 
-Historial de todas las ramas: 102 commits con diff escaneados (última revisión) (los merges sin cambios propios no tienen contenido que escanear).
+Historial de todas las ramas: 118 commits con diff escaneados (última revisión) (los merges sin cambios propios no tienen contenido que escanear).
 
 | Escaneo | Resultado |
 |---|---|
-| gitleaks sobre historial, sin config propia | 3 hallazgos, todos falsos positivos (ver abajo) |
+| gitleaks sobre historial, sin config propia | 4 hallazgos (6 coincidencias), todos falsos positivos (ver abajo) |
 | gitleaks sobre historial, con `.gitleaks.toml` | 0 hallazgos |
 | gitleaks sobre el árbol actual | 0 hallazgos |
 | Archivos `.pem/.p12/.jks/.key/.crt/.env/mail.properties` en cualquier commit | Ninguno |
@@ -57,6 +57,13 @@ Historial de todas las ramas: 102 commits con diff escaneados (última revisión
 - `qwertyuiop12` es una contraseña débil que el test le pasa a `resetearPassword` para comprobar que el servicio la rechaza. No corresponde a ninguna cuenta.
 - **Revocación y eliminación del historial:** no aplican, por las mismas razones que el hallazgo 1.
 - **Tratamiento:** tercera excepción acotada a ese archivo y ese valor en `.gitleaks.toml`.
+
+### Hallazgo 4: `curl -u "$SONAR_TOKEN:"` (falso positivo, 3 coincidencias)
+
+- Regla `curl-auth-user`, commit `175895d` (integración con SonarCloud): [security.yml](../.github/workflows/security.yml) líneas 118 y 120 y [crear-quality-gate.sh](../sonar/crear-quality-gate.sh) línea 18. Lo detectó el job en GitHub Actions, con 118 commits.
+- La regla marca cualquier `curl -u usuario:clave`. Acá la parte sensible es la **referencia a una variable de entorno** (`$SONAR_TOKEN`), no un valor literal. El token real vive en el secreto de GitHub `SONAR_TOKEN` y nunca está en el repositorio (se buscó a mano: no hay tokens `squ_`, `sqp_` ni `sqa_`, ni cadenas hexadecimales largas en `.github`, `sonar`, `docs` ni el pom).
+- **Revocación:** no aplica, no se expuso ningún token.
+- **Tratamiento:** cuarta excepción acotada a esos dos archivos y a la expresión `$SONAR_TOKEN` (con o sin llaves). Un token pegado como literal en esos mismos archivos seguiría siendo detectado.
 
 Criterio para futuras excepciones: solo valores públicos o inventados que viven en tests, siempre acotados por archivo y valor, nunca por regla completa.
 
