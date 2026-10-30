@@ -228,7 +228,7 @@ class CarritoDeReservaTest {
         when(tarifas.consultarTarifas(1L, desde, hasta)).thenReturn(List.of(
                 new TarifaDTO(1L, "DOBLE", desde, hasta, new BigDecimal("50"), "USD")));
         carrito.confirmar();
-        verify(reservas).crearReserva(argThat(q -> new BigDecimal("100").equals(q.precioTotal()) && "USD".equals(q.moneda())));
+        verify(reservas).crearReserva(argThat(q -> q.precioTotal() != null && new BigDecimal("100").compareTo(q.precioTotal()) == 0 && "USD".equals(q.moneda())));
     }
 
     @Test void confirmarCarritoVacioFallaSinCrearReserva() {

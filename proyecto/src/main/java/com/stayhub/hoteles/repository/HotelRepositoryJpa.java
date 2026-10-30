@@ -52,7 +52,9 @@ public class HotelRepositoryJpa implements HotelRepository {
 
     @Override
     public List<Hotel> listarHoteles(boolean incluirInactivos) {
-        String jpql = "SELECT h FROM Hotel h" + (incluirInactivos ? "" : " WHERE h.activo=true") + " ORDER BY h.nombre";
+        String jpql = incluirInactivos
+                ? "SELECT h FROM Hotel h ORDER BY h.nombre"
+                : "SELECT h FROM Hotel h WHERE h.activo=true ORDER BY h.nombre";
         return em.createQuery(jpql, Hotel.class).setMaxResults(100).getResultList();
     }
     @Override public List<TipoHabitacion> listarTipos(Long hotelId) {
@@ -70,7 +72,10 @@ public class HotelRepositoryJpa implements HotelRepository {
 
     @Override public List<Hotel> listarHoteles(boolean incluir, int offset, int limite) {
         com.stayhub.seguridad.Limites.pagina(offset, limite);
-        return em.createQuery("SELECT h FROM Hotel h" + (incluir ? "" : " WHERE h.activo=true") + " ORDER BY h.id", Hotel.class)
+        String jpql = incluir
+                ? "SELECT h FROM Hotel h ORDER BY h.id"
+                : "SELECT h FROM Hotel h WHERE h.activo=true ORDER BY h.id";
+        return em.createQuery(jpql, Hotel.class)
                 .setFirstResult(offset).setMaxResults(limite).getResultList();
     }
     @Override public void darDeBajaDependientes(Long hotelId) {
@@ -80,12 +85,18 @@ public class HotelRepositoryJpa implements HotelRepository {
 
     @Override public List<TipoHabitacion> listarTipos(Long id, boolean incluir, int offset, int limite) {
         com.stayhub.seguridad.Limites.pagina(offset,limite);
-        return em.createQuery("SELECT t FROM TipoHabitacion t WHERE t.hotel.id=:id" + (incluir ? "" : " AND t.activo=true") + " ORDER BY t.id", TipoHabitacion.class)
+        String jpql = incluir
+                ? "SELECT t FROM TipoHabitacion t WHERE t.hotel.id=:id ORDER BY t.id"
+                : "SELECT t FROM TipoHabitacion t WHERE t.hotel.id=:id AND t.activo=true ORDER BY t.id";
+        return em.createQuery(jpql, TipoHabitacion.class)
                 .setParameter("id",id).setFirstResult(offset).setMaxResults(limite).getResultList();
     }
     @Override public List<Habitacion> listarHabitaciones(Long id, boolean incluir, int offset, int limite) {
         com.stayhub.seguridad.Limites.pagina(offset,limite);
-        return em.createQuery("SELECT h FROM Habitacion h WHERE h.hotel.id=:id" + (incluir ? "" : " AND h.activa=true") + " ORDER BY h.id", Habitacion.class)
+        String jpql = incluir
+                ? "SELECT h FROM Habitacion h WHERE h.hotel.id=:id ORDER BY h.id"
+                : "SELECT h FROM Habitacion h WHERE h.hotel.id=:id AND h.activa=true ORDER BY h.id";
+        return em.createQuery(jpql, Habitacion.class)
                 .setParameter("id",id).setFirstResult(offset).setMaxResults(limite).getResultList();
     }
 }
