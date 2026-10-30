@@ -56,6 +56,11 @@
             "body": { "mode": "raw", "raw": "{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}" }
           },
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('sesión iniciada', () => pm.expect(pm.response.code).to.equal(200));"] } }]
+        },
+        {
+          "name": "Renovar CSRF de la sesión autenticada",
+          "request": { "method": "GET", "url": "{{baseUrl}}/seguridad/csrf" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('token autenticado recibido', () => pm.expect(pm.response.code).to.equal(200));", "if (pm.response.code === 200) pm.collectionVariables.set('csrfToken', pm.response.json().token);"] } }]
         }
       ]
     },

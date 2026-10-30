@@ -235,7 +235,12 @@ jobs:
       - name: Ejecutar colección de Canales Externos con Newman
         run: |
           npx --yes newman@6.2.1 run postman/StayHub-ServicioDeCanalesExternos.postman_collection.json \
-            --insecure --reporters cli,junit --reporter-junit-export ci-evidence/newman-canales.xml
+            --insecure \
+            --folder "Autenticación demo" \
+            --folder "Disponibilidad" \
+            --folder "Sincronizaciones" \
+            --folder "Catálogo multicanal" \
+            --reporters cli,junit --reporter-junit-export ci-evidence/newman-canales.xml
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
