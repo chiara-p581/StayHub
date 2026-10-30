@@ -94,7 +94,7 @@ de 5 a 8 páginas y no reemplaza la evidencia de los demás componentes.
 Con el WAR `StayHub.war`, la URL base predeterminada es:
 
 ```text
-http://localhost:8080/StayHub/api/hoteles
+https://localhost:8080/StayHub/api/hoteles
 ```
 
 | Método | Ruta | Resultado |
@@ -147,7 +147,7 @@ El artefacto queda en `target/StayHub.war`. Puede copiarse a
 WildFly informe que el despliegue terminó correctamente, esta llamada debe responder `200`:
 
 ```text
-GET http://localhost:8080/StayHub/api/hoteles
+GET https://localhost:8080/StayHub/api/hoteles
 ```
 
 ## Postman

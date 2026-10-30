@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  *
  * Enfoque code-first: esta clase anotada ES el contrato. WildFly genera el
  * WSDL a partir de las anotaciones y lo publica en
- *   http://localhost:8080/StayHub/soap/integracion-pms?wsdl
+ *   https://localhost:8080/StayHub/soap/integracion-pms?wsdl
  * (la URL se define en WEB-INF/web.xml).
  *
  * Patrón Facade: el servicio no tiene lógica de negocio propia. Traduce

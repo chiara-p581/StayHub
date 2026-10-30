@@ -19,7 +19,9 @@ con un servicio JAX-WS standalone (`pms-legado-mock/`).
 
 ## 3. Contrato del servicio de StayHub (flujo 1)
 
-- WSDL: `http://localhost:8080/StayHub/soap/integracion-pms?wsdl` (generado por WildFly, code-first)
+- WSDL en Docker: `https://localhost:8443/StayHub/soap/integracion-pms?wsdl`.
+- WSDL en WildFly manual endurecido: `https://localhost:8080/StayHub/soap/integracion-pms?wsdl`.
+  Ambos son generados por WildFly con enfoque code-first.
 - SOAP 1.1, document/literal wrapped
 - Operaciones: `consultarReserva`, `listarLlegadas`, `cancelarReserva`, `consultarDisponibilidad`, `consultarTarifas`
 - Fault: `IntegracionPmsFault` con detalle `errorIntegracionPms { codigo, mensaje }`
@@ -100,7 +102,7 @@ sequenceDiagram
 ## 6. Cómo demostrarlo
 
 1. Levantar WildFly (`standalone-full`) con StayHub desplegado.
-2. Abrir `http://localhost:8080/StayHub/soap/integracion-pms?wsdl` y recorrer el WSDL.
+2. Abrir el WSDL HTTPS correspondiente al entorno y recorrer el contrato.
 3. Correr la colección de Postman `StayHub-IntegracionPmsSOAP`: casos OK y Fault.
 4. Levantar el mock: `cd pms-legado-mock && mvn compile exec:java`.
 5. `POST /api/canales-externos/pms/sincronizaciones?...` y mostrar en la consola del mock

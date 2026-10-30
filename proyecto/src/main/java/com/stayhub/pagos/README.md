@@ -64,7 +64,7 @@ ejemplo, Notificaciones de forma asincrónica en una próxima entrega.
 Con el WAR `StayHub.war`, la URL base predeterminada es:
 
 ```text
-http://localhost:8080/StayHub/api/pagos
+https://localhost:8080/StayHub/api/pagos
 ```
 
 | Método | Ruta | Resultado |

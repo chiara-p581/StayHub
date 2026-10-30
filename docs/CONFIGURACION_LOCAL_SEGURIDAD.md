@@ -104,9 +104,15 @@ no se ejecutó y no se intentó un servicio alternativo. Se solicitó captura de
 filtro de IP o autorización explícita para la consulta original. La conexión
 se recuperó y ya no fue necesario obtener la IP pública.
 
-## Acceso actual y pendientes funcionales
+## Direcciones por modo de ejecución y pendientes funcionales
 
-Abrir `https://localhost:8443/StayHub/index.html`. El WAR actualizado está activo.
+El entorno Docker publicado por `compose.yaml` usa
+`https://localhost:8443/StayHub/index.html`. La instalación manual configurada con
+`config/configurar-seguridad-local.py` usa
+`https://localhost:8080/StayHub/index.html`. Una instalación de WildFly preexistente puede conservar
+otro puerto HTTPS; se debe consultar su `socket-binding=https` antes de probarla y no inferir la URL
+desde documentación histórica.
+
 Las reservas antiguas todavía requieren vinculación de propietario con evidencia
 confiable para aparecer como propias de huéspedes. La fachada PMS entrante sigue
 bloqueada hasta asignar hoteles a una identidad verificada.

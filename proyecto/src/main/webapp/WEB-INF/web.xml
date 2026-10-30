@@ -11,7 +11,7 @@
        En WildFly el servlet-class de un endpoint JAX-WS es la propia clase
        anotada con @WebService: el subsistema de webservices la detecta y la
        publica en la URL de abajo. El WSDL generado queda en
-         http://localhost:8080/StayHub/soap/integracion-pms?wsdl -->
+         https://localhost:8080/StayHub/soap/integracion-pms?wsdl -->
   <servlet>
     <servlet-name>IntegracionPmsService</servlet-name>
     <servlet-class>com.stayhub.integracionpms.api.IntegracionPmsWebService</servlet-class>

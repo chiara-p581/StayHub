@@ -56,7 +56,7 @@ dentro de la lógica de envío.
 Con el WAR `StayHub.war`, la URL base predeterminada es:
 
 ```text
-http://localhost:8080/StayHub/api/notificaciones
+https://localhost:8080/StayHub/api/notificaciones
 ```
 
 | Método | Ruta | Resultado |
