@@ -54,8 +54,8 @@ Puede suministrarse como propiedad de sistema de WildFly o variable de entorno:
 | `stayhub.pms.wsdl` | `STAYHUB_PMS_WSDL` | URL del WSDL del PMS |
 | `stayhub.canales.<canal>.webhook-secret` | `STAYHUB_CANALES_<CANAL>_WEBHOOK_SECRET` | Secreto HMAC individual para webhooks OTA |
 | `stayhub.canales.hosts-permitidos` | `STAYHUB_CANALES_HOSTS_PERMITIDOS` | Allowlist exacta de hosts OTA/PMS |
-| `stayhub.canales.timeout.conexion.ms` | `STAYHUB_CANALES_TIMEOUT_CONEXION_MS` | Timeout de conexión REST/SOAP (default/máximo 3000 ms) |
-| `stayhub.canales.timeout.lectura.ms` | `STAYHUB_CANALES_TIMEOUT_LECTURA_MS` | Timeout de lectura REST/SOAP (default/máximo 10000 ms) |
+| `stayhub.canales.timeout.conexion.ms` | `STAYHUB_CANALES_TIMEOUT_CONEXION_MS` | Timeout de conexión REST/SOAP (default/máximo 750 ms) |
+| `stayhub.canales.timeout.lectura.ms` | `STAYHUB_CANALES_TIMEOUT_LECTURA_MS` | Timeout de lectura REST/SOAP (default/máximo 1500 ms) |
 
 Los endpoints de sincronización responden HTTP `202 Accepted`. El campo
 `solicitudId` también se envía como `JMSCorrelationID`, para poder correlacionar
@@ -65,3 +65,8 @@ Para otra OTA se reemplaza `booking` por el nombre del canal en minúsculas. El 
 saliente utiliza `PUT {urlBase}/inventario` y `PUT {urlBase}/tarifas`. El cliente SOAP espera
 `PmsLegacyService` en el namespace `http://pms.stayhub.com/legacy`; esos nombres se ajustan al
 WSDL real cuando el proveedor del PMS lo entregue.
+
+Los envíos REST y SOAP son idempotentes y admiten un único reintento inmediato ante
+errores de comunicación. El cliente SOAP deriva el endpoint desde la URL configurada y
+no descarga el WSDL en cada mensaje, evitando una conexión inicial sin timeout. Dos
+intentos agotados generan un error controlado para que Artemis pueda reprocesar el mensaje.

@@ -18,6 +18,7 @@ class ConfiguracionCanalesTest {
         System.clearProperty("stayhub.canales.hosts-permitidos");
         System.clearProperty("stayhub.canales.hosts-locales");
         System.clearProperty("stayhub.canales.permitir-http-local");
+        System.clearProperty("stayhub.pms.wsdl");
     }
 
     @Test
@@ -77,8 +78,8 @@ class ConfiguracionCanalesTest {
     @Test
     void usaTimeoutsPredeterminadosSeguros() {
         ConfiguracionCanales configuracion = new ConfiguracionCanales();
-        assertEquals(3_000, configuracion.timeoutConexionMs());
-        assertEquals(10_000, configuracion.timeoutLecturaMs());
+        assertEquals(750, configuracion.timeoutConexionMs());
+        assertEquals(1_500, configuracion.timeoutLecturaMs());
     }
 
     @Test
@@ -93,9 +94,19 @@ class ConfiguracionCanalesTest {
 
     @Test
     void rechazaTimeoutsMayoresAlContrato() {
-        System.setProperty("stayhub.canales.timeout.conexion.ms", "3001");
-        System.setProperty("stayhub.canales.timeout.lectura.ms", "10001");
+        System.setProperty("stayhub.canales.timeout.conexion.ms", "751");
+        System.setProperty("stayhub.canales.timeout.lectura.ms", "1501");
         ConfiguracionCanales configuracion = new ConfiguracionCanales();
         assertThrows(CanalExternoException.class, configuracion::timeoutConexionMs);
         assertThrows(CanalExternoException.class, configuracion::timeoutLecturaMs);
-    }}
+    }
+
+    @Test
+    void derivaElEndpointSoapSinDescargarElWsdl() {
+        System.setProperty("stayhub.canales.hosts-permitidos", "localhost");
+        System.setProperty("stayhub.canales.permitir-http-local", "true");
+        System.setProperty("stayhub.pms.wsdl", "http://localhost:9091/pms?wsdl");
+
+        assertEquals("http://localhost:9091/pms", new ConfiguracionCanales().endpointPms());
+    }
+}

@@ -15,6 +15,7 @@ import jakarta.inject.Inject;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Stateless
 public class ProcesadorSincronizacion {
@@ -32,19 +33,47 @@ public class ProcesadorSincronizacion {
         ServicioDeInventarioYTarifasPort inventario = inventario();
         List<DisponibilidadDTO> disponibilidad = inventario.consultarDisponibilidad(hotelId, desde, hasta);
         List<TarifaDTO> tarifas = inventario.consultarTarifas(hotelId, desde, hasta);
-        otaClient.publicarDisponibilidad(canal, disponibilidad);
-        otaClient.publicarTarifas(canal, tarifas);
+        conReintentoAcotado(() -> {
+            otaClient.publicarDisponibilidad(canal, disponibilidad);
+            return null;
+        }, CodigoErrorCanal.ERROR_COMUNICACION_OTA, "OTA " + canal);
+        conReintentoAcotado(() -> {
+            otaClient.publicarTarifas(canal, tarifas);
+            return null;
+        }, CodigoErrorCanal.ERROR_COMUNICACION_OTA, "OTA " + canal);
     }
 
     public void sincronizarPms(Long hotelId, LocalDate desde, LocalDate hasta) {
         ServicioDeInventarioYTarifasPort inventario = inventario();
         List<DisponibilidadDTO> disponibilidad = inventario.consultarDisponibilidad(hotelId, desde, hasta);
         List<TarifaDTO> tarifas = inventario.consultarTarifas(hotelId, desde, hasta);
-        RespuestaPms respuesta = pmsClient.sincronizar(hotelId, disponibilidad, tarifas);
+        RespuestaPms respuesta = conReintentoAcotado(
+                () -> pmsClient.sincronizar(hotelId, disponibilidad, tarifas),
+                CodigoErrorCanal.ERROR_COMUNICACION_PMS, "PMS");
         if (!respuesta.exitoso) {
             throw new CanalExternoException(CodigoErrorCanal.ERROR_COMUNICACION_PMS,
                     respuesta.mensaje == null ? "El PMS rechazó la sincronización" : respuesta.mensaje);
         }
+    }
+
+    /**
+     * Un único reintento para operaciones idempotentes. Cada intento está
+     * limitado por los timeouts del cliente, por lo que una dependencia que no
+     * responde produce un fallback controlado antes de cinco segundos.
+     */
+    private <T> T conReintentoAcotado(Supplier<T> operacion, CodigoErrorCanal codigo, String destino) {
+        CanalExternoException ultimo = null;
+        for (int intento = 1; intento <= 2; intento++) {
+            try {
+                return operacion.get();
+            } catch (CanalExternoException ex) {
+                if (ex.getCodigo() != codigo) throw ex;
+                ultimo = ex;
+            }
+        }
+        throw new CanalExternoException(codigo,
+                "La sincronización con " + destino + " no está disponible temporalmente; el mensaje podrá reprocesarse",
+                ultimo);
     }
 
     private ServicioDeInventarioYTarifasPort inventario() {
