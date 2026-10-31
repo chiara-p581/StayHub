@@ -354,6 +354,12 @@ jobs:
             return 1
           }
 
+          # Newman ejecuta todas las colecciones desde la misma IP del runner y
+          # consume el cupo del limitador en memoria. Reiniciar sólo WildFly
+          # limpia ese estado sin perder los datos persistidos en PostgreSQL.
+          docker compose --project-directory .. restart app
+          esperar_app
+
           npx playwright test tests/stayhub-critical.spec.cjs
           docker compose --project-directory .. restart app
           esperar_app
