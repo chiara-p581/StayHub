@@ -203,7 +203,17 @@ public class IntegracionPmsWebService {
 
     static IntegracionPmsFault traducir(Throwable ex) {
         for (Throwable t = ex; t != null; t = t.getCause()) {
-            if (t instanceof SeguridadException se) return new IntegracionPmsFault(CodigoErrorIntegracionPms.NO_AUTORIZADO, "Solicitud PMS rechazada", se);
+            if (t instanceof SeguridadException se) {
+                // Reservas oculta tanto un id inexistente como uno ajeno con HTTP 404.
+                // Para el contrato PMS ambos casos deben verse igual: la reserva no está
+                // disponible, sin revelar si existe en otro hotel.
+                if (se.getEstado() == 404) {
+                    return new IntegracionPmsFault(CodigoErrorIntegracionPms.RESERVA_NO_ENCONTRADA,
+                            "Reserva no disponible", se);
+                }
+                return new IntegracionPmsFault(CodigoErrorIntegracionPms.NO_AUTORIZADO,
+                        "Solicitud PMS rechazada", se);
+            }
             if (t instanceof ReservaException re) {
                 return new IntegracionPmsFault(CodigoErrorIntegracionPms.desde(re.getCodigo()), re.getMessage(), re);
             }

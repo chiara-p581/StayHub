@@ -9,6 +9,7 @@ import com.stayhub.reservas.dto.ReservaResponse;
 import com.stayhub.reservas.exception.CodigoErrorReserva;
 import com.stayhub.reservas.exception.ReservaException;
 import com.stayhub.reservas.service.ServicioDeReservas;
+import com.stayhub.seguridad.SeguridadException;
 
 import jakarta.ejb.EJBException;
 
@@ -66,6 +67,18 @@ class IntegracionPmsWebServiceTest {
 
         assertEquals("RESERVA_NO_ENCONTRADA", fault.getFaultInfo().getCodigo());
         assertEquals("No existe la reserva 99", fault.getFaultInfo().getMensaje());
+    }
+
+    @Test
+    void reservaOcultaPorSeguridadSeExponeComoNoEncontradaSinFiltrarDetalles() {
+        when(reservas.consultarReserva(99L)).thenThrow(
+                new SeguridadException(404, "Reserva no disponible"));
+
+        IntegracionPmsFault fault = assertThrows(IntegracionPmsFault.class,
+                () -> servicio.consultarReserva(99L));
+
+        assertEquals("RESERVA_NO_ENCONTRADA", fault.getFaultInfo().getCodigo());
+        assertEquals("Reserva no disponible", fault.getFaultInfo().getMensaje());
     }
 
     @Test
@@ -127,7 +140,9 @@ class IntegracionPmsWebServiceTest {
 
     @Test void sinIdentidadPmsNoInvocaReservas() throws Exception {
         setPrivateField(servicio,"identidad",com.stayhub.seguridad.IdentidadFixture.usuario(1L,"ADMIN"));
-        assertThrows(IntegracionPmsFault.class,()->servicio.consultarReserva(7L)); verifyNoInteractions(reservas);
+        IntegracionPmsFault fault = assertThrows(IntegracionPmsFault.class,()->servicio.consultarReserva(7L));
+        assertEquals("NO_AUTORIZADO", fault.getFaultInfo().getCodigo());
+        verifyNoInteractions(reservas);
     }
     @Test void noPermiteOtroHotelNiExponeEmail() throws Exception {
         setPrivateField(servicio,"identidad",com.stayhub.seguridad.IdentidadFixture.pms(java.util.Set.of(2L)));
