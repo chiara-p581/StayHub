@@ -7,60 +7,179 @@
   "event": [
     {
       "listen": "prerequest",
-      "script": { "exec": [
-        "const token = pm.collectionVariables.get('csrfToken');",
-        "if (token) pm.request.headers.upsert({ key: 'X-CSRF-Token', value: token });",
-        "if (pm.info.requestName === 'OK - recibir reserva') pm.collectionVariables.set('idExterno', `POSTMAN-${Date.now()}`);",
-        "const match = pm.request.url.getPath().match(/StayHub\\/api\\/(canales-externos\\/otas\\/([^/]+)\\/reservas(?:\\/[^/]+)?)/i);",
-        "if (match) {",
-        "  const timestamp = String(Math.floor(Date.now() / 1000));",
-        "  const nonce = pm.variables.replaceIn('{{$guid}}').replaceAll('-', '');",
-        "  const body = pm.request.body?.mode === 'raw' ? pm.variables.replaceIn(pm.request.body.raw || '') : '';",
-        "  const bodyHash = CryptoJS.SHA256(body).toString(CryptoJS.enc.Hex);",
-        "  const canonical = [timestamp, nonce, pm.request.method, match[1], bodyHash].join('\\n');",
-        "  const signature = CryptoJS.HmacSHA256(canonical, pm.collectionVariables.get('webhookSecret')).toString(CryptoJS.enc.Hex);",
-        "  pm.request.headers.upsert({ key: 'X-StayHub-Timestamp', value: timestamp });",
-        "  pm.request.headers.upsert({ key: 'X-StayHub-Nonce', value: nonce });",
-        "  pm.request.headers.upsert({ key: 'X-StayHub-Signature', value: signature });",
-        "}"
-      ] }
+      "script": {
+        "exec": [
+          "const token = pm.collectionVariables.get('csrfToken');",
+          "if (token) pm.request.headers.upsert({ key: 'X-CSRF-Token', value: token });",
+          "if (pm.info.requestName === 'OK - recibir reserva') pm.collectionVariables.set('idExterno', `POSTMAN-${Date.now()}`);",
+          "const match = pm.request.url.getPath().match(/StayHub\\/api\\/(canales-externos\\/otas\\/([^/]+)\\/reservas(?:\\/[^/]+)?)/i);",
+          "if (match) {",
+          "  const timestamp = String(Math.floor(Date.now() / 1000));",
+          "  const nonce = pm.variables.replaceIn('{{$guid}}').replaceAll('-', '');",
+          "  const body = pm.request.body?.mode === 'raw' ? pm.variables.replaceIn(pm.request.body.raw || '') : '';",
+          "  const bodyHash = CryptoJS.SHA256(body).toString(CryptoJS.enc.Hex);",
+          "  const canonical = [timestamp, nonce, pm.request.method, match[1], bodyHash].join('\\n');",
+          "  const signature = CryptoJS.HmacSHA256(canonical, pm.collectionVariables.get('webhookSecret')).toString(CryptoJS.enc.Hex);",
+          "  pm.request.headers.upsert({ key: 'X-StayHub-Timestamp', value: timestamp });",
+          "  pm.request.headers.upsert({ key: 'X-StayHub-Nonce', value: nonce });",
+          "  pm.request.headers.upsert({ key: 'X-StayHub-Signature', value: signature });",
+          "}"
+        ]
+      }
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "https://localhost:8443/StayHub/api" },
-    { "key": "hotelId", "value": "1" },
-    { "key": "canal", "value": "BOOKING" },
-    { "key": "idExterno", "value": "POSTMAN-{{$timestamp}}" },
-    { "key": "desde", "value": "2027-01-10" },
-    { "key": "hasta", "value": "2027-01-12" }
-    ,{ "key": "email", "value": "admin@stayhub.local" }
-    ,{ "key": "password", "value": "StayHubDemo2026!" }
-    ,{ "key": "csrfToken", "value": "" }
-    ,{ "key": "webhookSecret", "value": "demo-booking-webhook-secret-2026-0001" }
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443/StayHub/api"
+    },
+    {
+      "key": "hotelId",
+      "value": "1"
+    },
+    {
+      "key": "canal",
+      "value": "BOOKING"
+    },
+    {
+      "key": "idExterno",
+      "value": "POSTMAN-{{$timestamp}}"
+    },
+    {
+      "key": "desde",
+      "value": "2027-01-10"
+    },
+    {
+      "key": "hasta",
+      "value": "2027-01-12"
+    },
+    {
+      "key": "email",
+      "value": "admin@stayhub.local"
+    },
+    {
+      "key": "password",
+      "value": "StayHubDemo2026!"
+    },
+    {
+      "key": "csrfToken",
+      "value": ""
+    },
+    {
+      "key": "webhookSecret",
+      "value": "demo-booking-webhook-secret-2026-0001"
+    }
   ],
   "item": [
+    {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Catálogo multicanal público",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/catalogo-canales/ofertas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Catálogo multicanal responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Autenticación demo",
       "item": [
         {
           "name": "Obtener CSRF",
-          "request": { "method": "GET", "url": "{{baseUrl}}/seguridad/csrf" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('token recibido', () => pm.expect(pm.response.code).to.equal(200));", "if (pm.response.code === 200) pm.collectionVariables.set('csrfToken', pm.response.json().token);"] } }]
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('token recibido', () => pm.expect(pm.response.code).to.equal(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login administrador",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{baseUrl}}/usuarios/login",
-            "body": { "mode": "raw", "raw": "{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}"
+            }
           },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('sesión iniciada', () => pm.expect(pm.response.code).to.equal(200));"] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('sesión iniciada', () => pm.expect(pm.response.code).to.equal(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Renovar CSRF de la sesión autenticada",
-          "request": { "method": "GET", "url": "{{baseUrl}}/seguridad/csrf" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('token autenticado recibido', () => pm.expect(pm.response.code).to.equal(200));", "if (pm.response.code === 200) pm.collectionVariables.set('csrfToken', pm.response.json().token);"] } }]
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('token autenticado recibido', () => pm.expect(pm.response.code).to.equal(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -69,13 +188,37 @@
       "item": [
         {
           "name": "OK - consultar disponibilidad",
-          "request": { "method": "GET", "url": "{{baseUrl}}/canales-externos/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('estado exitoso', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"] } }]
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/canales-externos/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('estado exitoso', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "ERROR - fecha inválida",
-          "request": { "method": "GET", "url": "{{baseUrl}}/canales-externos/disponibilidad?hotelId={{hotelId}}&desde=fecha-invalida&hasta={{hasta}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('rechaza fecha inválida', () => pm.expect(pm.response.code).to.equal(400));"] } }]
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/canales-externos/disponibilidad?hotelId={{hotelId}}&desde=fecha-invalida&hasta={{hasta}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('rechaza fecha inválida', () => pm.expect(pm.response.code).to.equal(400));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -86,36 +229,143 @@
           "name": "OK - recibir reserva",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas",
-            "body": { "mode": "raw", "raw": "{\n  \"idExterno\": \"{{idExterno}}\",\n  \"hotelId\": {{hotelId}},\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"tipoHabitacion\": \"STANDARD\",\n  \"cantidadHabitaciones\": 1,\n  \"huesped\": {\"nombre\":\"Ada\",\"apellido\":\"Lovelace\",\"email\":\"ada@example.test\",\"telefono\":\"+540000000\"},\n  \"precioTotal\": 120000,\n  \"moneda\": \"ARS\",\n  \"estado\": \"CONFIRMADA\"\n}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idExterno\": \"{{idExterno}}\",\n  \"hotelId\": {{hotelId}},\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"tipoHabitacion\": \"STANDARD\",\n  \"cantidadHabitaciones\": 1,\n  \"huesped\": {\"nombre\":\"Ada\",\"apellido\":\"Lovelace\",\"email\":\"ada@example.test\",\"telefono\":\"+540000000\"},\n  \"precioTotal\": 120000,\n  \"moneda\": \"ARS\",\n  \"estado\": \"CONFIRMADA\"\n}"
+            }
           },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('reserva creada', () => pm.expect(pm.response.code).to.equal(201));"] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('reserva creada', () => pm.expect(pm.response.code).to.equal(201));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "ERROR - canal inválido",
-          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/canales-externos/otas/CANAL_INVALIDO/reservas", "body": { "mode": "raw", "raw": "{}" } },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('rechaza canal', () => pm.expect(pm.response.code).to.be.oneOf([400, 401, 422]));"] } }]
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/canales-externos/otas/CANAL_INVALIDO/reservas",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('rechaza canal', () => pm.expect(pm.response.code).to.be.oneOf([400, 401, 422]));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "OK - modificar reserva",
-          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/{{idExterno}}", "body": { "mode": "raw", "raw": "{\"hotelId\":{{hotelId}},\"checkIn\":\"{{desde}}\",\"checkOut\":\"{{hasta}}\",\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"huesped\":{\"nombre\":\"Ada\",\"apellido\":\"Lovelace\",\"email\":\"ada@example.test\"},\"precioTotal\":120000,\"moneda\":\"ARS\",\"estado\":\"CONFIRMADA\"}" } },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('modificación procesada', () => pm.expect(pm.response.code).to.equal(200));"] } }]
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/{{idExterno}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"hotelId\":{{hotelId}},\"checkIn\":\"{{desde}}\",\"checkOut\":\"{{hasta}}\",\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"huesped\":{\"nombre\":\"Ada\",\"apellido\":\"Lovelace\",\"email\":\"ada@example.test\"},\"precioTotal\":120000,\"moneda\":\"ARS\",\"estado\":\"CONFIRMADA\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('modificación procesada', () => pm.expect(pm.response.code).to.equal(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "ERROR - modificar inexistente",
-          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/NO-EXISTE", "body": { "mode": "raw", "raw": "{}" } },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('rechaza modificación', () => pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 422]));"] } }]
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/NO-EXISTE",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('rechaza modificación', () => pm.expect(pm.response.code).to.be.oneOf([400, 404, 409, 422]));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "OK - cancelar reserva",
-          "request": { "method": "DELETE", "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/{{idExterno}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('cancelación procesada', () => pm.expect(pm.response.code).to.equal(200));"] } }]
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/{{idExterno}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('cancelación procesada', () => pm.expect(pm.response.code).to.equal(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "ERROR - cancelar inexistente",
-          "request": { "method": "DELETE", "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/NO-EXISTE" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('rechaza cancelación', () => pm.expect(pm.response.code).to.be.oneOf([404, 409, 422]));"] } }]
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/reservas/NO-EXISTE"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('rechaza cancelación', () => pm.expect(pm.response.code).to.be.oneOf([404, 409, 422]));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -124,23 +374,71 @@
       "item": [
         {
           "name": "OK - encolar OTA",
-          "request": { "method": "POST", "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/sincronizaciones?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('aceptada', () => pm.expect(pm.response.code).to.equal(202));"] } }]
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/sincronizaciones?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('aceptada', () => pm.expect(pm.response.code).to.equal(202));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "ERROR - OTA sin fechas",
-          "request": { "method": "POST", "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/sincronizaciones?hotelId={{hotelId}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('valida parámetros', () => pm.expect(pm.response.code).to.equal(400));"] } }]
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/canales-externos/otas/{{canal}}/sincronizaciones?hotelId={{hotelId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('valida parámetros', () => pm.expect(pm.response.code).to.equal(400));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "OK - encolar PMS",
-          "request": { "method": "POST", "url": "{{baseUrl}}/canales-externos/pms/sincronizaciones?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('aceptada', () => pm.expect(pm.response.code).to.equal(202));"] } }]
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/canales-externos/pms/sincronizaciones?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('aceptada', () => pm.expect(pm.response.code).to.equal(202));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "ERROR - PMS sin fechas",
-          "request": { "method": "POST", "url": "{{baseUrl}}/canales-externos/pms/sincronizaciones?hotelId={{hotelId}}" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('valida parámetros', () => pm.expect(pm.response.code).to.equal(400));"] } }]
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/canales-externos/pms/sincronizaciones?hotelId={{hotelId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('valida parámetros', () => pm.expect(pm.response.code).to.equal(400));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -149,13 +447,37 @@
       "item": [
         {
           "name": "OK - listar ofertas",
-          "request": { "method": "GET", "url": "{{baseUrl}}/catalogo-canales/ofertas" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('lista JSON', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.be.an('array'); });"] } }]
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/catalogo-canales/ofertas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('lista JSON', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "ERROR - ruta inexistente",
-          "request": { "method": "GET", "url": "{{baseUrl}}/catalogo-canales/ofertas/inexistente" },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test('ruta no encontrada', () => pm.expect(pm.response.code).to.equal(404));"] } }]
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/catalogo-canales/ofertas/inexistente"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('ruta no encontrada', () => pm.expect(pm.response.code).to.equal(404));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

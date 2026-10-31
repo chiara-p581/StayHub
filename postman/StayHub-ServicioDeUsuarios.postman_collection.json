@@ -7,6 +7,67 @@
   },
   "item": [
     {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login demo válido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://localhost:8443"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/usuarios/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"huesped@stayhub.local\",\"password\":\"StayHubDemo2026!\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login demo responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Registrar usuario (HUESPED)",
       "request": {
         "method": "POST",
@@ -26,7 +87,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/StayHub/api/usuarios",
+          "raw": "{{baseUrl}}/usuarios",
           "protocol": "http",
           "host": [
             "localhost"
@@ -39,7 +100,19 @@
           ]
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201 esperado', () => pm.response.to.have.status(201));",
+              "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "Registrar usuario (ADMIN)",
@@ -61,7 +134,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/StayHub/api/usuarios",
+          "raw": "{{baseUrl}}/usuarios",
           "protocol": "http",
           "host": [
             "localhost"
@@ -74,7 +147,19 @@
           ]
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201 esperado', () => pm.response.to.have.status(201));",
+              "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "Login",
@@ -96,7 +181,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/StayHub/api/usuarios/login",
+          "raw": "{{baseUrl}}/usuarios/login",
           "protocol": "http",
           "host": [
             "localhost"
@@ -110,7 +195,19 @@
           ]
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+              "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "Consultar usuario por id",
@@ -118,7 +215,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8080/StayHub/api/usuarios/1",
+          "raw": "{{baseUrl}}/usuarios/1",
           "protocol": "http",
           "host": [
             "localhost"
@@ -132,7 +229,25 @@
           ]
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+              "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443/StayHub/api"
     }
   ]
 }

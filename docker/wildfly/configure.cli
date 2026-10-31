@@ -21,7 +21,9 @@ embed-server --server-config=standalone-full.xml --std-out=echo
 
 /subsystem=elytron/key-store=StayHubLocalKS:add(path=/opt/jboss/local-security/stayhub-local.p12,type=PKCS12,credential-reference={clear-text="stayhub-local"})
 /subsystem=elytron/key-manager=StayHubLocalKM:add(key-store=StayHubLocalKS,algorithm=SunX509,credential-reference={clear-text="stayhub-local"})
-/subsystem=elytron/server-ssl-context=StayHubLocalSSC:add(key-manager=StayHubLocalKM,protocols=["TLSv1.3","TLSv1.2"])
+/subsystem=elytron/key-store=StayHubPmsTrustKS:add(path=/opt/jboss/local-security/stayhub-pms-trust.p12,type=PKCS12,credential-reference={clear-text="stayhub-pms-local"})
+/subsystem=elytron/trust-manager=StayHubPmsTrustManager:add(key-store=StayHubPmsTrustKS,algorithm=PKIX)
+/subsystem=elytron/server-ssl-context=StayHubLocalSSC:add(key-manager=StayHubLocalKM,trust-manager=StayHubPmsTrustManager,want-client-auth=true,protocols=["TLSv1.3","TLSv1.2"])
 /subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=StayHubLocalSSC)
 
 # Seguridad declarativa (@RolesAllowed) con el login por sesión: ver config/seguridad-declarativa.cli

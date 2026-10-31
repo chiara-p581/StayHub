@@ -9,6 +9,67 @@
   },
   "item": [
     {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Overbooking exige ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://localhost:8443"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/overbooking/resolver",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"hotelId\":1,\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"checkIn\":\"2027-01-10\",\"checkOut\":\"2027-01-12\",\"reservaIdConflictiva\":999999}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Overbooking rechaza sesión anónima', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "01 - Flujo completo (resolución de conflictos)",
       "item": [
         {
@@ -26,7 +87,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/inventario-tarifas/cargas",
+              "raw": "{{baseUrl}}/inventario-tarifas/cargas",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -40,7 +101,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', () => pm.response.to.have.status(201));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolver - Sin alternativa (compensacion)",
@@ -57,7 +130,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "raw": "{{baseUrl}}/overbooking/resolver",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -71,7 +144,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolver - Reubicacion (Exitosa)",
@@ -88,7 +173,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "raw": "{{baseUrl}}/overbooking/resolver",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -102,7 +187,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -124,7 +221,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "raw": "{{baseUrl}}/overbooking/resolver",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -138,7 +235,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolver - Invalido (falta tipoHabitacion)",
@@ -155,7 +264,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "raw": "{{baseUrl}}/overbooking/resolver",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -169,7 +278,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolver - Invalido (cantidadHabitaciones = 0)",
@@ -186,7 +307,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "raw": "{{baseUrl}}/overbooking/resolver",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -200,7 +321,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolver - Invalido (fechas invertidas)",
@@ -217,7 +350,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "raw": "{{baseUrl}}/overbooking/resolver",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -231,7 +364,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolver - Invalido (falta reservaIdConflictiva)",
@@ -248,7 +393,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/overbooking/resolver",
+              "raw": "{{baseUrl}}/overbooking/resolver",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -262,9 +407,27 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443/StayHub/api"
     }
   ]
 }

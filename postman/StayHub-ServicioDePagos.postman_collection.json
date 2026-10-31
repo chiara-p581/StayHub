@@ -7,6 +7,50 @@
   },
   "item": [
     {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagos exige autenticación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/pagos/mios"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Pagos rechaza sesión anónima', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Procesar pago (aprobado)",
       "request": {
         "method": "POST",
@@ -26,7 +70,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/StayHub/api/pagos",
+          "raw": "{{baseUrl}}/pagos",
           "protocol": "http",
           "host": [
             "localhost"
@@ -39,7 +83,19 @@
           ]
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201 esperado', () => pm.response.to.have.status(201));",
+              "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "Procesar pago (rechazado - monto invalido)",
@@ -61,7 +117,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/StayHub/api/pagos",
+          "raw": "{{baseUrl}}/pagos",
           "protocol": "http",
           "host": [
             "localhost"
@@ -74,7 +130,19 @@
           ]
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+              "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "Consultar pago por id",
@@ -82,7 +150,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8080/StayHub/api/pagos/1",
+          "raw": "{{baseUrl}}/pagos/1",
           "protocol": "http",
           "host": [
             "localhost"
@@ -96,7 +164,25 @@
           ]
         }
       },
-      "response": []
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+              "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443/StayHub/api"
     }
   ]
 }

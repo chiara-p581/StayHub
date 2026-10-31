@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "node generate-openapi.mjs",
-    "verify": "node generate-openapi.mjs && node verify-contracts.mjs",
+    "generate": "node generate-openapi-v2.mjs",
+    "verify": "node normalize-postman.mjs && node generate-openapi-v2.mjs && node verify-contracts-v2.mjs",
     "verify:wsdl": "node verify-wsdl.mjs"
   }
 }

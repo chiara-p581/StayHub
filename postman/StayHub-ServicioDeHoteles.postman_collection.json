@@ -6,14 +6,76 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080/StayHub/api" },
-    { "key": "hotelId", "value": "" },
-    { "key": "tipoId", "value": "" },
-    { "key": "habitacionId", "value": "" },
-    { "key": "tipoConcurrenciaId", "value": "" },
-    { "key": "habitacionConcurrenciaId", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443/StayHub/api"
+    },
+    {
+      "key": "hotelId",
+      "value": ""
+    },
+    {
+      "key": "tipoId",
+      "value": ""
+    },
+    {
+      "key": "habitacionId",
+      "value": ""
+    },
+    {
+      "key": "tipoConcurrenciaId",
+      "value": ""
+    },
+    {
+      "key": "habitacionConcurrenciaId",
+      "value": ""
+    }
   ],
   "item": [
+    {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Catálogo público de hoteles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Hoteles responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "01 - Flujo completo",
       "description": "Crea y consulta un hotel, un tipo y una habitación; prueba validaciones y termina realizando las bajas lógicas.",
@@ -22,410 +84,620 @@
           "name": "Crear hotel",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"StayHub Palermo\",\n  \"direccion\": \"Thames 1800\",\n  \"ciudad\": \"Buenos Aires\",\n  \"pais\": \"Argentina\",\n  \"descripcion\": \"Hotel urbano para probar ServicioDeHoteles\",\n  \"servicios\": [\"WiFi\", \"Desayuno\", \"Recepción 24 horas\"]\n}"
             },
             "url": "{{baseUrl}}/hoteles"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
-              "const body = pm.response.json();",
-              "pm.collectionVariables.set('hotelId', body.id);",
-              "pm.test('Hotel activo con servicios', function () { pm.expect(body.activo).to.eql(true); pm.expect(body.servicios).to.include('WiFi'); });",
-              "pm.test('Location del hotel', function () { pm.expect(pm.response.headers.get('Location')).to.include('/hoteles/' + body.id); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('hotelId', body.id);",
+                  "pm.test('Hotel activo con servicios', function () { pm.expect(body.activo).to.eql(true); pm.expect(body.servicios).to.include('WiFi'); });",
+                  "pm.test('Location del hotel', function () { pm.expect(pm.response.headers.get('Location')).to.include('/hoteles/' + body.id); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Listar hoteles activos",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "const id = String(pm.collectionVariables.get('hotelId'));",
-              "pm.test('Incluye el hotel creado', function () { pm.expect(pm.response.json().some(h => String(h.id) === id)).to.eql(true); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const id = String(pm.collectionVariables.get('hotelId'));",
+                  "pm.test('Incluye el hotel creado', function () { pm.expect(pm.response.json().some(h => String(h.id) === id)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Modificar hotel y servicios",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"StayHub Palermo Soho\",\n  \"direccion\": \"Thames 1800\",\n  \"ciudad\": \"Buenos Aires\",\n  \"pais\": \"Argentina\",\n  \"descripcion\": \"Hotel urbano actualizado\",\n  \"servicios\": [\"WiFi\", \"Desayuno\", \"Piscina\", \"Recepción 24 horas\"]\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "const body = pm.response.json();",
-              "pm.test('Actualiza datos descriptivos', function () { pm.expect(body.nombre).to.eql('StayHub Palermo Soho'); pm.expect(body.servicios).to.include('Piscina'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Actualiza datos descriptivos', function () { pm.expect(body.nombre).to.eql('StayHub Palermo Soho'); pm.expect(body.servicios).to.include('Piscina'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Crear tipo DOBLE",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"codigo\": \"doble\",\n  \"nombre\": \"Habitación doble\",\n  \"descripcion\": \"Habitación para dos personas\",\n  \"capacidadMaxima\": 2,\n  \"caracteristicas\": [\"Cama queen\", \"Baño privado\", \"Aire acondicionado\"]\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
-              "const body = pm.response.json();",
-              "pm.collectionVariables.set('tipoId', body.id);",
-              "pm.test('Código normalizado y capacidad correcta', function () { pm.expect(body.codigo).to.eql('DOBLE'); pm.expect(body.capacidadMaxima).to.eql(2); pm.expect(body.activo).to.eql(true); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('tipoId', body.id);",
+                  "pm.test('Código normalizado y capacidad correcta', function () { pm.expect(body.codigo).to.eql('DOBLE'); pm.expect(body.capacidadMaxima).to.eql(2); pm.expect(body.activo).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Listar tipos activos",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "pm.test('Incluye DOBLE', function () { pm.expect(pm.response.json().some(t => t.codigo === 'DOBLE' && t.capacidadMaxima === 2)).to.eql(true); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Incluye DOBLE', function () { pm.expect(pm.response.json().some(t => t.codigo === 'DOBLE' && t.capacidadMaxima === 2)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Consultar tipo",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion/{{tipoId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "pm.test('Devuelve el tipo correcto', function () { pm.expect(pm.response.json().codigo).to.eql('DOBLE'); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion/{{tipoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve el tipo correcto', function () { pm.expect(pm.response.json().codigo).to.eql('DOBLE'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Crear habitación 101",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"tipoHabitacionId\": {{tipoId}},\n  \"numero\": \"101\",\n  \"piso\": 1,\n  \"caracteristicas\": [\"Vista al patio\", \"No fumadores\"]\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
-              "const body = pm.response.json();",
-              "pm.collectionVariables.set('habitacionId', body.id);",
-              "pm.test('Habitación vinculada al tipo', function () { pm.expect(body.numero).to.eql('101'); pm.expect(String(body.tipoHabitacionId)).to.eql(String(pm.collectionVariables.get('tipoId'))); pm.expect(body.capacidadMaxima).to.eql(2); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('habitacionId', body.id);",
+                  "pm.test('Habitación vinculada al tipo', function () { pm.expect(body.numero).to.eql('101'); pm.expect(String(body.tipoHabitacionId)).to.eql(String(pm.collectionVariables.get('tipoId'))); pm.expect(body.capacidadMaxima).to.eql(2); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Listar habitaciones activas",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "pm.test('Incluye la habitación 101', function () { pm.expect(pm.response.json().some(h => h.numero === '101' && h.activa)).to.eql(true); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Incluye la habitación 101', function () { pm.expect(pm.response.json().some(h => h.numero === '101' && h.activa)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Consultar habitación",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones/{{habitacionId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "pm.test('Devuelve características y capacidad', function () { const body = pm.response.json(); pm.expect(body.caracteristicas).to.include('Vista al patio'); pm.expect(body.capacidadMaxima).to.eql(2); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones/{{habitacionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve características y capacidad', function () { const body = pm.response.json(); pm.expect(body.caracteristicas).to.include('Vista al patio'); pm.expect(body.capacidadMaxima).to.eql(2); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Consultar hotel con estructura completa",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "const body = pm.response.json();",
-              "pm.test('Incluye tipos y habitaciones', function () { pm.expect(body.tiposHabitacion.some(t => t.codigo === 'DOBLE')).to.eql(true); pm.expect(body.habitaciones.some(h => h.numero === '101')).to.eql(true); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Incluye tipos y habitaciones', function () { pm.expect(body.tiposHabitacion.some(t => t.codigo === 'DOBLE')).to.eql(true); pm.expect(body.habitaciones.some(h => h.numero === '101')).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Rechazar tipo duplicado",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"codigo\": \"DOBLE\",\n  \"nombre\": \"Duplicado\",\n  \"descripcion\": null,\n  \"capacidadMaxima\": 2,\n  \"caracteristicas\": []\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
-              "pm.test('Código CODIGO_DUPLICADO', function () { pm.expect(pm.response.json().codigo).to.eql('CODIGO_DUPLICADO'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Código CODIGO_DUPLICADO', function () { pm.expect(pm.response.json().codigo).to.eql('CODIGO_DUPLICADO'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Rechazar capacidad decimal",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"codigo\": \"DECIMAL\",\n  \"nombre\": \"Capacidad inválida\",\n  \"descripcion\": null,\n  \"capacidadMaxima\": 1.5,\n  \"caracteristicas\": []\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
-              "pm.test('Código SOLICITUD_INVALIDA', function () { pm.expect(pm.response.json().codigo).to.eql('SOLICITUD_INVALIDA'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Código SOLICITUD_INVALIDA', function () { pm.expect(pm.response.json().codigo).to.eql('SOLICITUD_INVALIDA'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Concurrencia: tipo duplicado devuelve 201 y 409",
           "event": [
             {
               "listen": "prerequest",
-              "script": { "exec": [
-                "const codigo = 'CONC-' + Date.now();",
-                "const url = pm.variables.replace('{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion');",
-                "const solicitud = { url: url, method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify({ codigo: codigo, nombre: 'Tipo concurrente', descripcion: null, capacidadMaxima: 2, caracteristicas: [] }) } };",
-                "const estados = [];",
-                "const registrar = function (error, respuesta) {",
-                "  pm.test('Solicitud concurrente sin error de transporte', function () { pm.expect(error).to.equal(null); });",
-                "  if (error) return;",
-                "  estados.push(respuesta.code);",
-                "  if (respuesta.code === 201) pm.collectionVariables.set('tipoConcurrenciaId', respuesta.json().id);",
-                "  if (respuesta.code === 409) pm.test('El conflicto usa CODIGO_DUPLICADO', function () { pm.expect(respuesta.json().codigo).to.eql('CODIGO_DUPLICADO'); });",
-                "  if (estados.length === 2) pm.test('Una alta gana y la otra recibe conflicto', function () { pm.expect(estados.sort()).to.eql([201, 409]); });",
-                "};",
-                "pm.sendRequest(solicitud, registrar);",
-                "pm.sendRequest(solicitud, registrar);"
-              ] }
+              "script": {
+                "exec": [
+                  "const codigo = 'CONC-' + Date.now();",
+                  "const url = pm.variables.replace('{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion');",
+                  "const solicitud = { url: url, method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify({ codigo: codigo, nombre: 'Tipo concurrente', descripcion: null, capacidadMaxima: 2, caracteristicas: [] }) } };",
+                  "const estados = [];",
+                  "const registrar = function (error, respuesta) {",
+                  "  pm.test('Solicitud concurrente sin error de transporte', function () { pm.expect(error).to.equal(null); });",
+                  "  if (error) return;",
+                  "  estados.push(respuesta.code);",
+                  "  if (respuesta.code === 201) pm.collectionVariables.set('tipoConcurrenciaId', respuesta.json().id);",
+                  "  if (respuesta.code === 409) pm.test('El conflicto usa CODIGO_DUPLICADO', function () { pm.expect(respuesta.json().codigo).to.eql('CODIGO_DUPLICADO'); });",
+                  "  if (estados.length === 2) pm.test('Una alta gana y la otra recibe conflicto', function () { pm.expect(estados.sort()).to.eql([201, 409]); });",
+                  "};",
+                  "pm.sendRequest(solicitud, registrar);",
+                  "pm.sendRequest(solicitud, registrar);"
+                ]
+              }
             },
             {
               "listen": "test",
-              "script": { "exec": [
-                "pm.test('La solicitud de control responde 200', function () { pm.response.to.have.status(200); });",
-                "pm.test('Se guardó el tipo creado por la carrera', function () { pm.expect(pm.collectionVariables.get('tipoConcurrenciaId')).to.be.ok; });"
-              ] }
+              "script": {
+                "exec": [
+                  "pm.test('La solicitud de control responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Se guardó el tipo creado por la carrera', function () { pm.expect(pm.collectionVariables.get('tipoConcurrenciaId')).to.be.ok; });"
+                ]
+              }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}"
+          }
         },
         {
           "name": "Concurrencia: número sin distinguir mayúsculas devuelve 201 y 409",
           "event": [
             {
               "listen": "prerequest",
-              "script": { "exec": [
-                "const numero = 'Case-' + Date.now();",
-                "const url = pm.variables.replace('{{baseUrl}}/hoteles/{{hotelId}}/habitaciones');",
-                "const cuerpo = function (valor) { return { tipoHabitacionId: Number(pm.collectionVariables.get('tipoConcurrenciaId')), numero: valor, piso: 1, caracteristicas: [] }; };",
-                "const solicitud = function (valor) { return { url: url, method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify(cuerpo(valor)) } }; };",
-                "const estados = [];",
-                "const registrar = function (error, respuesta) {",
-                "  pm.test('Solicitud concurrente sin error de transporte', function () { pm.expect(error).to.equal(null); });",
-                "  if (error) return;",
-                "  estados.push(respuesta.code);",
-                "  if (respuesta.code === 201) pm.collectionVariables.set('habitacionConcurrenciaId', respuesta.json().id);",
-                "  if (respuesta.code === 409) pm.test('El conflicto usa NUMERO_HABITACION_DUPLICADO', function () { pm.expect(respuesta.json().codigo).to.eql('NUMERO_HABITACION_DUPLICADO'); });",
-                "  if (estados.length === 2) pm.test('Mayúsculas y minúsculas compiten por el mismo número', function () { pm.expect(estados.sort()).to.eql([201, 409]); });",
-                "};",
-                "pm.sendRequest(solicitud(numero), registrar);",
-                "pm.sendRequest(solicitud(numero.toLowerCase()), registrar);"
-              ] }
+              "script": {
+                "exec": [
+                  "const numero = 'Case-' + Date.now();",
+                  "const url = pm.variables.replace('{{baseUrl}}/hoteles/{{hotelId}}/habitaciones');",
+                  "const cuerpo = function (valor) { return { tipoHabitacionId: Number(pm.collectionVariables.get('tipoConcurrenciaId')), numero: valor, piso: 1, caracteristicas: [] }; };",
+                  "const solicitud = function (valor) { return { url: url, method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify(cuerpo(valor)) } }; };",
+                  "const estados = [];",
+                  "const registrar = function (error, respuesta) {",
+                  "  pm.test('Solicitud concurrente sin error de transporte', function () { pm.expect(error).to.equal(null); });",
+                  "  if (error) return;",
+                  "  estados.push(respuesta.code);",
+                  "  if (respuesta.code === 201) pm.collectionVariables.set('habitacionConcurrenciaId', respuesta.json().id);",
+                  "  if (respuesta.code === 409) pm.test('El conflicto usa NUMERO_HABITACION_DUPLICADO', function () { pm.expect(respuesta.json().codigo).to.eql('NUMERO_HABITACION_DUPLICADO'); });",
+                  "  if (estados.length === 2) pm.test('Mayúsculas y minúsculas compiten por el mismo número', function () { pm.expect(estados.sort()).to.eql([201, 409]); });",
+                  "};",
+                  "pm.sendRequest(solicitud(numero), registrar);",
+                  "pm.sendRequest(solicitud(numero.toLowerCase()), registrar);"
+                ]
+              }
             },
             {
               "listen": "test",
-              "script": { "exec": [
-                "pm.test('La solicitud de control responde 200', function () { pm.response.to.have.status(200); });",
-                "pm.test('Se guardó una sola habitación de la carrera', function () { pm.expect(pm.collectionVariables.get('habitacionConcurrenciaId')).to.be.ok; });"
-              ] }
+              "script": {
+                "exec": [
+                  "pm.test('La solicitud de control responde 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Se guardó una sola habitación de la carrera', function () { pm.expect(pm.collectionVariables.get('habitacionConcurrenciaId')).to.be.ok; });"
+                ]
+              }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}" }
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}"
+          }
         },
         {
           "name": "Impedir baja de tipo en uso",
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion/{{tipoId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
-              "pm.test('Código TIPO_HABITACION_EN_USO', function () { pm.expect(pm.response.json().codigo).to.eql('TIPO_HABITACION_EN_USO'); });"
-            ] }
-          }]
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion/{{tipoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Código TIPO_HABITACION_EN_USO', function () { pm.expect(pm.response.json().codigo).to.eql('TIPO_HABITACION_EN_USO'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Modificar habitación",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"tipoHabitacionId\": {{tipoId}},\n  \"numero\": \"101A\",\n  \"piso\": 1,\n  \"caracteristicas\": [\"Vista al patio\", \"No fumadores\", \"Accesible\"]\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones/{{habitacionId}}"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "pm.test('Actualiza número y características', function () { const body = pm.response.json(); pm.expect(body.numero).to.eql('101A'); pm.expect(body.caracteristicas).to.include('Accesible'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Actualiza número y características', function () { const body = pm.response.json(); pm.expect(body.numero).to.eql('101A'); pm.expect(body.caracteristicas).to.include('Accesible'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Dar de baja habitación",
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones/{{habitacionId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
-            ] }
-          }]
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones/{{habitacionId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Bloquear modificación de habitación inactiva",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"tipoHabitacionId\": {{tipoId}},\n  \"numero\": \"HISTORICO-ALTERADO\",\n  \"piso\": 9,\n  \"caracteristicas\": []\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones/{{habitacionId}}"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
-              "pm.test('Código HABITACION_INACTIVA', function () { pm.expect(pm.response.json().codigo).to.eql('HABITACION_INACTIVA'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Código HABITACION_INACTIVA', function () { pm.expect(pm.response.json().codigo).to.eql('HABITACION_INACTIVA'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Verificar filtro de habitaciones inactivas",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "const id = String(pm.collectionVariables.get('habitacionId'));",
-              "pm.test('Omite la habitación inactiva', function () { pm.expect(pm.response.json().some(h => String(h.id) === id)).to.eql(false); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/habitaciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const id = String(pm.collectionVariables.get('habitacionId'));",
+                  "pm.test('Omite la habitación inactiva', function () { pm.expect(pm.response.json().some(h => String(h.id) === id)).to.eql(false); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Dar de baja tipo sin habitaciones activas",
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion/{{tipoId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
-            ] }
-          }]
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion/{{tipoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 No Content', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Bloquear modificación de tipo inactivo",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"codigo\": \"HISTORICO\",\n  \"nombre\": \"Histórico alterado\",\n  \"descripcion\": null,\n  \"capacidadMaxima\": 3,\n  \"caracteristicas\": []\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}/tipos-habitacion/{{tipoId}}"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
-              "pm.test('Código TIPO_HABITACION_INACTIVO', function () { pm.expect(pm.response.json().codigo).to.eql('TIPO_HABITACION_INACTIVO'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Código TIPO_HABITACION_INACTIVO', function () { pm.expect(pm.response.json().codigo).to.eql('TIPO_HABITACION_INACTIVO'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Dar de baja hotel",
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "pm.test('Hotel inactivo', function () { pm.expect(pm.response.json().activo).to.eql(false); });"
-            ] }
-          }]
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Hotel inactivo', function () { pm.expect(pm.response.json().activo).to.eql(false); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Bloquear modificación de hotel inactivo",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Histórico alterado\",\n  \"direccion\": \"Otra dirección\",\n  \"ciudad\": \"Otra ciudad\",\n  \"pais\": \"Otro país\",\n  \"descripcion\": null,\n  \"servicios\": []\n}"
             },
             "url": "{{baseUrl}}/hoteles/{{hotelId}}"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
-              "pm.test('Código HOTEL_INACTIVO', function () { pm.expect(pm.response.json().codigo).to.eql('HOTEL_INACTIVO'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Código HOTEL_INACTIVO', function () { pm.expect(pm.response.json().codigo).to.eql('HOTEL_INACTIVO'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Verificar baja lógica",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/{{hotelId}}" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "const body = pm.response.json();",
-              "pm.test('Conserva estructura histórica inactiva', function () { pm.expect(body.activo).to.eql(false); pm.expect(body.tiposHabitacion.every(t => !t.activo)).to.eql(true); pm.expect(body.habitaciones.every(h => !h.activa)).to.eql(true); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/{{hotelId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Conserva estructura histórica inactiva', function () { pm.expect(body.activo).to.eql(false); pm.expect(body.tiposHabitacion.every(t => !t.activo)).to.eql(true); pm.expect(body.habitaciones.every(h => !h.activa)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Listar incluyendo inactivos",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles?incluirInactivos=true" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
-              "const id = String(pm.collectionVariables.get('hotelId'));",
-              "pm.test('Incluye el hotel dado de baja', function () { pm.expect(pm.response.json().some(h => String(h.id) === id && !h.activo)).to.eql(true); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles?incluirInactivos=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const id = String(pm.collectionVariables.get('hotelId'));",
+                  "pm.test('Incluye el hotel dado de baja', function () { pm.expect(pm.response.json().some(h => String(h.id) === id && !h.activo)).to.eql(true); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -436,80 +708,123 @@
           "name": "Rechazar hotel incompleto",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"\",\n  \"direccion\": \"Sin número\",\n  \"ciudad\": \"Buenos Aires\",\n  \"pais\": \"Argentina\",\n  \"servicios\": []\n}"
             },
             "url": "{{baseUrl}}/hoteles"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
-              "pm.test('Código SOLICITUD_INVALIDA', function () { pm.expect(pm.response.json().codigo).to.eql('SOLICITUD_INVALIDA'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Código SOLICITUD_INVALIDA', function () { pm.expect(pm.response.json().codigo).to.eql('SOLICITUD_INVALIDA'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Consultar hotel inexistente",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/999999999" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });",
-              "pm.test('Código HOTEL_NO_ENCONTRADO', function () { pm.expect(pm.response.json().codigo).to.eql('HOTEL_NO_ENCONTRADO'); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/999999999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Código HOTEL_NO_ENCONTRADO', function () { pm.expect(pm.response.json().codigo).to.eql('HOTEL_NO_ENCONTRADO'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Rechazar JSON malformado",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Roto\"\n  \"direccion\": \"Falta una coma\"\n}"
             },
             "url": "{{baseUrl}}/hoteles"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
-              "pm.test('Error JSON estable y sin detalles internos', function () { const body = pm.response.json(); pm.expect(body.codigo).to.eql('SOLICITUD_INVALIDA'); pm.expect(body.mensaje).not.to.include('Json'); pm.expect(body.mensaje).not.to.include('java.'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Error JSON estable y sin detalles internos', function () { const body = pm.response.json(); pm.expect(body.codigo).to.eql('SOLICITUD_INVALIDA'); pm.expect(body.mensaje).not.to.include('Json'); pm.expect(body.mensaje).not.to.include('java.'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Rechazar tipo JSON incorrecto",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Hotel inválido\",\n  \"direccion\": \"Calle 1\",\n  \"ciudad\": \"Buenos Aires\",\n  \"pais\": \"Argentina\",\n  \"servicios\": { \"wifi\": true }\n}"
             },
             "url": "{{baseUrl}}/hoteles"
           },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
-              "pm.test('Código SOLICITUD_INVALIDA sin clases internas', function () { const body = pm.response.json(); pm.expect(body.codigo).to.eql('SOLICITUD_INVALIDA'); pm.expect(body.mensaje).not.to.include('java.'); });"
-            ] }
-          }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Código SOLICITUD_INVALIDA sin clases internas', function () { const body = pm.response.json(); pm.expect(body.codigo).to.eql('SOLICITUD_INVALIDA'); pm.expect(body.mensaje).not.to.include('java.'); });"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Rechazar ID textual",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/hoteles/no-es-un-id" },
-          "event": [{
-            "listen": "test",
-            "script": { "exec": [
-              "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
-              "pm.test('Código SOLICITUD_INVALIDA', function () { pm.expect(pm.response.json().codigo).to.eql('SOLICITUD_INVALIDA'); });"
-            ] }
-          }]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hoteles/no-es-un-id"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Código SOLICITUD_INVALIDA', function () { pm.expect(pm.response.json().codigo).to.eql('SOLICITUD_INVALIDA'); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

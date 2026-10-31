@@ -6,16 +6,84 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080/StayHub/api" },
-    { "key": "hotelId", "value": "1" },
-    { "key": "hotelIdAlt", "value": "99" },
-    { "key": "desdeCarga", "value": "2026-09-01" },
-    { "key": "hastaCarga", "value": "2026-09-10" },
-    { "key": "desde", "value": "2026-09-01" },
-    { "key": "hasta", "value": "2026-09-05" },
-    { "key": "reservaId", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443/StayHub/api"
+    },
+    {
+      "key": "hotelId",
+      "value": "1"
+    },
+    {
+      "key": "hotelIdAlt",
+      "value": "99"
+    },
+    {
+      "key": "desdeCarga",
+      "value": "2026-09-01"
+    },
+    {
+      "key": "hastaCarga",
+      "value": "2026-09-10"
+    },
+    {
+      "key": "desde",
+      "value": "2026-09-01"
+    },
+    {
+      "key": "hasta",
+      "value": "2026-09-05"
+    },
+    {
+      "key": "reservaId",
+      "value": ""
+    }
   ],
   "item": [
+    {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Disponibilidad pública",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId=1&desde=2027-01-10&hasta=2027-01-12"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Disponibilidad responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "01 - Inventario y Tarifas (API propia)",
       "description": "Da de alta capacidad/tarifa para dos tipos de habitación del hotel {{hotelId}} y verifica que las consultas de lectura reflejen esos datos.",
@@ -24,12 +92,26 @@
           "name": "Cargar inventario - DOBLE",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"desde\": \"{{desdeCarga}}\",\n  \"hasta\": \"{{hastaCarga}}\",\n  \"unidadesTotales\": 5,\n  \"precio\": 100.00,\n  \"moneda\": \"ARS\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/inventario-tarifas/cargas", "host": ["{{baseUrl}}"], "path": ["inventario-tarifas", "cargas"] }
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/cargas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "cargas"
+              ]
+            }
           },
           "event": [
             {
@@ -50,12 +132,26 @@
           "name": "Cargar inventario - SIMPLE",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"SIMPLE\",\n  \"desde\": \"{{desdeCarga}}\",\n  \"hasta\": \"{{hastaCarga}}\",\n  \"unidadesTotales\": 3,\n  \"precio\": 60.00,\n  \"moneda\": \"ARS\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/inventario-tarifas/cargas", "host": ["{{baseUrl}}"], "path": ["inventario-tarifas", "cargas"] }
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/cargas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "cargas"
+              ]
+            }
           },
           "event": [
             {
@@ -75,12 +171,26 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["inventario-tarifas", "disponibilidad"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "disponibilidad"
+              ],
               "query": [
-                { "key": "hotelId", "value": "{{hotelId}}" },
-                { "key": "desde", "value": "{{desde}}" },
-                { "key": "hasta", "value": "{{hasta}}" }
+                {
+                  "key": "hotelId",
+                  "value": "{{hotelId}}"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
               ]
             }
           },
@@ -107,12 +217,26 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/inventario-tarifas/tarifas?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["inventario-tarifas", "tarifas"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "tarifas"
+              ],
               "query": [
-                { "key": "hotelId", "value": "{{hotelId}}" },
-                { "key": "desde", "value": "{{desde}}" },
-                { "key": "hasta", "value": "{{hasta}}" }
+                {
+                  "key": "hotelId",
+                  "value": "{{hotelId}}"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
               ]
             }
           },
@@ -142,12 +266,25 @@
           "name": "Crear reserva (retiene hold)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"cantidadHabitaciones\": 2,\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"huespedNombre\": \"Ana\",\n  \"huespedApellido\": \"Gomez\",\n  \"huespedEmail\": \"ana.gomez@example.com\",\n  \"huespedTelefono\": \"+541100000000\",\n  \"precioTotal\": 400.00,\n  \"moneda\": \"ARS\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservas", "host": ["{{baseUrl}}"], "path": ["reservas"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas"
+              ]
+            }
           },
           "event": [
             {
@@ -172,12 +309,26 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["inventario-tarifas", "disponibilidad"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "disponibilidad"
+              ],
               "query": [
-                { "key": "hotelId", "value": "{{hotelId}}" },
-                { "key": "desde", "value": "{{desde}}" },
-                { "key": "hasta", "value": "{{hasta}}" }
+                {
+                  "key": "hotelId",
+                  "value": "{{hotelId}}"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
               ]
             }
           },
@@ -199,7 +350,17 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/reservas/{{reservaId}}/confirmacion", "host": ["{{baseUrl}}"], "path": ["reservas", "{{reservaId}}", "confirmacion"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaId}}/confirmacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaId}}",
+                "confirmacion"
+              ]
+            }
           },
           "event": [
             {
@@ -221,12 +382,26 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["inventario-tarifas", "disponibilidad"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "disponibilidad"
+              ],
               "query": [
-                { "key": "hotelId", "value": "{{hotelId}}" },
-                { "key": "desde", "value": "{{desde}}" },
-                { "key": "hasta", "value": "{{hasta}}" }
+                {
+                  "key": "hotelId",
+                  "value": "{{hotelId}}"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
               ]
             }
           },
@@ -247,7 +422,16 @@
           "request": {
             "method": "DELETE",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/reservas/{{reservaId}}", "host": ["{{baseUrl}}"], "path": ["reservas", "{{reservaId}}"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservas/{{reservaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas",
+                "{{reservaId}}"
+              ]
+            }
           },
           "event": [
             {
@@ -269,12 +453,26 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/inventario-tarifas/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["inventario-tarifas", "disponibilidad"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "disponibilidad"
+              ],
               "query": [
-                { "key": "hotelId", "value": "{{hotelId}}" },
-                { "key": "desde", "value": "{{desde}}" },
-                { "key": "hasta", "value": "{{hasta}}" }
+                {
+                  "key": "hotelId",
+                  "value": "{{hotelId}}"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
               ]
             }
           },
@@ -294,12 +492,25 @@
           "name": "Crear reserva sin inventario cargado (queda RECHAZADA)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"SUITE\",\n  \"cantidadHabitaciones\": 1,\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"huespedNombre\": \"Luis\",\n  \"huespedApellido\": \"Diaz\",\n  \"huespedEmail\": \"luis.diaz@example.com\",\n  \"huespedTelefono\": \"+541100000001\",\n  \"precioTotal\": 999.00,\n  \"moneda\": \"ARS\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/reservas", "host": ["{{baseUrl}}"], "path": ["reservas"] }
+            "url": {
+              "raw": "{{baseUrl}}/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservas"
+              ]
+            }
           },
           "event": [
             {
@@ -326,12 +537,26 @@
           "name": "Cargar inventario - hotel sin alternativa (solo DOBLE)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"hotelId\": {{hotelIdAlt}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"desde\": \"{{desdeCarga}}\",\n  \"hasta\": \"{{hastaCarga}}\",\n  \"unidadesTotales\": 2,\n  \"precio\": 100.00,\n  \"moneda\": \"ARS\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/inventario-tarifas/cargas", "host": ["{{baseUrl}}"], "path": ["inventario-tarifas", "cargas"] }
+            "url": {
+              "raw": "{{baseUrl}}/inventario-tarifas/cargas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventario-tarifas",
+                "cargas"
+              ]
+            }
           },
           "event": [
             {
@@ -348,12 +573,26 @@
           "name": "Resolver conflicto CON alternativa -> REUBICACION",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"reservaIdConflictiva\": 123,\n  \"hotelId\": {{hotelId}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"canalOrigen\": \"BOOKING\",\n  \"referenciaExterna\": \"TEST-OVB-1\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/overbooking/resolver", "host": ["{{baseUrl}}"], "path": ["overbooking", "resolver"] }
+            "url": {
+              "raw": "{{baseUrl}}/overbooking/resolver",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "overbooking",
+                "resolver"
+              ]
+            }
           },
           "event": [
             {
@@ -376,12 +615,26 @@
           "name": "Resolver conflicto SIN alternativa -> COMPENSACION",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"reservaIdConflictiva\": 456,\n  \"hotelId\": {{hotelIdAlt}},\n  \"tipoHabitacion\": \"DOBLE\",\n  \"checkIn\": \"{{desde}}\",\n  \"checkOut\": \"{{hasta}}\",\n  \"canalOrigen\": \"BOOKING\",\n  \"referenciaExterna\": \"TEST-OVB-2\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/overbooking/resolver", "host": ["{{baseUrl}}"], "path": ["overbooking", "resolver"] }
+            "url": {
+              "raw": "{{baseUrl}}/overbooking/resolver",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "overbooking",
+                "resolver"
+              ]
+            }
           },
           "event": [
             {
@@ -411,12 +664,26 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/canales-externos/disponibilidad?hotelId={{hotelId}}&desde={{desde}}&hasta={{hasta}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["canales-externos", "disponibilidad"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "canales-externos",
+                "disponibilidad"
+              ],
               "query": [
-                { "key": "hotelId", "value": "{{hotelId}}" },
-                { "key": "desde", "value": "{{desde}}" },
-                { "key": "hasta", "value": "{{hasta}}" }
+                {
+                  "key": "hotelId",
+                  "value": "{{hotelId}}"
+                },
+                {
+                  "key": "desde",
+                  "value": "{{desde}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hasta}}"
+                }
               ]
             }
           },

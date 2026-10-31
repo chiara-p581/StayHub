@@ -99,7 +99,8 @@
             "exec": [
               "pm.test('HTTP 500 (SOAP Fault)', () => pm.response.to.have.status(500));",
               "pm.test('Es un soap:Fault', () => pm.expect(pm.response.text()).to.include('Fault'));",
-              "pm.test('Código RESERVA_NO_ENCONTRADA', () => pm.expect(pm.response.text()).to.include('RESERVA_NO_ENCONTRADA'));"
+              "pm.test('Código RESERVA_NO_ENCONTRADA', () => pm.expect(pm.response.text()).to.include('RESERVA_NO_ENCONTRADA'));",
+              "pm.test('Fault no expone clases internas', () => { pm.expect(pm.response.text()).not.to.include('java.'); pm.expect(pm.response.text()).not.to.include('Exception'); });"
             ]
           }
         }
@@ -292,7 +293,8 @@
             "exec": [
               "pm.test('HTTP 500 (SOAP Fault)', () => pm.response.to.have.status(500));",
               "pm.test('Es un soap:Fault', () => pm.expect(pm.response.text()).to.include('Fault'));",
-              "pm.test('Código SOLICITUD_INVALIDA', () => pm.expect(pm.response.text()).to.include('SOLICITUD_INVALIDA'));"
+              "pm.test('Código SOLICITUD_INVALIDA', () => pm.expect(pm.response.text()).to.include('SOLICITUD_INVALIDA'));",
+              "pm.test('Fault técnico no expone implementación', () => { pm.expect(pm.response.text()).not.to.include('java.'); pm.expect(pm.response.text()).not.to.include('Exception'); });"
             ]
           }
         }

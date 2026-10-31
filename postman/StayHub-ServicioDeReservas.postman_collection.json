@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080/StayHub/api"
+      "value": "https://localhost:8443/StayHub/api"
     },
     {
       "key": "hotelId",
@@ -56,6 +56,50 @@
     }
   ],
   "item": [
+    {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas exige autenticación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/reservas/mias"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reservas rechaza sesión anónima', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "00 - Cuentas y login",
       "description": "Registra (si hace falta) los dos usuarios que usa toda la coleccion y deja una sesion ADMIN activa al final, lista para la carpeta 01. El registro publico siempre crea HUESPED - para el ADMIN hay que promoverlo a mano en la base la primera vez (ver descripcion de la coleccion).",

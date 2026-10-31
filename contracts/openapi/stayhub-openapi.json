@@ -3,7 +3,7 @@
   "info": {
     "title": "StayHub REST API",
     "version": "1.0.0",
-    "description": "Contrato generado desde los recursos JAX-RS versionados."
+    "description": "Contrato generado desde recursos JAX-RS y DTOs versionados."
   },
   "servers": [
     {
@@ -17,36 +17,67 @@
         "tags": [
           "canalesexternos"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
@@ -69,37 +100,52 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaExternaDTO"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+        }
       }
     },
     "/api/canales-externos/otas/{canal}/reservas/{idExterno}": {
@@ -128,33 +174,38 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoReservaDTO"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
@@ -184,36 +235,51 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/ResultadoReservaDTO"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaExternaDTO"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
+        }
       }
     },
     "/api/canales-externos/otas/{canal}/sincronizaciones": {
@@ -230,37 +296,67 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "hotelId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
+          "202": {
+            "description": "Solicitud aceptada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
@@ -272,36 +368,67 @@
         "tags": [
           "canalesexternos"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
+          "202": {
+            "description": "Solicitud aceptada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CanalExternoResource.java"
@@ -315,34 +442,32 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
+          "204": {
+            "description": "Sin contenido"
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
@@ -355,33 +480,38 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarritoResumenDTO"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
@@ -396,33 +526,38 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
@@ -437,36 +572,51 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/CarritoResumenDTO"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeleccionFechasRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+        }
       }
     },
     "/api/carrito/hotel": {
@@ -478,36 +628,51 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/CarritoResumenDTO"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeleccionHotelYHabitacionRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+        }
       }
     },
     "/api/carrito/huesped": {
@@ -519,36 +684,51 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/CarritoResumenDTO"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeleccionHuespedYPrecioRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/CarritoResource.java"
+        }
       }
     },
     "/api/catalogo-canales/ofertas": {
@@ -560,33 +740,41 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OfertaCatalogoDTO"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/canalesexternos/api/CatalogoCanalesResource.java"
@@ -601,33 +789,39 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/demo/DemoDataResource.java"
@@ -639,36 +833,71 @@
         "tags": [
           "hoteles"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HotelResponse"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -680,37 +909,52 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HotelRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+        }
       }
     },
     "/api/hoteles/{hotelId}/habitaciones": {
@@ -727,37 +971,71 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "incluirInactivas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HabitacionResponse"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -778,37 +1056,52 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HabitacionRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+        }
       }
     },
     "/api/hoteles/{hotelId}/habitaciones/{habitacionId}": {
@@ -836,34 +1129,32 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
+          "204": {
+            "description": "Sin contenido"
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -893,33 +1184,38 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HabitacionResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -949,36 +1245,51 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/HabitacionResponse"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HabitacionRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+        }
       }
     },
     "/api/hoteles/{hotelId}/tipos-habitacion": {
@@ -995,37 +1306,71 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TipoHabitacionResponse"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -1046,37 +1391,52 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TipoHabitacionRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+        }
       }
     },
     "/api/hoteles/{hotelId}/tipos-habitacion/{tipoId}": {
@@ -1104,34 +1464,32 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
+          "204": {
+            "description": "Sin contenido"
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -1161,33 +1519,38 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TipoHabitacionResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -1217,36 +1580,51 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/TipoHabitacionResponse"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TipoHabitacionRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+        }
       }
     },
     "/api/hoteles/{id}": {
@@ -1267,33 +1645,38 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -1315,33 +1698,38 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
@@ -1363,36 +1751,51 @@
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/HotelResponse"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HotelRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/hoteles/api/HotelResource.java"
+        }
       }
     },
     "/api/inventario-tarifas/cargas": {
@@ -1403,37 +1806,52 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/inventarioytarifas/api/InventarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CargaInventarioRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/inventarioytarifas/api/InventarioResource.java"
+        }
       }
     },
     "/api/inventario-tarifas/disponibilidad": {
@@ -1442,36 +1860,70 @@
         "tags": [
           "inventarioytarifas"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/inventarioytarifas_DisponibilidadDTO"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/inventarioytarifas/api/InventarioResource.java"
@@ -1483,36 +1935,70 @@
         "tags": [
           "inventarioytarifas"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/inventarioytarifas_TarifaDTO"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/inventarioytarifas/api/InventarioResource.java"
@@ -1527,36 +2013,51 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/ResultadoEnvioNotificacionDTO"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/notificaciones/api/NotificacionesResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudNotificacionDTO"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/notificaciones/api/NotificacionesResource.java"
+        }
       }
     },
     "/api/overbooking/resolver": {
@@ -1568,36 +2069,51 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/ResultadoResolucionOverbookingDTO"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/servicioDeOverbooking/api/OverbookingResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConflictoReservaDTO"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/servicioDeOverbooking/api/OverbookingResource.java"
+        }
       }
     },
     "/api/pagos": {
@@ -1608,37 +2124,52 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagoRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
+        }
       }
     },
     "/api/pagos/{id}": {
@@ -1653,39 +2184,45 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagoResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
@@ -1699,37 +2236,52 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagoLoteRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
+        }
       }
     },
     "/api/pagos/mios": {
@@ -1738,36 +2290,63 @@
         "tags": [
           "pagos"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PagoResponse"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/pagos/api/PagoResource.java"
@@ -1779,36 +2358,72 @@
         "tags": [
           "reservas"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "hotelId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReservaResponse"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
@@ -1820,37 +2435,52 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+        }
       }
     },
     "/api/reservas/{id}": {
@@ -1865,39 +2495,45 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
@@ -1913,39 +2549,45 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
@@ -1961,42 +2603,58 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/ReservaResponse"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
+        }
       }
     },
     "/api/reservas/{id}/confirmacion": {
@@ -2011,39 +2669,45 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
@@ -2055,36 +2719,63 @@
         "tags": [
           "reservas"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReservaResponse"
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/reservas/api/ReservaResource.java"
@@ -2099,33 +2790,38 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/SaludoResource.java"
@@ -2140,33 +2836,38 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/seguridad/SeguridadResource.java"
@@ -2180,37 +2881,52 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "201": {
+            "description": "Recurso creado",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistroUsuarioRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+        }
       }
     },
     "/api/usuarios/{id}": {
@@ -2225,39 +2941,45 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioResponse"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
@@ -2272,36 +2994,51 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/UsuarioResponse"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+        }
       }
     },
     "/api/usuarios/me": {
@@ -2313,36 +3050,51 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+            "description": "Operación procesada correctamente",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "$ref": "#/components/schemas/UsuarioResponse"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizacionUsuarioRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+        }
       }
     },
     "/api/usuarios/recuperar-password": {
@@ -2353,37 +3105,52 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
-          },
-          "400": {
-            "description": "Solicitud inválida",
+          "202": {
+            "description": "Solicitud aceptada",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Problem"
+                  "type": "object"
                 }
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudRecuperacionRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+        }
       }
     },
     "/api/usuarios/resetear-password": {
@@ -2394,37 +3161,45 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
+          "204": {
+            "description": "Sin contenido"
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
               }
             }
           }
-        },
-        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+        }
       }
     },
     "/api/usuarios/sesion": {
@@ -2435,34 +3210,32 @@
         ],
         "parameters": [],
         "responses": {
-          "200": {
-            "description": "Operación procesada correctamente"
+          "204": {
+            "description": "Sin contenido"
           },
           "400": {
-            "description": "Solicitud inválida",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "Autenticación requerida"
+            "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Operación no autorizada"
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "500": {
-            "description": "Error interno",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
@@ -2471,6 +3244,1763 @@
   },
   "components": {
     "schemas": {
+      "canalesexternos_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "ResultadoOperacionReserva": {
+        "type": "object",
+        "properties": {
+          "reservaId": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservaId",
+          "estado"
+        ]
+      },
+      "SolicitudReserva": {
+        "type": "object",
+        "properties": {
+          "referenciaExterna": {
+            "type": "string"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "cantidadHabitaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "huesped": {
+            "$ref": "#/components/schemas/HuespedDTO"
+          },
+          "precioTotal": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "referenciaExterna",
+          "canal",
+          "hotelId",
+          "checkIn",
+          "checkOut",
+          "tipoHabitacion",
+          "cantidadHabitaciones",
+          "huesped",
+          "precioTotal",
+          "moneda"
+        ]
+      },
+      "Canal": {
+        "type": "string",
+        "enum": [
+          "BOOKING",
+          "EXPEDIA",
+          "AIRBNB",
+          "DESPEGAR",
+          "OTRO"
+        ]
+      },
+      "canalesexternos_DisponibilidadDTO": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "unidadesDisponibles": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "desde",
+          "hasta",
+          "unidadesDisponibles"
+        ]
+      },
+      "EstadoReservaExterna": {
+        "type": "string",
+        "enum": [
+          "CONFIRMADA",
+          "MODIFICADA",
+          "CANCELADA"
+        ]
+      },
+      "HuespedDTO": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "telefono": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nombre",
+          "apellido",
+          "email",
+          "telefono"
+        ]
+      },
+      "OfertaCatalogoDTO": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "precioDesde": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "puntuacion": {
+            "type": "number"
+          },
+          "opiniones": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "hotelId",
+          "canal",
+          "precioDesde",
+          "moneda",
+          "puntuacion",
+          "opiniones"
+        ]
+      },
+      "ReservaExternaDTO": {
+        "type": "object",
+        "properties": {
+          "idExterno": {
+            "type": "string"
+          },
+          "canal": {
+            "$ref": "#/components/schemas/Canal"
+          },
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "cantidadHabitaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "huesped": {
+            "$ref": "#/components/schemas/HuespedDTO"
+          },
+          "precioTotal": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoReservaExterna"
+          }
+        },
+        "required": [
+          "idExterno",
+          "canal",
+          "hotelId",
+          "checkIn",
+          "checkOut",
+          "tipoHabitacion",
+          "cantidadHabitaciones",
+          "huesped",
+          "precioTotal",
+          "moneda",
+          "estado"
+        ]
+      },
+      "ResultadoReservaDTO": {
+        "type": "object",
+        "properties": {
+          "reservaId": {
+            "type": "string"
+          },
+          "idExterno": {
+            "type": "string"
+          },
+          "canal": {
+            "$ref": "#/components/schemas/Canal"
+          },
+          "estado": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservaId",
+          "idExterno",
+          "canal",
+          "estado"
+        ]
+      },
+      "ResultadoSincronizacionDTO": {
+        "type": "object",
+        "properties": {
+          "solicitudId": {
+            "type": "string"
+          },
+          "exitoso": {
+            "type": "boolean"
+          },
+          "destino": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "elementosProcesados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "solicitudId",
+          "exitoso",
+          "destino",
+          "mensaje",
+          "elementosProcesados",
+          "fecha"
+        ]
+      },
+      "canalesexternos_TarifaDTO": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "importe": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "desde",
+          "hasta",
+          "importe",
+          "moneda"
+        ]
+      },
+      "CodigoErrorCanal": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "CANAL_NO_SOPORTADO",
+          "DEPENDENCIA_NO_DISPONIBLE",
+          "ERROR_COMUNICACION_OTA",
+          "ERROR_COMUNICACION_PMS",
+          "RESPUESTA_EXTERNA_INVALIDA"
+        ]
+      },
+      "SolicitudSincronizacion": {
+        "type": "object",
+        "properties": {
+          "solicitudId": {
+            "$ref": "#/components/schemas/LocalDatehastaimplementsSerializablepublicenumTipoDestinoOTAPMSpublicstaticSolicitudSincronizacionparaOtaString"
+          },
+          "destino": {
+            "$ref": "#/components/schemas/TipoDestino"
+          },
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canal": {
+            "$ref": "#/components/schemas/Canal"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "solicitudId",
+          "destino",
+          "hotelId",
+          "canal",
+          "desde",
+          "solicitudId",
+          "hotelId",
+          "canal",
+          "desde",
+          "hasta"
+        ]
+      },
+      "TipoDestino": {
+        "type": "string",
+        "enum": [
+          "OTA",
+          "PMS"
+        ]
+      },
+      "hoteles_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "HabitacionRequest": {
+        "type": "object",
+        "properties": {
+          "tipoHabitacionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "piso": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "caracteristicas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tipoHabitacionId",
+          "numero",
+          "piso",
+          "caracteristicas"
+        ]
+      },
+      "HabitacionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "piso": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "tipoHabitacionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacionCodigo": {
+            "type": "string"
+          },
+          "capacidadMaxima": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "caracteristicas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "numero",
+          "piso",
+          "activa",
+          "tipoHabitacionId",
+          "tipoHabitacionCodigo",
+          "capacidadMaxima",
+          "caracteristicas"
+        ]
+      },
+      "HotelRequest": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "direccion": {
+            "type": "string"
+          },
+          "ciudad": {
+            "type": "string"
+          },
+          "pais": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "servicios": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "nombre",
+          "direccion",
+          "ciudad",
+          "pais",
+          "descripcion",
+          "servicios"
+        ]
+      },
+      "HotelResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "direccion": {
+            "type": "string"
+          },
+          "ciudad": {
+            "type": "string"
+          },
+          "pais": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "servicios": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tiposHabitacion": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TipoHabitacionResponse"
+            }
+          },
+          "habitaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HabitacionResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "nombre",
+          "direccion",
+          "ciudad",
+          "pais",
+          "descripcion",
+          "activo",
+          "servicios",
+          "tiposHabitacion",
+          "habitaciones"
+        ]
+      },
+      "TipoHabitacionRequest": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "capacidadMaxima": {
+            "type": "number"
+          },
+          "caracteristicas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "codigo",
+          "nombre",
+          "descripcion",
+          "capacidadMaxima",
+          "caracteristicas"
+        ]
+      },
+      "TipoHabitacionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "capacidadMaxima": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "caracteristicas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "descripcion",
+          "capacidadMaxima",
+          "activo",
+          "caracteristicas"
+        ]
+      },
+      "CodigoErrorHotel": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "HOTEL_NO_ENCONTRADO",
+          "TIPO_HABITACION_NO_ENCONTRADO",
+          "HABITACION_NO_ENCONTRADA",
+          "CODIGO_DUPLICADO",
+          "NUMERO_HABITACION_DUPLICADO",
+          "HOTEL_INACTIVO",
+          "TIPO_HABITACION_INACTIVO",
+          "HABITACION_INACTIVA",
+          "TIPO_HABITACION_EN_USO"
+        ]
+      },
+      "CodigoErrorIntegracionPms": {
+        "type": "string",
+        "enum": [
+          "NO_AUTORIZADO",
+          "SOLICITUD_INVALIDA",
+          "RESERVA_NO_ENCONTRADA",
+          "TRANSICION_DE_ESTADO_INVALIDA",
+          "SIN_DISPONIBILIDAD",
+          "DEPENDENCIA_NO_DISPONIBLE",
+          "ERROR_INTERNO",
+          "RESERVA_DUPLICADA",
+          "NO_AUTORIZADO"
+        ]
+      },
+      "inventarioytarifas_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "CargaInventarioRequest": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "unidadesTotales": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "precio": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "desde",
+          "hasta",
+          "unidadesTotales",
+          "precio",
+          "moneda"
+        ]
+      },
+      "CargaInventarioResponse": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "diasCargados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "desde",
+          "hasta",
+          "diasCargados"
+        ]
+      },
+      "inventarioytarifas_DisponibilidadDTO": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "unidadesDisponibles": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "desde",
+          "hasta",
+          "unidadesDisponibles"
+        ]
+      },
+      "inventarioytarifas_TarifaDTO": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "importe": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "desde",
+          "hasta",
+          "importe",
+          "moneda"
+        ]
+      },
+      "CodigoErrorInventarioTarifas": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "HOLD_NO_ENCONTRADO",
+          "TRANSICION_DE_ESTADO_INVALIDA"
+        ]
+      },
+      "EstadoHold": {
+        "type": "string",
+        "enum": [
+          "PENDIENTE",
+          "CONFIRMADO",
+          "LIBERADO"
+        ]
+      },
+      "notificaciones_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "CanalNotificacion": {
+        "type": "string",
+        "enum": [
+          "EMAIL",
+          "SMS",
+          "PUSH"
+        ]
+      },
+      "ResultadoEnvioNotificacionDTO": {
+        "type": "object",
+        "properties": {
+          "enviado": {
+            "type": "boolean"
+          },
+          "canalUtilizado": {
+            "$ref": "#/components/schemas/CanalNotificacion"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mensajeError": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enviado",
+          "canalUtilizado",
+          "fecha",
+          "mensajeError"
+        ]
+      },
+      "SolicitudNotificacionDTO": {
+        "type": "object",
+        "properties": {
+          "destinatario": {
+            "type": "string"
+          },
+          "tipoEvento": {
+            "$ref": "#/components/schemas/TipoEvento"
+          },
+          "canalPreferido": {
+            "$ref": "#/components/schemas/CanalNotificacion"
+          },
+          "asunto": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "destinatario",
+          "tipoEvento",
+          "canalPreferido",
+          "asunto",
+          "mensaje"
+        ]
+      },
+      "TipoEvento": {
+        "type": "string",
+        "enum": [
+          "CONFIRMACION_RESERVA",
+          "CANCELACION",
+          "RECORDATORIO",
+          "RESULTADO_OVERBOOKING",
+          "AVISO_PAGO",
+          "BIENVENIDA",
+          "RECUPERACION_PASSWORD",
+          "CAMBIO_PASSWORD"
+        ]
+      },
+      "CodigoErrorNotificacion": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "CANAL_NO_SOPORTADO",
+          "ERROR_ENVIO"
+        ]
+      },
+      "pagos_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "ResultadoCobro": {
+        "type": "object",
+        "properties": {
+          "aprobado": {
+            "type": "boolean"
+          },
+          "referenciaExterna": {
+            "type": "string"
+          },
+          "motivoRechazo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "aprobado",
+          "referenciaExterna",
+          "motivoRechazo"
+        ]
+      },
+      "PagoLoteRequest": {
+        "type": "object",
+        "properties": {
+          "reservaIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "monto": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "claveIdempotencia": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservaIds",
+          "monto",
+          "moneda",
+          "claveIdempotencia"
+        ]
+      },
+      "PagoRequest": {
+        "type": "object",
+        "properties": {
+          "reservaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "monto": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "claveIdempotencia": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservaId",
+          "monto",
+          "moneda",
+          "claveIdempotencia"
+        ]
+      },
+      "PagoResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reservaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reservaIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "monto": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "referenciaPasarela": {
+            "type": "string"
+          },
+          "fechaPago": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "reservaId",
+          "reservaIds",
+          "monto",
+          "moneda",
+          "estado",
+          "referenciaPasarela",
+          "fechaPago"
+        ]
+      },
+      "CodigoErrorPago": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "PAGO_NO_ENCONTRADO",
+          "PAGO_RECHAZADO",
+          "RESERVA_YA_PAGADA",
+          "ERROR_COMUNICACION_PASARELA"
+        ]
+      },
+      "EventoPagoAprobado": {
+        "type": "object",
+        "properties": {
+          "pagoId": {
+            "$ref": "#/components/schemas/ReservaPagadareservaPagadaimplementsSerializableConstructoranteriorsinsnapshotdelareserva.publicEventoPagoAprobadoLong"
+          },
+          "reservaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "monto": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "referenciaPasarela": {
+            "type": "string"
+          },
+          "fechaAprobacion": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "pagoId",
+          "reservaId",
+          "monto",
+          "moneda",
+          "referenciaPasarela",
+          "fechaAprobacion",
+          "pagoId",
+          "reservaId",
+          "monto",
+          "moneda",
+          "referenciaPasarela",
+          "fechaAprobacion"
+        ]
+      },
+      "EstadoPago": {
+        "type": "string",
+        "enum": [
+          "PENDIENTE",
+          "APROBADO",
+          "RECHAZADO"
+        ]
+      },
+      "reservas_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "CarritoResumenDTO": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "cantidadHabitaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "huespedNombre": {
+            "type": "string"
+          },
+          "huespedApellido": {
+            "type": "string"
+          },
+          "huespedEmail": {
+            "type": "string"
+          },
+          "huespedTelefono": {
+            "type": "string"
+          },
+          "precioTotal": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "listoParaConfirmar": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "cantidadHabitaciones",
+          "checkIn",
+          "checkOut",
+          "huespedNombre",
+          "huespedApellido",
+          "huespedEmail",
+          "huespedTelefono",
+          "precioTotal",
+          "moneda",
+          "listoParaConfirmar"
+        ]
+      },
+      "ReservaRequest": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "cantidadHabitaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "huespedNombre": {
+            "type": "string"
+          },
+          "huespedApellido": {
+            "type": "string"
+          },
+          "huespedEmail": {
+            "type": "string"
+          },
+          "huespedTelefono": {
+            "type": "string"
+          },
+          "precioTotal": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "cantidadHabitaciones",
+          "checkIn",
+          "checkOut",
+          "huespedNombre",
+          "huespedApellido",
+          "huespedEmail",
+          "huespedTelefono",
+          "precioTotal",
+          "moneda"
+        ]
+      },
+      "ReservaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "referenciaExterna": {
+            "type": "string"
+          },
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "cantidadHabitaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "huespedNombre": {
+            "type": "string"
+          },
+          "huespedApellido": {
+            "type": "string"
+          },
+          "huespedEmail": {
+            "type": "string"
+          },
+          "precioTotal": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "fechaCreacion": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "canal",
+          "referenciaExterna",
+          "hotelId",
+          "tipoHabitacion",
+          "cantidadHabitaciones",
+          "checkIn",
+          "checkOut",
+          "huespedNombre",
+          "huespedApellido",
+          "huespedEmail",
+          "precioTotal",
+          "moneda",
+          "estado",
+          "fechaCreacion"
+        ]
+      },
+      "SeleccionFechasRequest": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "checkIn",
+          "checkOut"
+        ]
+      },
+      "SeleccionHotelYHabitacionRequest": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "cantidadHabitaciones": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "cantidadHabitaciones"
+        ]
+      },
+      "SeleccionHuespedYPrecioRequest": {
+        "type": "object",
+        "properties": {
+          "huespedNombre": {
+            "type": "string"
+          },
+          "huespedApellido": {
+            "type": "string"
+          },
+          "huespedEmail": {
+            "type": "string"
+          },
+          "huespedTelefono": {
+            "type": "string"
+          },
+          "precioTotal": {
+            "type": "number"
+          },
+          "moneda": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "huespedNombre",
+          "huespedApellido",
+          "huespedEmail",
+          "huespedTelefono",
+          "precioTotal",
+          "moneda"
+        ]
+      },
+      "CodigoErrorReserva": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "RESERVA_NO_ENCONTRADA",
+          "RESERVA_DUPLICADA",
+          "SIN_DISPONIBILIDAD",
+          "DEPENDENCIA_NO_DISPONIBLE",
+          "TRANSICION_DE_ESTADO_INVALIDA",
+          "NO_AUTORIZADO"
+        ]
+      },
+      "EstadoReserva": {
+        "type": "string",
+        "enum": [
+          "PENDIENTE",
+          "CONFIRMADA",
+          "MODIFICADA",
+          "CANCELADA",
+          "RECHAZADA"
+        ]
+      },
+      "servicioDeOverbooking_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "ConflictoReservaDTO": {
+        "type": "object",
+        "properties": {
+          "reservaIdConflictiva": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "cantidadHabitaciones": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "canalOrigen": {
+            "type": "string"
+          },
+          "referenciaExterna": {
+            "type": "string"
+          },
+          "huespedEmail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservaIdConflictiva",
+          "hotelId",
+          "tipoHabitacion",
+          "cantidadHabitaciones",
+          "checkIn",
+          "checkOut",
+          "canalOrigen",
+          "referenciaExterna",
+          "huespedEmail"
+        ]
+      },
+      "servicioDeOverbooking_DisponibilidadDTO": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipoHabitacion": {
+            "type": "string"
+          },
+          "desde": {
+            "type": "string",
+            "format": "date"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date"
+          },
+          "unidadesDisponibles": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "hotelId",
+          "tipoHabitacion",
+          "desde",
+          "hasta",
+          "unidadesDisponibles"
+        ]
+      },
+      "ResultadoResolucionOverbookingDTO": {
+        "type": "object",
+        "properties": {
+          "conflictoId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reservaIdConflictiva": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "resuelto": {
+            "type": "boolean"
+          },
+          "estrategia": {
+            "$ref": "#/components/schemas/EstrategiaResolucion"
+          },
+          "tipoHabitacionAlternativa": {
+            "type": "string"
+          },
+          "holdAlternativoId": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "conflictoId",
+          "reservaIdConflictiva",
+          "resuelto",
+          "estrategia",
+          "tipoHabitacionAlternativa",
+          "holdAlternativoId",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "CodigoErrorOverbooking": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "DEPENDENCIA_NO_DISPONIBLE",
+          "CONFLICTO_NO_RESUELTO"
+        ]
+      },
+      "EstrategiaResolucion": {
+        "type": "string",
+        "enum": [
+          "REUBICACION",
+          "COMPENSACION",
+          "CANCELACION_ANTICIPADA"
+        ]
+      },
+      "usuarios_ErrorDTO": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensaje",
+          "fecha"
+        ]
+      },
+      "ActualizacionUsuarioRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "nombre",
+          "apellido",
+          "password"
+        ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RegistroUsuarioRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "rol": {
+            "$ref": "#/components/schemas/RolUsuario"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "nombre",
+          "apellido",
+          "rol"
+        ]
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "nuevaPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "nuevaPassword"
+        ]
+      },
+      "SolicitudRecuperacionRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "UsuarioResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "apellido": {
+            "type": "string"
+          },
+          "rol": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "nombre",
+          "apellido",
+          "rol"
+        ]
+      },
+      "CodigoErrorUsuario": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_INVALIDA",
+          "EMAIL_YA_REGISTRADO",
+          "USUARIO_NO_ENCONTRADO",
+          "CREDENCIALES_INVALIDAS"
+        ]
+      },
+      "TipoEventoPassword": {
+        "type": "string",
+        "enum": [
+          "SOLICITUD_RECUPERACION",
+          "PASSWORD_CAMBIADA"
+        ]
+      },
+      "RolUsuario": {
+        "type": "string",
+        "enum": [
+          "HUESPED",
+          "ADMIN"
+        ]
+      },
       "Problem": {
         "type": "object",
         "required": [
@@ -2492,6 +5022,94 @@
           },
           "instance": {
             "type": "string"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "mensaje": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Solicitud inválida",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Autenticación requerida",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Operación no autorizada",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso no encontrado",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflicto de negocio o concurrencia",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Error interno",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "Error de integración externa",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "Dependencia no disponible",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
           }
         }
       }
