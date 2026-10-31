@@ -25,7 +25,29 @@ RUN keytool -genkeypair -alias stayhub-local -keyalg RSA -keysize 3072 -validity
       -storepass stayhub-local -keypass stayhub-local \
       -dname "CN=localhost, OU=StayHub Local, O=StayHub, C=AR" \
       -ext "SAN=dns:localhost,ip:127.0.0.1" -noprompt && \
+    keytool -genkeypair -alias stayhub-pms -keyalg RSA -keysize 3072 -validity 825 \
+      -storetype PKCS12 -keystore /opt/jboss/local-security/stayhub-pms-client.p12 \
+      -storepass stayhub-pms-local -keypass stayhub-pms-local \
+      -dname "CN=stayhub-pms-demo, OU=PMS, O=StayHub, C=AR" -noprompt && \
+    keytool -exportcert -alias stayhub-pms \
+      -keystore /opt/jboss/local-security/stayhub-pms-client.p12 \
+      -storepass stayhub-pms-local -rfc \
+      -file /opt/jboss/local-security/stayhub-pms-client.cer && \
+    keytool -importcert -alias stayhub-pms -noprompt \
+      -file /opt/jboss/local-security/stayhub-pms-client.cer \
+      -storetype PKCS12 -keystore /opt/jboss/local-security/stayhub-pms-trust.p12 \
+      -storepass stayhub-pms-local && \
     /opt/jboss/wildfly/bin/jboss-cli.sh --file=/opt/jboss/wildfly/configure.cli && \
+    fingerprint="$(keytool -J-Duser.language=en -list -v -alias stayhub-pms \
+      -keystore /opt/jboss/local-security/stayhub-pms-client.p12 \
+      -storepass stayhub-pms-local | sed -n 's/^[[:space:]]*SHA256: //p' | head -n 1)" && \
+    test -n "$fingerprint" && \
+    printf '%s\n' \
+      'embed-server --server-config=standalone-full.xml --std-out=echo' \
+      "/system-property=stayhub.pms.certificado-sha256:add(value=\"$fingerprint\")" \
+      '/system-property=stayhub.pms.hoteles:add(value="1,2,3,4,5,6,7,8,9,10")' \
+      'stop-embedded-server' > /tmp/configure-pms-security.cli && \
+    /opt/jboss/wildfly/bin/jboss-cli.sh --file=/tmp/configure-pms-security.cli && \
     chmod +x /opt/jboss/load-demo.sh
 
 COPY --from=build --chown=jboss:root /build/target/StayHub.war /opt/jboss/wildfly/standalone/deployments/StayHub.war

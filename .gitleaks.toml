@@ -21,3 +21,10 @@ description = "Vector de prueba público del RFC 6238 (TOTP): Base32 de '1234567
 condition = "AND"
 paths = ['''proyecto/src/test/java/com/stayhub/seguridad/MfaTotpTest\.java''']
 regexes = ['''GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ''']
+
+[[allowlists]]
+description = "Variable de entorno SONAR_TOKEN usada por curl en el commit histórico de configuración de Sonar; no contiene el valor del token"
+condition = "AND"
+regexTarget = "line"
+paths = ['''(?:\.github/workflows/security\.yml|sonar/crear-quality-gate\.sh)''']
+regexes = ['''SONAR_TOKEN''']

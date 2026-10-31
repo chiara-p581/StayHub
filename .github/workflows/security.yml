@@ -229,9 +229,71 @@ jobs:
           curl --insecure --fail --silent --show-error https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
           jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json
           node contracts/verify-wsdl.mjs ci-evidence/pms-mock.wsdl sincronizarInventario
+          pms_p12="$(mktemp)"
+          pms_crt="$(mktemp)"
+          pms_key="$(mktemp)"
+          cookies="$(mktemp)"
+          trap 'rm -f "$pms_p12" "$pms_crt" "$pms_key" "$cookies"' EXIT
+          docker compose cp app:/opt/jboss/local-security/stayhub-pms-client.p12 "$pms_p12"
+          openssl pkcs12 -in "$pms_p12" -passin pass:stayhub-pms-local \
+            -clcerts -nokeys -out "$pms_crt"
+          openssl pkcs12 -in "$pms_p12" -passin pass:stayhub-pms-local \
+            -nocerts -nodes -out "$pms_key"
+          curl --insecure --fail --silent --show-error \
+            --cert "$pms_crt" --key "$pms_key" \
+            'https://localhost:8443/StayHub/soap/integracion-pms?wsdl' > ci-evidence/stayhub.wsdl
+          node contracts/verify-wsdl.mjs ci-evidence/stayhub.wsdl
+          without_cert_status="$(curl --insecure --silent --output ci-evidence/soap-sin-certificado.json \
+            --write-out '%{http_code}' 'https://localhost:8443/StayHub/soap/integracion-pms?wsdl')"
+          test "$without_cert_status" = "401"
+          unauthorized_status="$(curl --insecure --silent --output ci-evidence/soap-hotel-no-autorizado.xml \
+            --write-out '%{http_code}' --cert "$pms_crt" --key "$pms_key" \
+            --header 'Content-Type: text/xml; charset=utf-8' \
+            --data '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:int="http://soap.stayhub.com/integracion-pms"><soapenv:Body><int:consultarDisponibilidad><hotelId>999</hotelId><desde>2026-11-09</desde><hasta>2026-11-12</hasta></int:consultarDisponibilidad></soapenv:Body></soapenv:Envelope>' \
+            https://localhost:8443/StayHub/soap/integracion-pms)"
+          test "$unauthorized_status" = "500"
+          grep -q 'NO_AUTORIZADO' ci-evidence/soap-hotel-no-autorizado.xml
+
+          csrf="$(curl --insecure --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+            https://localhost:8443/StayHub/api/seguridad/csrf | jq -r .token)"
+          curl --insecure --fail --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+            --header 'Origin: https://localhost:8443' \
+            --header "X-CSRF-Token: $csrf" \
+            --header 'Content-Type: application/json' \
+            --data '{"email":"huesped@stayhub.local","password":"StayHubDemo2026!"}' \
+            https://localhost:8443/StayHub/api/usuarios/login >/dev/null
+          csrf="$(curl --insecure --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+            https://localhost:8443/StayHub/api/seguridad/csrf | jq -r .token)"
+          desde="$(date -I -d '+7 days')"
+          hasta="$(date -I -d '+9 days')"
+          reserva="$(curl --insecure --fail --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+            --header 'Origin: https://localhost:8443' \
+            --header "X-CSRF-Token: $csrf" \
+            --header 'Content-Type: application/json' \
+            --data "{\"hotelId\":1,\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"checkIn\":\"$desde\",\"checkOut\":\"$hasta\",\"huespedNombre\":\"PMS\",\"huespedApellido\":\"CI\",\"huespedEmail\":\"huesped@stayhub.local\",\"huespedTelefono\":\"+5491100000000\",\"precioTotal\":1,\"moneda\":\"ARS\"}" \
+            https://localhost:8443/StayHub/api/reservas)"
+          echo "$reserva" > ci-evidence/reserva-pms.json
+          echo "SOAP_RESERVA_ID=$(jq -r .id <<<"$reserva")" >> "$GITHUB_ENV"
+          echo "SOAP_DESDE=$desde" >> "$GITHUB_ENV"
+          echo "SOAP_HASTA=$hasta" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
+      - name: Ejecutar todas las colecciones REST con Newman
+        run: |
+          set -euo pipefail
+          mkdir -p ci-evidence/postman
+          for collection in postman/*.postman_collection.json; do
+            case "$collection" in
+              *IntegracionPmsSOAP*) continue ;;
+            esac
+            report="ci-evidence/postman/$(basename "$collection" .postman_collection.json).xml"
+            npx --yes newman@6.2.1 run "$collection" \
+              --insecure \
+              --folder "CI - Contrato mínimo" \
+              --env-var baseUrl=https://localhost:8443/StayHub/api \
+              --reporters cli,junit --reporter-junit-export "$report"
+          done
       - name: Ejecutar colección de Canales Externos con Newman
         run: |
           npx --yes newman@6.2.1 run postman/StayHub-ServicioDeCanalesExternos.postman_collection.json \
@@ -241,6 +303,29 @@ jobs:
             --folder "Sincronizaciones" \
             --folder "Catálogo multicanal" \
             --reporters cli,junit --reporter-junit-export ci-evidence/newman-canales.xml
+      - name: Ejecutar contrato SOAP desplegado con certificado PMS
+        run: |
+          set -euo pipefail
+          pms_p12="$(mktemp)"
+          pms_crt="$(mktemp)"
+          pms_key="$(mktemp)"
+          trap 'rm -f "$pms_p12" "$pms_crt" "$pms_key"' EXIT
+          docker compose cp app:/opt/jboss/local-security/stayhub-pms-client.p12 "$pms_p12"
+          openssl pkcs12 -in "$pms_p12" -passin pass:stayhub-pms-local \
+            -clcerts -nokeys -out "$pms_crt"
+          openssl pkcs12 -in "$pms_p12" -passin pass:stayhub-pms-local \
+            -nocerts -nodes -out "$pms_key"
+          npx --yes newman@6.2.1 run postman/StayHub-IntegracionPmsSOAP.postman_collection.json \
+            --insecure \
+            --ssl-client-cert "$pms_crt" \
+            --ssl-client-key "$pms_key" \
+            --env-var baseUrl=https://localhost:8443/StayHub \
+            --env-var reservaId="$SOAP_RESERVA_ID" \
+            --env-var hotelId=1 \
+            --env-var fecha="$SOAP_DESDE" \
+            --env-var desde="$SOAP_DESDE" \
+            --env-var hasta="$SOAP_HASTA" \
+            --reporters cli,junit --reporter-junit-export ci-evidence/newman-soap.xml
       - uses: actions/setup-node@v6
         with:
           node-version: "22"

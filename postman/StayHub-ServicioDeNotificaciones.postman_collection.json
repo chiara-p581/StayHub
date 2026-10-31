@@ -9,6 +9,67 @@
   },
   "item": [
     {
+      "name": "CI - Contrato mínimo",
+      "item": [
+        {
+          "name": "Obtener CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/seguridad/csrf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('CSRF disponible', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('csrfToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Notificaciones exige ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "https://localhost:8443"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/notificaciones/enviar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"destinatario\":\"qa@example.test\",\"canalPreferido\":\"EMAIL\",\"tipoEvento\":\"PRUEBA\",\"mensaje\":\"Prueba CI\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Notificaciones rechaza sesión anónima', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "01 - Envio por canal",
       "item": [
         {
@@ -26,7 +87,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "raw": "{{baseUrl}}/notificaciones/enviar",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -40,7 +101,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Enviar - SMS exitoso",
@@ -57,7 +130,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "raw": "{{baseUrl}}/notificaciones/enviar",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -71,7 +144,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Enviar - Push exitoso",
@@ -88,7 +173,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "raw": "{{baseUrl}}/notificaciones/enviar",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -102,7 +187,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', () => pm.response.to.have.status(200));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -124,7 +221,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "raw": "{{baseUrl}}/notificaciones/enviar",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -138,7 +235,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Enviar - Invalido (falta canalPreferido)",
@@ -155,7 +264,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "raw": "{{baseUrl}}/notificaciones/enviar",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -169,7 +278,19 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Enviar - Invalido (falta tipoEvento)",
@@ -186,7 +307,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/StayHub/api/notificaciones/enviar",
+              "raw": "{{baseUrl}}/notificaciones/enviar",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -200,9 +321,27 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('Sin error interno expuesto', () => pm.expect(pm.response.text()).not.to.include('java.'));"
+                ]
+              }
+            }
+          ]
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443/StayHub/api"
     }
   ]
 }
