@@ -11,7 +11,8 @@ Evidencia para el Eje B de los Criterios de Testing (Clase 15, sección 5): Qual
 | Cuenta, organización y proyecto en SonarCloud, secreto y variables de GitHub | Hecho (organización `stayhub`, proyecto `stayhub_stayhub`, secreto `SONAR_TOKEN`, variables `SONAR_ORGANIZATION` y `SONAR_PROJECT_KEY`) |
 | Análisis en CI | Hecho: el PR #77 publicó el análisis en SonarCloud (0 bugs, 0 vulnerabilidades, ratings A, duplicación 0,6%, 0 hotspots) |
 | Quality Gate propio "StayHub TP" asociado al proyecto | Hecho en SonarCloud (5 condiciones sobre el código completo). El análisis del PR #77 es anterior y se evaluó con *Sonar way*; los análisis siguientes usan "StayHub TP" |
-| Análisis de las ramas `development` y `main` | **Pendiente**: ver "Rama principal" abajo |
+| Análisis de `development` | Hecho: Quality Gate **StayHub TP** aprobado con valores reales |
+| Análisis de `main` | **Pendiente**: se publica al mergear `development` a `main` (ver "Rama principal") |
 
 ## Qué se agregó al repositorio
 
@@ -61,6 +62,20 @@ El workflow analiza los pushes a `development` y a `main`, y el proyecto es púb
 - Antes de la prueba, abrir el selector de ramas del dashboard y comprobar que `main` aparece con el Quality Gate aprobado.
 - Un tag no tiene nombre de rama, así que el workflow analiza los runs sobre un tag con `-Dsonar.branch.name=main` (el tag `v1.0-testing` apunta a `main`). Esto no se pudo probar sin un tag real: verificarlo en el primer run sobre el tag y dejar margen antes de las 13:30 del 10/11 por si hay que corregirlo.
 
+## Evidencia: captura del dashboard (rama `development`, 2026-11-02 14:08)
+
+![Quality Gate de SonarCloud en la rama development: Passed](img/sonarcloud-quality-gate-development.png)
+
+Qué muestra y cómo leerla:
+
+- **Passed**: el Quality Gate "StayHub TP" está aprobado.
+- **Security A, Reliability A, Hotspots Reviewed 100%, Duplications 0,6%**: cumplen los criterios de la cátedra. Los ratings A del gate coinciden con la API: `reliability_rating` y `security_rating` valen 1 (A), con 0 bugs y 0 vulnerabilidades.
+- **Los números junto a los ratings** (Security 1, Reliability 84, Maintainability 78) son la cantidad de issues abiertos por calidad de software. Se verificó por API que **ninguno tiene impacto alto ni blocker**: los 84 de Reliability son *code smells* de impacto medio, y el 1 de Security es de impacto bajo (S1313, una IP fija en `ConfiguracionCanales`, que es la lista de hosts bloqueados contra SSRF). La cátedra pide 0 bugs Blocker/Critical y 0 vulnerabilidades, no 0 issues.
+- **Coverage 95,5%**: medida sobre el alcance de negocio configurado (ver [COBERTURA_JACOCO.md](COBERTURA_JACOCO.md)), no sobre todo el código.
+- **Dependency risks B (3)**: es el análisis de composición de software (SCA) de SonarCloud y no forma parte del Quality Gate de esta tarea. Conviene revisar esos 3 riesgos antes de cerrar el informe de seguridad, que exige 0 CVE críticas o altas sin mitigación documentada.
+
+Esta captura es de la lista de proyectos de la organización. Para el informe de ejecución conviene sumar otra de la pantalla **Overview** del proyecto, que muestra el nombre de la rama y las condiciones del gate una por una. Repetir las capturas sobre `main` después del merge.
+
 ## Resultados de la validación local (2026-10-30)
 
 No pude usar SonarCloud, así que validé con SonarQube Community Build 26.9 en local, con el mismo motor de análisis y el perfil *Sonar way* de Java, JavaScript, CSS y HTML/JSP. **SonarCloud puede reportar reglas distintas o adicionales** (su versión de las reglas puede diferir), por eso el primer run real puede traer hallazgos nuevos que habrá que revisar.
@@ -89,6 +104,15 @@ Quality Gate **StayHub TP**: pasa (`BUILD SUCCESS`). Cuando un gate falla, el an
 | S2445: sincronizar sobre un parámetro | `Csrf.token` | Candado estático propio |
 | S2259: posible NPE | `ConfiguracionCanales.esLocal` | Comparaciones seguras ante null, sin cambiar el resultado |
 | S2077 (4 vulnerabilidades): consulta JPQL armada por concatenación | `HotelRepositoryJpa` | Dos consultas literales completas. Nunca había entrada del usuario en la concatenación: era un falso positivo, pero se reescribió para eliminarlo |
+
+**Hallazgos del primer análisis real en SonarCloud (rama `development`, 2026-11-02):** el Quality Gate falló solo por el rating de confiabilidad (C, 2 bugs). Eran reglas nuevas que el SonarQube local no tenía, tal como se había advertido. Todo lo demás cumplía.
+
+| Regla | Dónde | Corrección |
+|---|---|---|
+| `java:S9436`: dos loggers en la misma clase | `AuditoriaSeguridad` | Sonar sugiere unificarlos, pero `stayhub.security.audit` y `stayhub.error` son categorías distintas con archivos distintos en WildFly ([seguridad-a-logging.cli](../config/seguridad-a-logging.cli)). Unificarlas rompería el ruteo de logs. El logger de errores pasó a una clase interna `CanalErrores`, con el mismo nombre de categoría |
+| `javascript:S9383`: promesa sin esperar ni marcar como ignorada | `inventory-1.js` (`refrescarTipos` en el evento `change`) | `void refrescarTipos(...)`. La función ya captura sus errores con `.catch` |
+
+Tras la corrección, el Quality Gate de `development` pasó con valores reales: confiabilidad A, seguridad A, 0 vulnerabilidades, duplicación 0,6%, 100% de hotspots revisados (0 bugs, cobertura 95,5% en el alcance configurado).
 
 **Tests**: S9351 (2 bugs) en `CarritoDeReservaTest` y `ServicioDeReservasCanalTest`: `BigDecimal.equals` reemplazado por `compareTo`.
 
