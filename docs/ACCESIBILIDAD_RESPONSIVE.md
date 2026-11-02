@@ -10,9 +10,10 @@ Evidencia para el Eje A de los Criterios de Testing (Clase 15, sección 4): resp
 | Lighthouse/axe obtiene 90 o más | Cumplido: Lighthouse 100 en las 76 mediciones (19 pantallas × móvil y escritorio × tema claro y oscuro) |
 | No existen violaciones críticas | Cumplido: 0 críticas y 0 graves (la prueba exige más que lo pedido) |
 | Se adjuntan reportes y evidencias | Cumplido: artefacto de CI y capturas de este documento |
-| Run de CI con el job `ui-accesibilidad` en verde | **Pendiente** hasta el primer push (link abajo) |
+| Run de CI con el job `ui-accesibilidad` en verde | Cumplido en el PR y sobre `development` (links abajo); falta confirmarlo sobre `main` |
 
-Link al run en verde: _pendiente_
+Link al run en verde (PR, commit `a8d8643`, job completo en 7 min 30 s): https://github.com/chiara-p581/StayHub/actions/runs/41511233273
+Link al run sobre `development` (commit `fad98d6`, job completo en 8 min 10 s): https://github.com/chiara-p581/StayHub/actions/runs/41512627255
 
 ## Qué se automatizó
 
