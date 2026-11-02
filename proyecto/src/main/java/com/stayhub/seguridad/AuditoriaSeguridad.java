@@ -22,7 +22,14 @@ public final class AuditoriaSeguridad {
     private static final Pattern ID_VALIDO = Pattern.compile("[A-Za-z0-9._-]{8,64}");
     private static final Pattern VALOR_SEGURO = Pattern.compile("[A-Za-z0-9áéíóúÁÉÍÓÚñÑ._:/@ -]{0,160}");
     private static final Logger AUDIT = Logger.getLogger("stayhub.security.audit");
-    private static final Logger ERROR = Logger.getLogger("stayhub.error");
+
+    /**
+     * Los errores van a otra categoría de log (stayhub.error) con su propio archivo en WildFly
+     * (config/seguridad-a-logging.cli), por eso no se unifica con AUDIT.
+     */
+    private static final class CanalErrores {
+        static final Logger LOG = Logger.getLogger("stayhub.error");
+    }
 
     private AuditoriaSeguridad() {}
 
@@ -73,7 +80,7 @@ public final class AuditoriaSeguridad {
         }
         String linea = "ERROR " + json("fecha", Instant.now().toString(),
                 "correlationId", correlationId(request), "tipo", tipo, "ubicacion", ubicacion);
-        ERROR.log(Level.SEVERE, linea); // No registra mensajes, cuerpos, credenciales ni stack traces con PII.
+        CanalErrores.LOG.log(Level.SEVERE, linea); // No registra mensajes, cuerpos, credenciales ni stack traces con PII.
     }
 
     public static void auditarHttp(HttpServletRequest request, String ruta, int estado) {

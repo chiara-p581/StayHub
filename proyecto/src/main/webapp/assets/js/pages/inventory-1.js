@@ -47,7 +47,7 @@
         }).catch(function(err) { if (consulta === consultaTipos) mostrarError(errorBanner, err); });
     }
 
-    hotelSelect.addEventListener("change", function () { ++consultaDatos; refrescarTipos(this.value); document.getElementById("disponibilidad-body").textContent=""; document.getElementById("tarifas-body").textContent=""; });
+    hotelSelect.addEventListener("change", function () { ++consultaDatos; void refrescarTipos(this.value); document.getElementById("disponibilidad-body").textContent=""; document.getElementById("tarifas-body").textContent=""; });
 
     document.getElementById("btn-cargar").addEventListener("click", function () {
         var cargaError = document.getElementById("carga-error");
