@@ -317,7 +317,7 @@ const Api = (() => {
             '<a class="stayhub-header-icon" href="index.html" aria-label="Home" title="Home"><span class="material-symbols-outlined">home</span></a>' +
             '<a class="stayhub-header-icon" href="index.html#hoteles" aria-label="Search hotels" title="Search hotels"><span class="material-symbols-outlined">search</span></a>' +
             (usuario && usuario.rol === "ADMIN" ? '<a class="stayhub-header-icon" href="admin-dashboard.html" aria-label="Administration" title="Administration"><span class="material-symbols-outlined">space_dashboard</span></a>' : '') +
-            (!usuario || usuario.rol !== "ADMIN" ? '<a class="stayhub-header-icon stayhub-cart-link" href="cart.html" aria-label="Cart" title="Cart"><span class="material-symbols-outlined">shopping_bag</span><span id="global-cart-count" class="stayhub-cart-count">0</span></a>' : '') +
+            (!usuario || usuario.rol !== "ADMIN" ? '<a class="stayhub-header-icon stayhub-cart-link" href="cart.html" aria-label="Cart, 0 items" title="Cart"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span id="global-cart-count" class="stayhub-cart-count" aria-hidden="true">0</span></a>' : '') +
             '<a class="stayhub-profile-pill" href="' + (usuario ? 'settings.html' : 'login.html') + '"><span class="stayhub-avatar">' + (usuario ? String(usuario.nombre || "U").charAt(0).toUpperCase() : '<span class="material-symbols-outlined">person</span>') + '</span><span>' + (usuario ? usuario.nombre : 'Sign in') + '</span></a>' +
             '</nav></div>');
         document.body.insertBefore(header, document.body.firstChild);
@@ -360,7 +360,11 @@ const Api = (() => {
         }
         function updateCartBadge() {
             var badge = document.getElementById("global-cart-count");
-            if (badge) badge.textContent = String(localCart().length);
+            if (!badge) return;
+            var cantidad = localCart().length;
+            badge.textContent = String(cantidad);
+            // El nombre accesible debe contener el texto visible del contador (WCAG 2.5.3), también cuando es 0
+            if (badge.parentElement) badge.parentElement.setAttribute("aria-label", "Cart, " + cantidad + (cantidad === 1 ? " item" : " items"));
         }
         updateCartBadge();
         document.addEventListener("stayhub:cart-changed", updateCartBadge);

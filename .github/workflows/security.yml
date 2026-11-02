@@ -183,6 +183,79 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  ui-accesibilidad:
+    name: Responsive y accesibilidad (WCAG 2.2 AA)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ui-accesibilidad
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ui-accesibilidad/package-lock.json
+      - name: Instalar dependencias reproducibles
+        run: npm ci
+      - name: Instalar Chromium de Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Pruebas de 360, 768 y 1280 px (axe, WCAG 2.2 AA), teclado y contraste de campos, en tema claro y oscuro
+        run: npm test
+      - name: Lighthouse de accesibilidad (móvil y escritorio, tema claro y oscuro, umbral 90)
+        run: node lighthouse.mjs
+      - name: Resumen de resultados
+        if: always()
+        run: |
+          {
+            echo "### Responsive y axe (WCAG 2.2 AA)"
+            python3 - <<'PY'
+          import glob, json
+          archivos = sorted(glob.glob("reports/axe/*.json"))
+          peso = {"critical": 0, "serious": 0, "moderate": 0, "minor": 0}
+          for a in archivos:
+              for v in json.load(open(a, encoding="utf8"))["violaciones"]:
+                  peso[v["impacto"]] = peso.get(v["impacto"], 0) + 1
+          print(f"Se analizaron {len(archivos)} combinaciones pantalla x ancho (360, 768 y 1280 px) x tema (claro y oscuro).")
+          print()
+          print("| Impacto | Violaciones |")
+          print("|---|---|")
+          for k, v in peso.items():
+              print(f"| {k} | {v} |")
+          print()
+          print("### Navegación por teclado")
+          kb = [json.load(open(a, encoding="utf8")) for a in sorted(glob.glob("reports/teclado/*.json"))]
+          print(f"{len(kb)} recorridos con Tab: {sum(k['controlesRecorridos'] for k in kb)} controles enfocados, "
+                f"{sum(len(k['sinIndicador']) for k in kb)} sin indicador de foco, "
+                f"{sum(len(k['tapados']) for k in kb)} tapados por el encabezado, "
+                f"{sum(1 for k in kb if k['trampa'])} trampas de teclado.")
+          print()
+          print("### Contraste de campos de formulario (WCAG 1.4.11, mínimo 3:1)")
+          cc = [json.load(open(a, encoding="utf8")) for a in sorted(glob.glob("reports/contraste-controles/*.json"))]
+          medidos = [m["contraste"] for c in cc for m in c["medidos"]]
+          print(f"{len(cc)} pantallas x tema: {len(medidos)} campos medidos, contraste mínimo {min(medidos):.2f}:1, "
+                f"{sum(len(c['incumplen']) for c in cc)} por debajo del umbral.")
+          PY
+            echo
+            cat reports/lighthouse/resumen.md 2>/dev/null || echo "Sin resumen de Lighthouse"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Publicar evidencias de accesibilidad
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-accesibilidad-evidence
+          path: |
+            ui-accesibilidad/reports/playwright/
+            ui-accesibilidad/reports/axe/
+            ui-accesibilidad/reports/teclado/
+            ui-accesibilidad/reports/contraste-controles/
+            ui-accesibilidad/reports/capturas/
+            ui-accesibilidad/reports/lighthouse/
+            ui-accesibilidad/reports/ui-junit.xml
+          if-no-files-found: warn
+          retention-days: 14
+
   pms-mock:
     name: Mock SOAP del PMS
     runs-on: ubuntu-latest
