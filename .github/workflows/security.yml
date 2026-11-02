@@ -100,12 +100,16 @@ jobs:
       - name: Análisis estático y Quality Gate (SonarCloud)
         if: env.SONAR_TOKEN != '' && env.SONAR_ORGANIZATION != '' && env.SONAR_PROJECT_KEY != ''
         run: |
+          # Un tag no tiene nombre de rama: se analiza como main, que es donde apunta v1.0-testing
+          rama=()
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then rama=(-Dsonar.branch.name=main); fi
           mvn --file proyecto/pom.xml --batch-mode --no-transfer-progress \
             org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
             -Dsonar.organization="$SONAR_ORGANIZATION" \
             -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.qualitygate.timeout=300
+            -Dsonar.qualitygate.timeout=300 \
+            "${rama[@]}"
       - name: Guardar estado del Quality Gate
         if: always() && env.SONAR_TOKEN != '' && env.SONAR_ORGANIZATION != '' && env.SONAR_PROJECT_KEY != ''
         run: |

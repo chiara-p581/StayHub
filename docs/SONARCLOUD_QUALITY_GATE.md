@@ -8,8 +8,10 @@ Evidencia para el Eje B de los Criterios de Testing (Clase 15, sección 5): Qual
 |---|---|
 | Integración en el repositorio (pom, CI, script del gate) | Hecha |
 | Código corregido hasta cumplir los criterios | Hecho, validado con SonarQube local (ver resultados) |
-| Cuenta, organización y proyecto en SonarCloud, secreto y variables de GitHub | **Pendiente: requiere tu cuenta** (pasos abajo) |
-| Run de CI con el Quality Gate de SonarCloud en verde | **Pendiente**, después de configurar lo anterior |
+| Cuenta, organización y proyecto en SonarCloud, secreto y variables de GitHub | Hecho (organización `stayhub`, proyecto `stayhub_stayhub`, secreto `SONAR_TOKEN`, variables `SONAR_ORGANIZATION` y `SONAR_PROJECT_KEY`) |
+| Análisis en CI | Hecho: el PR #77 publicó el análisis en SonarCloud (0 bugs, 0 vulnerabilidades, ratings A, duplicación 0,6%, 0 hotspots) |
+| Quality Gate propio "StayHub TP" asociado al proyecto | Hecho en SonarCloud (5 condiciones sobre el código completo). El análisis del PR #77 es anterior y se evaluó con *Sonar way*; los análisis siguientes usan "StayHub TP" |
+| Análisis de las ramas `development` y `main` | **Pendiente**: ver "Rama principal" abajo |
 
 ## Qué se agregó al repositorio
 
@@ -39,7 +41,7 @@ Evalúa el **código completo**, no solo el nuevo (los gates nuevos vienen sembr
 4. En GitHub, **Settings > Secrets and variables > Actions**:
    - Secreto `SONAR_TOKEN` con ese token.
    - Variables `SONAR_ORGANIZATION` (la clave de la organización) y `SONAR_PROJECT_KEY` (la clave del proyecto).
-5. Crear el gate y asociarlo al proyecto:
+5. Crear el gate y asociarlo al proyecto (el script resuelve la diferencia de API: SonarCloud identifica los gates por id y SonarQube por nombre):
    ```
    SONAR_TOKEN=... SONAR_HOST_URL=https://sonarcloud.io \
    SONAR_ORGANIZATION=<org> SONAR_PROJECT_KEY=<proyecto> ./sonar/crear-quality-gate.sh
@@ -47,8 +49,17 @@ Evalúa el **código completo**, no solo el nuevo (los gates nuevos vienen sembr
    Si el plan de SonarCloud no permite gates propios, dejar *Sonar way* y verificar a mano en el dashboard que se cumplan los criterios de la tabla de arriba (los resultados locales indican que se cumplen).
 6. Hacer push y revisar que el job `backend` pase. Pegar abajo el link al run y la captura del dashboard (la cátedra pide la captura del Quality Gate en el informe de ejecución).
 
-Link al run en verde: _pendiente_
-Link al dashboard de SonarCloud: _pendiente_
+Link al run en verde (PR #77): https://github.com/chiara-p581/StayHub/actions/runs/41143152544
+Link al dashboard de SonarCloud: https://sonarcloud.io/project/overview?id=stayhub_stayhub (organización `stayhub`, clave `stayhub_stayhub`)
+
+## Rama principal en SonarCloud
+
+El proyecto se creó con la rama principal llamada `master`, que no existe en este repositorio. Decisión del equipo: que el dashboard por defecto muestre **`development`**. En SonarCloud: **Administration > Branches and Pull Requests**, renombrar la rama principal de `master` a `development`. Hacerlo antes del primer análisis de esa rama.
+
+El workflow analiza los pushes a `development` y a `main`, y el proyecto es público, así que SonarCloud conserva ambas ramas. La cátedra evalúa el tag `v1.0-testing`, que va sobre `main` (G2):
+
+- Antes de la prueba, abrir el selector de ramas del dashboard y comprobar que `main` aparece con el Quality Gate aprobado.
+- Un tag no tiene nombre de rama, así que el workflow analiza los runs sobre un tag con `-Dsonar.branch.name=main` (el tag `v1.0-testing` apunta a `main`). Esto no se pudo probar sin un tag real: verificarlo en el primer run sobre el tag y dejar margen antes de las 13:30 del 10/11 por si hay que corregirlo.
 
 ## Resultados de la validación local (2026-10-30)
 
