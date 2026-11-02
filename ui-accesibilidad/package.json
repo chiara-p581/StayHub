@@ -1,0 +1,17 @@
+{
+  "name": "stayhub-ui-accesibilidad",
+  "private": true,
+  "description": "Pruebas de diseño responsive y accesibilidad (WCAG 2.2 AA) de las pantallas de StayHub",
+  "scripts": {
+    "test": "playwright test",
+    "lighthouse": "node lighthouse.mjs",
+    "verificar": "playwright test && node lighthouse.mjs",
+    "servidor": "node servidor-mock.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@playwright/test": "1.56.1",
+    "chrome-launcher": "1.2.0",
+    "lighthouse": "12.8.2"
+  }
+}

@@ -153,7 +153,7 @@ html[data-theme="dark"] #hotel-servicios > div:hover { background:#22334c !impor
 body.stayhub-auth-page #login-form input {
     background:#f7f5f2 !important;
     color:#1f2937 !important;
-    border-color:#c8ced8 !important;
+    border-color:#6f7a8c !important;
     caret-color:#182944;
 }
 body.stayhub-auth-page #login-form input:focus {
@@ -284,7 +284,7 @@ body.stayhub-unified { padding-top:80px !important; }
 .stayhub-filter-bar { padding:8px; width:max-content; max-width:100%; border:1px solid var(--sh-line); border-radius:18px; background:rgba(255,255,255,.74); box-shadow:0 8px 30px rgba(15,31,57,.045); }
 .canal-chip { min-height:40px; padding-inline:16px !important; border:0 !important; border-radius:12px !important; color:#59677b; font-weight:650; }
 .canal-chip:hover { background:#edf3f9; color:var(--sh-ink); }
-.canal-chip.bg-primary { background:var(--sh-ink) !important; box-shadow:0 6px 16px rgba(15,31,57,.18); }
+.canal-chip.bg-primary { background:var(--sh-ink) !important; color:#fff !important; box-shadow:0 6px 16px rgba(15,31,57,.18); }
 .stayhub-filter-note { padding-inline:10px 8px; }
 #hoteles-grid { gap:28px !important; }
 .stayhub-hotel-card { min-height:430px; border:1px solid rgba(15,31,57,.09); border-radius:26px; background:#fff; box-shadow:0 14px 42px rgba(15,31,57,.08); }
@@ -309,6 +309,10 @@ input:focus,select:focus,textarea:focus { border-color:#6b8db5 !important; box-s
 .stayhub-secondary-action,.btn-secondary,.btn-danger { border-radius:14px !important; }
 .stayhub-admin-sidebar { top:80px; width:264px; padding:26px 16px 18px; background:rgba(239,243,247,.96); border-right:1px solid rgba(15,31,57,.08); }
 .stayhub-admin-layout > main,.stayhub-admin-layout > .flex > main { width:calc(100% - 264px) !important; margin-left:264px !important; }
+@media (max-width: 820px) {
+    /* La barra lateral se oculta en pantallas chicas: el contenido debe ocupar todo el ancho */
+    .stayhub-admin-layout > main,.stayhub-admin-layout > .flex > main { width:100% !important; margin-left:0 !important; }
+}
 .stayhub-admin-sidebar nav { gap:7px; }
 .stayhub-admin-sidebar nav a { min-height:48px; border-radius:14px; padding:0 14px; }
 .stayhub-admin-sidebar nav a.active { background:linear-gradient(135deg,#0f1f39,#294467); box-shadow:0 10px 24px rgba(15,31,57,.19); }
@@ -391,3 +395,69 @@ input:focus,select:focus,textarea:focus { border-color:#6b8db5 !important; box-s
     .stayhub-motion .stayhub-search-shell { animation:none !important; }
     .stayhub-motion [data-reveal] { opacity:1 !important; transform:none !important; transition:none !important; }
 }
+
+/* ------------------------------------------------------------------
+   Tema oscuro: correcciones de contraste (WCAG 1.4.3, mínimo 4,5:1).
+   El bloque de rediseño aplica fondos blancos translúcidos y las clases de Tailwind con opacidad
+   (bg-.../50) no estaban cubiertas por las reglas oscuras: quedaban superficies claras con texto claro.
+   ------------------------------------------------------------------ */
+html[data-theme="dark"] .stayhub-channel-shortcuts,
+html[data-theme="dark"] .stayhub-profile-pill,
+html[data-theme="dark"] .stayhub-filter-bar,
+html[data-theme="dark"] .glass-card { background:#1f2b40 !important; color:#e5e7eb !important; border-color:#3c4a61 !important; }
+html[data-theme="dark"] .stayhub-channel-shortcuts a { color:#d7e0ec !important; }
+html[data-theme="dark"] .stayhub-filter-note { color:#b8c4d6 !important; }
+html[data-theme="dark"] .stayhub-eyebrow { color:#9db4d0 !important; }
+html[data-theme="dark"] .canal-chip:not(.bg-primary) { color:#d7e0ec !important; }
+html[data-theme="dark"] .canal-chip:not(.bg-primary):hover { background:#2d3c56 !important; color:#fff !important; }
+
+/* Superficies de Tailwind con variante de opacidad y las de color terciario (tarjeta durazno, avisos) */
+html[data-theme="dark"] [class*="bg-surface-container-low/"],
+html[data-theme="dark"] [class*="bg-surface-container-high/"],
+html[data-theme="dark"] [class*="bg-surface-container-highest/"],
+html[data-theme="dark"] [class*="bg-surface-variant"],
+html[data-theme="dark"] [class*="bg-surface-container/"] { background-color:#243149 !important; color:#e8eef7 !important; }
+html[data-theme="dark"] .bg-tertiary-fixed,
+html[data-theme="dark"] [class*="bg-tertiary-fixed"] { background-color:#3b3123 !important; color:#f6ead4 !important; border-color:#5b4a30 !important; }
+html[data-theme="dark"] .bg-tertiary-fixed *:not(button):not(input):not(select):not(textarea):not(.material-symbols-outlined) { color:inherit; }
+html[data-theme="dark"] .bg-tertiary-fixed a,
+html[data-theme="dark"] [class*="bg-tertiary-fixed"] a { color:#ffd9a0 !important; }
+html[data-theme="dark"] [class*="bg-tertiary-fixed"] code { background:#2a2218 !important; color:#ffe4b8 !important; }
+
+/* Colores de texto semánticos pensados para fondo claro */
+html[data-theme="dark"] .text-secondary { color:#a9bdd4 !important; }
+html[data-theme="dark"] .text-error { color:#ffb4ab !important; }
+html[data-theme="dark"] .text-on-surface-variant { color:#b8c4d6 !important; }
+
+/* Barra lateral de administración */
+html[data-theme="dark"] .stayhub-sidebar-title > span { color:#f3f4f6 !important; }
+html[data-theme="dark"] .stayhub-sidebar-title > small { color:#b8c4d6 !important; }
+html[data-theme="dark"] .stayhub-admin-sidebar nav a:not(.active) { color:#d7e0ec !important; }
+html[data-theme="dark"] .stayhub-admin-sidebar nav a:not(.active):hover { background:#2d3c56 !important; color:#fff !important; }
+html[data-theme="dark"] .stayhub-sidebar-profile { color:#e5e7eb !important; }
+html[data-theme="dark"] .stayhub-sidebar-profile strong { color:#f3f4f6 !important; }
+html[data-theme="dark"] .stayhub-sidebar-profile small { color:#b8c4d6 !important; }
+
+/* Pestañas de configuración */
+html[data-theme="dark"] button[data-panel]:not(.active):not([aria-selected="true"]) { color:#d7e0ec !important; }
+
+/* ------------------------------------------------------------------
+   Foco visible en los campos de fecha (WCAG 2.4.7). El rediseño les quita borde y sombra, de modo que
+   solo resaltaba el segmento interno (mes, día o año) del navegador; ahora todo el campo muestra el foco.
+   ------------------------------------------------------------------ */
+input[type="date"]:focus-visible,
+input[type="date"]:focus-within { outline:2px solid #0b57d0 !important; outline-offset:2px !important; border-radius:8px; }
+html[data-theme="dark"] input[type="date"]:focus-visible,
+html[data-theme="dark"] input[type="date"]:focus-within { outline-color:#9ec5ff !important; }
+
+/* ------------------------------------------------------------------
+   Límite de los campos de formulario (WCAG 1.4.11, contraste de componentes >= 3:1).
+   El borde original era un 16 % de azul (contraste 1,4:1 en claro y casi invisible en oscuro) y en
+   el tema oscuro algunos campos conservaban el borde del tema claro.
+   ------------------------------------------------------------------ */
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="file"]):not(.border-none),
+select:not(.border-none),
+textarea:not(.border-none) { border-color:#6f7a8c !important; }
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="file"]):not(.border-none),
+html[data-theme="dark"] select:not(.border-none),
+html[data-theme="dark"] textarea:not(.border-none) { border-color:#7a8aa3 !important; }
