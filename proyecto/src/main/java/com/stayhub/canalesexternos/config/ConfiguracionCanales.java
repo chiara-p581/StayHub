@@ -115,7 +115,7 @@ public class ConfiguracionCanales {
     }
 
     private boolean esLocal(String host) {
-        return host != null && (host.equalsIgnoreCase("localhost") || host.equals("127.0.0.1") || host.equals("::1"));
+        return "localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host) || "::1".equals(host);
     }
 
     private boolean hostBloqueado(String host) {

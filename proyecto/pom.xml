@@ -13,6 +13,19 @@
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- SonarCloud. La organización, la clave del proyecto y el token se pasan por
+             línea de comandos (-Dsonar.organization, -Dsonar.projectKey, SONAR_TOKEN):
+             no van en el repositorio. -->
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.projectName>StayHub</sonar.projectName>
+        <sonar.sources>src/main/java,src/main/webapp</sonar.sources>
+        <sonar.tests>src/test/java</sonar.tests>
+        <!-- CSS generado por Tailwind (minificado) y recursos de terceros: no es código propio -->
+        <sonar.exclusions>src/main/webapp/assets/css/tailwind.css,src/main/webapp/assets/js/vendor/**</sonar.exclusions>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <!-- La cobertura se mide sobre la capa de negocio, igual que el umbral de JaCoCo -->
+        <sonar.coverage.exclusions>src/main/webapp/**,**/api/**,**/dto/**,**/repository/**,**/client/**,**/messaging/**,**/config/**,**/exception/**,**/contrato/**,**/seguridad/**,**/demo/**,**/RestApplication.java,**/SaludoResource.java,**/SaludoService.java,**/LocalDateParamConverterProvider.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>

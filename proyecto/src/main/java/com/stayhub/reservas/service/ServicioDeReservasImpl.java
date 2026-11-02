@@ -70,9 +70,21 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     private Instance<GestionDeDisponibilidadPort> disponibilidad;
 
     /** 256 locks acotados por referencia. La restricción única en DB protege duplicados entre nodos. */
-    private static final Object[] CANDADOS = java.util.stream.IntStream.range(0, 256).mapToObj(i -> new Object()).toArray();
-    private Object candadoPara(String canal, String referenciaExterna) {
-        return CANDADOS[Math.floorMod(java.util.Objects.hash(canal, referenciaExterna), CANDADOS.length)];
+    private static final java.util.concurrent.locks.ReentrantLock[] CANDADOS = java.util.stream.IntStream.range(0, 256)
+            .mapToObj(i -> new java.util.concurrent.locks.ReentrantLock()).toArray(java.util.concurrent.locks.ReentrantLock[]::new);
+
+    /**
+     * Ejecuta la acción con el candado de la referencia. Se usa un ReentrantLock y no
+     * {@code synchronized} porque la especificación EJB no permite bloques sincronizados.
+     */
+    private <T> T conCandado(String canal, String referenciaExterna, java.util.function.Supplier<T> accion) {
+        var candado = CANDADOS[Math.floorMod(java.util.Objects.hash(canal, referenciaExterna), CANDADOS.length)];
+        candado.lock();
+        try {
+            return accion.get();
+        } finally {
+            candado.unlock();
+        }
     }
 
     // ------------------------------------------------------------------
@@ -83,7 +95,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @PermitAll
     public ResultadoOperacionReserva crearDesdeCanal(SolicitudReserva solicitud) {
         validar(solicitud);
-        synchronized (candadoPara(solicitud.canal(), solicitud.referenciaExterna())) {
+        return conCandado(solicitud.canal(), solicitud.referenciaExterna(), () -> {
             Optional<Reserva> existente = repositorio.buscarPorCanalYReferencia(
                     solicitud.canal(), solicitud.referenciaExterna());
             if (existente.isPresent()) {
@@ -95,14 +107,14 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             holdYConfirmarEnUnPaso(reserva);
             repositorio.guardar(reserva);
             return ReservaMapper.aResultadoOperacion(reserva);
-        }
+        });
     }
 
     @Override
     @PermitAll
     public ResultadoOperacionReserva modificarDesdeCanal(SolicitudReserva solicitud) {
         validar(solicitud);
-        synchronized (candadoPara(solicitud.canal(), solicitud.referenciaExterna())) {
+        return conCandado(solicitud.canal(), solicitud.referenciaExterna(), () -> {
             Reserva reserva = repositorio.buscarPorCanalYReferencia(solicitud.canal(), solicitud.referenciaExterna())
                     .orElseThrow(() -> noEncontrada(solicitud.canal(), solicitud.referenciaExterna()));
 
@@ -116,13 +128,13 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             reemplazarHoldYConfirmar(reserva, solicitud);
             repositorio.guardar(reserva);
             return ReservaMapper.aResultadoOperacion(reserva);
-        }
+        });
     }
 
     @Override
     @PermitAll
     public ResultadoOperacionReserva cancelarDesdeCanal(String canal, String referenciaExterna) {
-        synchronized (candadoPara(canal, referenciaExterna)) {
+        return conCandado(canal, referenciaExterna, () -> {
             Reserva reserva = repositorio.buscarPorCanalYReferencia(canal, referenciaExterna)
                     .orElseThrow(() -> noEncontrada(canal, referenciaExterna));
 
@@ -138,7 +150,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             reserva.cancelar();
             repositorio.guardar(reserva);
             return ReservaMapper.aResultadoOperacion(reserva);
-        }
+        });
     }
 
     // ------------------------------------------------------------------

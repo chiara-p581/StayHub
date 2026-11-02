@@ -1,6 +1,15 @@
 (function () {
     var errorBanner = document.getElementById("error-banner");
 
+    var claveContador = 0;
+    function claveAleatoriaHex() {
+        if (window.crypto && window.crypto.getRandomValues) {
+            return window.crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
+        }
+        claveContador += 1;
+        return claveContador.toString(16);
+    }
+
     function pintarSesion() {
         var usuario = Api.currentUser();
         if (usuario && usuario.rol === "ADMIN") document.getElementById("brand-admin").classList.remove("hidden");
@@ -81,8 +90,8 @@
 
         var btn = document.getElementById("btn-pagar");
         btn.disabled = true;
-        var claveIdempotencia = crypto.randomUUID ? crypto.randomUUID() :
-            "pago-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+        var claveIdempotencia = window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() :
+            "pago-" + Date.now() + "-" + claveAleatoriaHex();
         Api.procesarPago({ reservaId: reservaId, monto: monto, moneda: moneda,
             claveIdempotencia: claveIdempotencia })
             .then(function (pago) {

@@ -10,11 +10,13 @@ import java.util.HexFormat;
 /** Genera el token del link y su hash. En la base solo se guarda el hash. */
 public final class TokenRecuperacion {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private TokenRecuperacion() { }
 
     public static String generar() {
         byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
+        RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
