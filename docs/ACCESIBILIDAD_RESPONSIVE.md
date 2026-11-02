@@ -20,10 +20,10 @@ El paquete [ui-accesibilidad](../ui-accesibilidad/README.md) corre en el job `ui
 
 | Instrumento | Pruebas | Qué comprueba |
 |---|---|---|
-| Playwright + @axe-core/playwright 4.11 | 114 (19 pantallas × 3 anchos × 2 temas) | Reglas WCAG 2.0, 2.1 y 2.2 de nivel A y AA. Falla ante cualquier violación crítica o grave, desborde horizontal, meta viewport que bloquee el zoom, error de JavaScript, o si el tema pedido no quedó aplicado |
+| Playwright + @axe-core/playwright 4.14 | 114 (19 pantallas × 3 anchos × 2 temas) | Reglas WCAG 2.0, 2.1 y 2.2 de nivel A y AA. Falla ante cualquier violación crítica o grave, desborde horizontal, meta viewport que bloquee el zoom, error de JavaScript, o si el tema pedido no quedó aplicado |
 | Navegación por teclado | 57 (19 pantallas × 1280 claro, 360 claro, 1280 oscuro) | Recorre la página con Tab. Todo control enfocado cambia su aspecto (foco visible, WCAG 2.4.7), el encabezado fijo no lo tapa (foco no oculto, WCAG 2.4.11, criterio nuevo de 2.2) y no hay trampas de teclado (2.1.2) |
 | Contraste de campos de formulario | 38 (19 pantallas × 2 temas, a 1280 px) | El límite de cada campo (borde o fondo) contrasta al menos 3:1 con su entorno (WCAG 1.4.11). axe no mide este criterio |
-| Lighthouse 12 (categoría Accesibilidad) | 76 mediciones | Móvil (360 px) y escritorio (1280 px) por pantalla y tema. Falla si alguna queda por debajo de 90 |
+| Lighthouse 13 (categoría Accesibilidad) | 76 mediciones | Móvil (360 px) y escritorio (1280 px) por pantalla y tema. Falla si alguna queda por debajo de 90 |
 
 **Pantallas cubiertas (19):** inicio, ingreso, registro, recuperar y restablecer contraseña, detalle de hotel, carrito, pago, detalle de reserva, configuración, nosotros, ayuda, panel de administración, inventario, hoteles, canales, pagos, operaciones y portal de personal.
 
@@ -58,7 +58,7 @@ Los encontró la propia automatización y quedaron corregidos. Conviene registra
 | 6 | Mayor | Todas las pantallas con campos | **El límite de los campos de formulario no llegaba a 3:1** (WCAG 1.4.11): 1,4:1 en claro y hasta 1,0:1 en oscuro, donde algunos campos conservaban el borde del tema claro | Borde `#6f7a8c` en claro y `#7a8aa3` en oscuro para todo campo con borde. El selector de hotel del panel no tenía borde: se le agregó |
 | 7 | Menor | Campos de fecha (inicio, inventario, canales, operaciones) | Sin borde ni sombra, el único indicador de foco era el segmento interno del navegador (mes, día o año) | Contorno de 2 px en todo el campo, claro y oscuro |
 | 8 | Menor | Registro (360 px) | Desborde de 16 px: `w-full` más márgenes laterales en un contenedor de bloque | `w-auto` ([register.html](../proyecto/src/main/webapp/register.html)) |
-| 9 | Menor | Todas las pantallas con encabezado | El vínculo del carrito tenía el nombre "Cart", pero su texto visible incluía el nombre del ícono y el contador (WCAG 2.5.3, auditoría de Lighthouse sin peso en el puntaje) | Ícono y contador decorativos; el conteo se anuncia en el nombre: "Cart, 2 items" ([api.js](../proyecto/src/main/webapp/assets/js/api.js)) |
+| 9 | Mayor | Todas las pantallas con encabezado | El vínculo del carrito tenía el nombre accesible "Cart", pero su texto visible incluía el contador (WCAG 2.5.3, *Label in Name*, nivel A). Lighthouse lo marcaba sin peso en el puntaje y axe 4.14 lo promovió a violación grave en 60 de las 114 pruebas | El nombre accesible incluye siempre la cantidad, también cuando es 0: "Cart, 0 items", "Cart, 2 items" ([api.js](../proyecto/src/main/webapp/assets/js/api.js)) |
 | 10 | Menor | Portal de personal | Tres fotos con el nombre de la persona repetido al lado (`image-redundant-alt`) | `alt=""` |
 
 ### Evidencia visual (tema claro)
@@ -76,6 +76,14 @@ Los encontró la propia automatización y quedaron corregidos. Conviene registra
 | ![Canales 360 oscuro](img/responsive/channels-sync-360-oscuro.png) | ![Registro 360 oscuro](img/responsive/register-360-oscuro.png) | ![Operaciones 1280 oscuro](img/responsive/alerts-1280-oscuro.png) |
 
 [Portal de personal a 1280 px, tema oscuro](img/responsive/staff-portal-1280-oscuro.png). El set completo (axe, teclado, contraste de campos, capturas y reportes de Lighthouse) queda en el artefacto de CI.
+
+## Dependencias de las pruebas
+
+El escaneo OSV del CI (job `Dependencias y SBOM`) falló con el primer `package-lock.json` del paquete: 12 vulnerabilidades conocidas (4 altas), todas heredadas de dependencias de desarrollo de Lighthouse 12. Se resolvió así:
+
+- Lighthouse 13.6.0, `chrome-launcher` 1.2.2 y `@axe-core/playwright` 4.14.0 (la versión 13 ya no arrastra `puppeteer-core`, `extract-zip` ni `zod`; pasó de 30 a 5 vulnerabilidades en `npm audit`).
+- `overrides` en [ui-accesibilidad/package.json](../ui-accesibilidad/package.json) para `minimatch` (^11.0.1) y `glob` (^14.0.3), que son dependencias internas de una herramienta de empaquetado de Sentry dentro de Lighthouse y no se ejecutan en estas pruebas. Se pueden quitar cuando Lighthouse publique una versión con las suyas ya corregidas.
+- Resultado: `npm audit` sin vulnerabilidades y OSV-Scanner 2.7.0 (el mismo que usa el CI) con "No issues found" sobre todos los lockfiles. Con el lockfile anterior, la misma herramienta daba 12 vulnerabilidades y salía con error.
 
 ## Limitaciones
 
