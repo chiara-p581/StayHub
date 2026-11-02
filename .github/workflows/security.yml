@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Generar y verificar OpenAPI y colecciones
@@ -157,7 +157,7 @@ jobs:
         working-directory: proyecto/ui-security
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -192,7 +192,7 @@ jobs:
         working-directory: ui-accesibilidad
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -395,7 +395,7 @@ jobs:
           echo "SOAP_RESERVA_ID=$(jq -r .id <<<"$reserva")" >> "$GITHUB_ENV"
           echo "SOAP_DESDE=$desde" >> "$GITHUB_ENV"
           echo "SOAP_HASTA=$hasta" >> "$GITHUB_ENV"
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Ejecutar todas las colecciones REST con Newman
@@ -445,7 +445,7 @@ jobs:
             --env-var desde="$SOAP_DESDE" \
             --env-var hasta="$SOAP_HASTA" \
             --reporters cli,junit --reporter-junit-export ci-evidence/newman-soap.xml
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
