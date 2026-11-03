@@ -8,7 +8,6 @@ import static org.mockito.Mockito.*;
 import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
 import com.stayhub.inventarioytarifas.dto.TarifaDTO;
 import com.stayhub.pagos.repository.PagoRepository;
-import com.stayhub.reservas.api.ReservaExceptionMapper;
 import com.stayhub.reservas.contrato.GestionDeDisponibilidadPort;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.exception.CodigoErrorReserva;
@@ -34,6 +33,9 @@ import org.junit.jupiter.api.Test;
  *  1. Una actualización con ETag vigente se aplica.
  *  2. Una actualización con ETag obsoleto devuelve 412.
  *  3. El dato más reciente no se sobrescribe.
+ *
+ * El mapeo a HTTP (VERSION_OBSOLETA -> 412, VERSION_REQUERIDA -> 428)
+ * se prueba en com.stayhub.reservas.api.ETagReservaTest.
  */
 class ConcurrenciaETagReservaTest {
 
@@ -102,7 +104,6 @@ class ConcurrenciaETagReservaTest {
         var error = assertThrows(ReservaException.class, () -> servicio.modificarReserva(7L, cambio(2), 2L));
 
         assertEquals(CodigoErrorReserva.VERSION_OBSOLETA, error.getCodigo());
-        assertEquals(412, ReservaExceptionMapper.estadoHttp(error));
         verifyNoInteractions(cupo);
         verify(repo, never()).guardar(any());
     }
@@ -121,7 +122,7 @@ class ConcurrenciaETagReservaTest {
         var error = assertThrows(ReservaException.class,
                 () -> servicio.modificarReserva(7L, cambio(1), etagLeidoPorBruno));
 
-        assertEquals(412, ReservaExceptionMapper.estadoHttp(error));
+        assertEquals(CodigoErrorReserva.VERSION_OBSOLETA, error.getCodigo()); // -> HTTP 412
         assertEquals(3, reserva.getCantidadHabitaciones(), "se conserva el cambio de Ana");
         assertEquals(new BigDecimal("300000"), reserva.getPrecioTotal());
         verify(cupo, times(1)).reemplazarHold(any(), any(), any(), anyInt(), any(), any());
@@ -134,7 +135,6 @@ class ConcurrenciaETagReservaTest {
         var error = assertThrows(ReservaException.class, () -> servicio.modificarReserva(7L, cambio(2), null));
 
         assertEquals(CodigoErrorReserva.VERSION_REQUERIDA, error.getCodigo());
-        assertEquals(428, ReservaExceptionMapper.estadoHttp(error));
         assertEquals(1, reserva.getCantidadHabitaciones());
         verifyNoInteractions(cupo);
     }
