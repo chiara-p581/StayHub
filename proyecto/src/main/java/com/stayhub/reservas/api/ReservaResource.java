@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
@@ -56,10 +57,12 @@ public class ReservaResource {
         return Response.created(location).entity(creada).build();
     }
 
+    /** Devuelve la reserva con su versión en el header ETag (para usar luego en If-Match). */
     @GET
     @Path("/{id}")
-    public ReservaResponse consultar(@PathParam("id") Long id) {
-        return servicio.consultarReserva(id);
+    public Response consultar(@PathParam("id") Long id) {
+        ReservaResponse reserva = servicio.consultarReserva(id);
+        return Response.ok(reserva).header(HttpHeaders.ETAG, ETagReserva.formatear(reserva.version())).build();
     }
 
     @POST
@@ -68,10 +71,18 @@ public class ReservaResource {
         return servicio.confirmarReserva(id);
     }
 
+    /**
+     * Modificación con control de concurrencia: exige If-Match con el ETag
+     * leído. ETag vigente -> 200 con el nuevo ETag; ETag obsoleto -> 412;
+     * sin If-Match -> 428.
+     */
     @PUT
     @Path("/{id}")
-    public ReservaResponse modificar(@PathParam("id") Long id, ReservaRequest solicitud) {
-        return servicio.modificarReserva(id, solicitud);
+    public Response modificar(@PathParam("id") Long id,
+                              @HeaderParam(HttpHeaders.IF_MATCH) String ifMatch,
+                              ReservaRequest solicitud) {
+        ReservaResponse modificada = servicio.modificarReserva(id, solicitud, ETagReserva.versionDesdeIfMatch(ifMatch));
+        return Response.ok(modificada).header(HttpHeaders.ETAG, ETagReserva.formatear(modificada.version())).build();
     }
 
     @DELETE

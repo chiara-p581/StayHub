@@ -24,6 +24,8 @@ public class ReservaExceptionMapper implements ExceptionMapper<ReservaException>
             case RESERVA_DUPLICADA, SIN_DISPONIBILIDAD, TRANSICION_DE_ESTADO_INVALIDA -> 409;
             case DEPENDENCIA_NO_DISPONIBLE -> 503;
             case NO_AUTORIZADO -> 403;
+            case VERSION_OBSOLETA -> 412;
+            case VERSION_REQUERIDA -> 428;
         };
     }
 }

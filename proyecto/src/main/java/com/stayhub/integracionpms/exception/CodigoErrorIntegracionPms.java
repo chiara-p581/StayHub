@@ -25,6 +25,8 @@ public enum CodigoErrorIntegracionPms {
             case TRANSICION_DE_ESTADO_INVALIDA -> TRANSICION_DE_ESTADO_INVALIDA;
             case SIN_DISPONIBILIDAD -> SIN_DISPONIBILIDAD;
             case DEPENDENCIA_NO_DISPONIBLE -> DEPENDENCIA_NO_DISPONIBLE;
+            // Concurrencia con ETag (KAN-96): solo aplica a la API REST; el PMS no envía If-Match.
+            case VERSION_OBSOLETA, VERSION_REQUERIDA -> SOLICITUD_INVALIDA;
         };
     }
 

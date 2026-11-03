@@ -223,8 +223,18 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Override
     @PermitAll
     public ReservaResponse modificarReserva(Long id, ReservaRequest solicitud) {
+        return modificarReserva(id, solicitud, CUALQUIER_VERSION);
+    }
+
+    /** Solo reservas pendientes: un cambio de una reserva pagada necesita ajuste de pago explícito. */
+    @Override
+    @PermitAll
+    public ReservaResponse modificarReserva(Long id, ReservaRequest solicitud, Long versionEsperada) {
+        // Lock pesimista + chequeo de versión: aunque dos pedidos lleguen a la
+        // vez, el segundo espera al primero y después ve la versión nueva.
         Reserva reserva = buscarBloqueando(id);
-        identidad.autorizarReserva(reserva);
+        identidad.autorizarReserva(reserva);   // primero 404/403, para no filtrar info
+        verificarVersion(reserva, versionEsperada);
         if (reserva.getEstado() == EstadoReserva.CANCELADA || reserva.getEstado() == EstadoReserva.RECHAZADA) {
             throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
                     "No se puede modificar una reserva en estado " + reserva.getEstado());
@@ -256,7 +266,25 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             reserva.iniciarHold(nuevoHoldId);
         }
         repositorio.guardar(reserva);
+        repositorio.sincronizar();
         return ReservaMapper.aResponse(reserva);
+    }
+
+    /** Control de concurrencia optimista: el If-Match debe coincidir con la versión actual. */
+    private static void verificarVersion(Reserva reserva, Long versionEsperada) {
+        if (versionEsperada == null) {
+            throw new ReservaException(CodigoErrorReserva.VERSION_REQUERIDA,
+                    "Falta el header If-Match: consultá la reserva y enviá su ETag para modificarla");
+        }
+        if (versionEsperada == CUALQUIER_VERSION) {
+            return;
+        }
+        long actual = ReservaMapper.versionDe(reserva);
+        if (versionEsperada != actual) {
+            throw new ReservaException(CodigoErrorReserva.VERSION_OBSOLETA,
+                    "La reserva fue modificada por otro pedido (versión actual " + actual
+                            + ", enviada " + versionEsperada + "); volvé a consultarla e intentá de nuevo");
+        }
     }
 
     @Override

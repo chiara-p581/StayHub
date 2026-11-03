@@ -161,6 +161,9 @@ public class Reserva {
     //     siempre por los métodos de arriba y la entidad se mantenga consistente) ---
 
     public Long getId() { return id; }
+
+    /** Versión de control optimista (@Version). Se expone como ETag en la API REST. */
+    public Long getVersion() { return version; }
     public String getCanal() { return canal; }
     public String getReferenciaExterna() { return referenciaExterna; }
     public Long getHotelId() { return hotelId; }

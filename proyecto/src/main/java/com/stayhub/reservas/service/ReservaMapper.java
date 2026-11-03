@@ -45,6 +45,11 @@ final class ReservaMapper {
         return new ReservaResponse(r.getId(), r.getCanal(), r.getReferenciaExterna(), r.getHotelId(),
                 r.getTipoHabitacion(), r.getCantidadHabitaciones(), r.getCheckIn(), r.getCheckOut(),
                 r.getHuesped().getNombre(), r.getHuesped().getApellido(), r.getHuesped().getEmail(),
-                r.getPrecioTotal(), r.getMoneda(), r.getEstado().name(), r.getFechaCreacion());
+                r.getPrecioTotal(), r.getMoneda(), r.getEstado().name(), r.getFechaCreacion(), versionDe(r));
+    }
+
+    /** JPA arranca @Version en 0 al persistir; antes de eso se considera 0. */
+    static long versionDe(Reserva r) {
+        return r.getVersion() == null ? 0L : r.getVersion();
     }
 }
