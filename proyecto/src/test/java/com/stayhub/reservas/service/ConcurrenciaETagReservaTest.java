@@ -81,7 +81,8 @@ class ConcurrenciaETagReservaTest {
     }
 
     ReservaRequest cambio(int habitaciones) {
-        return new ReservaRequest(1L, "DOBLE", habitaciones, desde, hasta, null, null, null, null, null, "ARS");
+        // El precio enviado es obligatorio pero no manda: el servidor lo recalcula con la tarifa.
+        return new ReservaRequest(1L, "DOBLE", habitaciones, desde, hasta, null, null, null, null, BigDecimal.ONE, "ARS");
     }
 
     @Test
