@@ -12,6 +12,12 @@ public interface ReservaRepository {
 
     Reserva guardar(Reserva reserva);
 
+    /**
+     * Sincroniza los cambios pendientes con la base para que JPA incremente
+     * @Version antes de armar la respuesta (y el ETag devuelto sea el nuevo).
+     */
+    default void sincronizar() { }
+
     Optional<Reserva> buscarPorId(Long id);
     Optional<Reserva> buscarPorIdBloqueando(Long id);
 

@@ -32,6 +32,11 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     }
 
     @Override
+    public void sincronizar() {
+        em.flush();
+    }
+
+    @Override
     public Optional<Reserva> buscarPorId(Long id) {
         return Optional.ofNullable(em.find(Reserva.class, id));
     }

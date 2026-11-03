@@ -20,4 +20,15 @@ public record ReservaResponse(
         BigDecimal precioTotal,
         String moneda,
         String estado,
-        LocalDateTime fechaCreacion) { }
+        LocalDateTime fechaCreacion,
+        Long version) {
+
+    /** Constructor compatible con el formato anterior (sin versión). */
+    public ReservaResponse(Long id, String canal, String referenciaExterna, Long hotelId,
+            String tipoHabitacion, int cantidadHabitaciones, LocalDate checkIn, LocalDate checkOut,
+            String huespedNombre, String huespedApellido, String huespedEmail,
+            BigDecimal precioTotal, String moneda, String estado, LocalDateTime fechaCreacion) {
+        this(id, canal, referenciaExterna, hotelId, tipoHabitacion, cantidadHabitaciones, checkIn, checkOut,
+                huespedNombre, huespedApellido, huespedEmail, precioTotal, moneda, estado, fechaCreacion, null);
+    }
+}

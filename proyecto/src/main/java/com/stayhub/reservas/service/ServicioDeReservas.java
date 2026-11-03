@@ -24,6 +24,20 @@ public interface ServicioDeReservas {
     /** Mutaciones autorizadas contra el usuario de la sesión y el propietario persistido. */
     ReservaResponse modificarReserva(Long id, ReservaRequest solicitud);
 
+    /**
+     * Modificación con control de concurrencia optimista (ETag / If-Match).
+     *
+     * @param versionEsperada versión que el cliente leyó (valor del If-Match).
+     *        Si no coincide con la actual se lanza VERSION_OBSOLETA (412) y la
+     *        reserva no se toca. {@code null} significa que no se envió If-Match
+     *        (VERSION_REQUERIDA, 428). Usar {@link #CUALQUIER_VERSION} para
+     *        "If-Match: *".
+     */
+    ReservaResponse modificarReserva(Long id, ReservaRequest solicitud, Long versionEsperada);
+
+    /** Valor especial que representa "If-Match: *" (cualquier versión vigente). */
+    long CUALQUIER_VERSION = -1L;
+
     ReservaResponse cancelarReserva(Long id);
 
     List<ReservaResponse> listarPorHotel(Long hotelId);
