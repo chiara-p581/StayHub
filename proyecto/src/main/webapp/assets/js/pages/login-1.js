@@ -18,16 +18,23 @@
 
         Api.loginUsuario({ email: email, password: password })
             .then(function (usuario) {
-                Api.setSession(usuario);
-
                 var params = new URLSearchParams(location.search);
                 var next = destinoLocalSeguro(params.get("next"));
+                if (usuario.rol === "ADMIN" && usuario.mfaRequerido && !usuario.mfaConfigurado) {
+                    Api.forgetLocalSession();
+                    location.href = "mfa-setup.html";
+                } else if (usuario.rol === "ADMIN" && usuario.mfaRequerido) {
+                    Api.forgetLocalSession();
+                    location.href = "mfa-verify.html";
+                } else {
+                    Api.setSession(usuario);
                 if (next) {
                     location.assign(next);
                 } else if (usuario.rol === "ADMIN") {
                     location.href = "admin-dashboard.html";
                 } else {
                     location.href = "index.html";
+                }
                 }
             })
             .catch(function (err) {

@@ -3,6 +3,7 @@ package com.stayhub.seguridad;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.enterprise.inject.spi.CDI;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -53,16 +54,29 @@ public final class AuditoriaSeguridad {
         Object actor = sesion == null ? null : sesion.getAttribute("usuarioId");
         Object rol = sesion == null ? null : sesion.getAttribute("usuarioRol");
         String origen = request == null ? "desconocido" : huella(request.getRemoteAddr());
+        Instant fecha = Instant.now();
+        String correlacion = correlationId(request);
+        String actorId = actor == null ? "anonimo" : String.valueOf(actor);
+        String nombreRol = rol == null ? "ANONIMO" : String.valueOf(rol);
         AUDIT.info(() -> "AUDIT " + json(
-                "fecha", Instant.now().toString(),
-                "correlationId", correlationId(request),
-                "actorId", actor == null ? "anonimo" : String.valueOf(actor),
-                "rol", rol == null ? "ANONIMO" : String.valueOf(rol),
+                "fecha", fecha.toString(),
+                "correlationId", correlacion,
+                "actorId", actorId,
+                "rol", nombreRol,
                 "accion", accion,
                 "resultado", resultado,
                 "recurso", recurso,
                 "origenHash", origen,
                 "detalle", detalle));
+        try {
+            CDI.current().select(AuditoriaPersistente.class).get().guardar(fecha, correlacion,
+                    actorId, nombreRol, accion, resultado, recurso, origen, detalle);
+        } catch (IllegalStateException ex) {
+            // Ejecución fuera de un contenedor CDI (por ejemplo, unit tests).
+        } catch (RuntimeException ex) {
+            // La auditoría local nunca se pierde porque falle el almacenamiento central.
+            CanalErrores.LOG.log(Level.WARNING, "AUDIT_PERSISTENCE_UNAVAILABLE correlationId=" + correlacion);
+        }
     }
 
     public static void registrarUnaVez(HttpServletRequest request, String accion, String resultado,

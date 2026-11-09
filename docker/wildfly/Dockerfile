@@ -10,17 +10,19 @@ FROM quay.io/wildfly/wildfly:41.0.0.Final-jdk21
 USER root
 RUN microdnf install --best --nodocs -y curl && microdnf clean all && \
     mkdir -p /opt/jboss/wildfly/modules/org/postgresql/main && \
-    mkdir -p /opt/jboss/local-security && \
+    mkdir -p /opt/jboss/local-security /opt/jboss/ci-tools && \
     curl --fail --location --output /opt/jboss/wildfly/modules/org/postgresql/main/postgresql.jar \
       https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.13/postgresql-42.7.13.jar && \
-    chown -R jboss:root /opt/jboss/wildfly/modules/org/postgresql /opt/jboss/local-security
+    chown -R jboss:root /opt/jboss/wildfly/modules/org/postgresql /opt/jboss/local-security /opt/jboss/ci-tools
 
 COPY --chown=jboss:root docker/wildfly/module.xml /opt/jboss/wildfly/modules/org/postgresql/main/module.xml
 COPY --chown=jboss:root docker/wildfly/configure.cli /opt/jboss/wildfly/configure.cli
 COPY --chown=jboss:root docker/wildfly/load-demo.sh /opt/jboss/load-demo.sh
+COPY --chown=jboss:root docker/wildfly/MfaTotpCode.java /tmp/MfaTotpCode.java
 
 USER jboss
-RUN keytool -genkeypair -alias stayhub-local -keyalg RSA -keysize 3072 -validity 825 \
+RUN javac -d /opt/jboss/ci-tools /tmp/MfaTotpCode.java && rm /tmp/MfaTotpCode.java && \
+    keytool -genkeypair -alias stayhub-local -keyalg RSA -keysize 3072 -validity 825 \
       -storetype PKCS12 -keystore /opt/jboss/local-security/stayhub-local.p12 \
       -storepass stayhub-local -keypass stayhub-local \
       -dname "CN=localhost, OU=StayHub Local, O=StayHub, C=AR" \
@@ -38,6 +40,12 @@ RUN keytool -genkeypair -alias stayhub-local -keyalg RSA -keysize 3072 -validity
       -storetype PKCS12 -keystore /opt/jboss/local-security/stayhub-pms-trust.p12 \
       -storepass stayhub-pms-local && \
     /opt/jboss/wildfly/bin/jboss-cli.sh --file=/opt/jboss/wildfly/configure.cli && \
+    mfa_key="$(java -cp /opt/jboss/ci-tools MfaTotpCode --derive-key stayhub-docker-mfa-demo-only)" && \
+    printf '%s\n' \
+      'embed-server --server-config=standalone-full.xml --std-out=echo' \
+      "/system-property=stayhub.mfa.master-key:add(value=\"$mfa_key\")" \
+      'stop-embedded-server' > /tmp/configure-mfa-demo.cli && \
+    /opt/jboss/wildfly/bin/jboss-cli.sh --file=/tmp/configure-mfa-demo.cli && \
     fingerprint="$(keytool -J-Duser.language=en -list -v -alias stayhub-pms \
       -keystore /opt/jboss/local-security/stayhub-pms-client.p12 \
       -storepass stayhub-pms-local | sed -n 's/^[[:space:]]*SHA256: //p' | head -n 1)" && \

@@ -5,4 +5,10 @@ public record UsuarioResponse(
         String email,
         String nombre,
         String apellido,
-        String rol) { }
+        String rol,
+        boolean mfaRequerido,
+        boolean mfaConfigurado) {
+    public UsuarioResponse(Long id, String email, String nombre, String apellido, String rol) {
+        this(id, email, nombre, apellido, rol, false, false);
+    }
+}

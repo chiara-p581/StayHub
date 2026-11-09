@@ -56,4 +56,21 @@ class AutenticacionFilterTest {
         assertFalse(filtro.inicioSesionExpirado(ahora - 60_000L, ahora));
         assertTrue(filtro.inicioSesionExpirado(null, ahora));
     }
+
+    @Test
+    void antesDeValidarMfaSoloPermiteConfigurarloOCerrarSesion() {
+        assertTrue(filtro.esFlujoMfaPermitido("usuarios/mfa/preparar", "POST"));
+        assertTrue(filtro.esFlujoMfaPermitido("usuarios/mfa/activar", "POST"));
+        assertTrue(filtro.esFlujoMfaPermitido("usuarios/mfa/estado", "GET"));
+        assertTrue(filtro.esFlujoMfaPermitido("usuarios/sesion", "DELETE"));
+        assertFalse(filtro.esFlujoMfaPermitido("usuarios/1", "GET"));
+        assertFalse(filtro.esFlujoMfaPermitido("hoteles", "POST"));
+    }
+
+    @Test
+    void protegeLaAdministracionDeCodigosYElReemplazoDelAutenticador() {
+        assertTrue(filtro.requiereReautenticacion("usuarios/mfa/codigos-recuperacion/regenerar", "POST"));
+        assertTrue(filtro.requiereReautenticacion("usuarios/mfa/reiniciar", "POST"));
+        assertFalse(filtro.requiereReautenticacion("usuarios/mfa/estado", "GET"));
+    }
 }

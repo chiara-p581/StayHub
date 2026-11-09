@@ -216,6 +216,49 @@ html[data-theme="dark"] .stayhub-global-footer { background:#0b1422; border-colo
 body.stayhub-auth-page { overflow-y:auto !important; align-items:flex-start !important; padding-bottom:32px !important; }
 body.stayhub-auth-page main { margin-top:24px; margin-bottom:24px; }
 
+/* MFA setup: the secret stays protected until the administrator reveals it. */
+.mfa-secret-row { display:flex; align-items:stretch; gap:10px; }
+.mfa-secret-value { min-width:0; flex:1; display:flex; align-items:center; min-height:48px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:8px; background:#f1f5f9; color:#172033; overflow-wrap:anywhere; letter-spacing:.04em; }
+.mfa-secret-actions { display:flex; gap:8px; }
+.mfa-secret-action { min-width:64px; padding:10px 12px; border:1px solid #94a3b8; border-radius:8px; background:#fff; color:#1e293b; font-weight:700; transition:background-color .2s ease,border-color .2s ease,color .2s ease; }
+.mfa-secret-action:hover:not(:disabled) { background:#e8eef6; border-color:#64748b; }
+.mfa-secret-action:focus-visible { outline:3px solid rgba(96,126,166,.45); outline-offset:2px; }
+.mfa-secret-action:disabled { cursor:not-allowed; opacity:.55; }
+html[data-theme="dark"] .mfa-secret-value { background:#0f172a; color:#f8fafc; border-color:#52627a; }
+html[data-theme="dark"] .mfa-secret-action { background:#26354d; color:#f8fafc; border-color:#64748b; }
+html[data-theme="dark"] .mfa-secret-action:hover:not(:disabled) { background:#344866; border-color:#8da0ba; }
+@media (max-width:520px) {
+    .mfa-secret-row { flex-direction:column; }
+    .mfa-secret-actions { width:100%; }
+    .mfa-secret-action { flex:1; }
+}
+.mfa-recovery-codes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:18px 0 12px; }
+.mfa-recovery-codes code { padding:10px 8px; border:1px solid #cbd5e1; border-radius:8px; background:#f1f5f9; color:#172033; text-align:center; font-weight:700; letter-spacing:.05em; }
+.mfa-recovery-secondary { width:100%; padding:11px 14px; border:1px solid #94a3b8; border-radius:8px; color:#1e293b; background:#fff; font-weight:700; }
+.mfa-recovery-confirm { display:flex; align-items:flex-start; gap:10px; margin:18px 0; color:#334155; }
+.mfa-recovery-confirm input { margin-top:3px; }
+html[data-theme="dark"] .mfa-recovery-codes code { background:#0f172a; color:#f8fafc; border-color:#52627a; }
+html[data-theme="dark"] .mfa-recovery-secondary { background:#26354d; color:#f8fafc; border-color:#64748b; }
+html[data-theme="dark"] .mfa-recovery-confirm { color:#dbe5f2; }
+@media (max-width:420px) { .mfa-recovery-codes { grid-template-columns:1fr; } }
+
+/* Global step-up authentication dialog for sensitive admin operations. */
+.stayhub-reauth-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:20px; background:rgba(5,12,24,.72); backdrop-filter:blur(4px); }
+.stayhub-reauth-dialog { width:min(100%,440px); padding:28px; border:1px solid #cbd5e1; border-radius:16px; background:#fff; color:#172033; box-shadow:0 24px 70px rgba(0,0,0,.35); }
+.stayhub-reauth-dialog h2 { margin:0 0 8px; font-family:'Libre Caslon Text',serif; font-size:1.55rem; font-weight:700; }
+.stayhub-reauth-dialog p { margin:0 0 18px; color:#526071; }
+.stayhub-reauth-field { display:block; margin-top:14px; font-weight:700; }
+.stayhub-reauth-field input { width:100%; margin-top:6px; padding:12px 13px; border:1px solid #94a3b8; border-radius:8px; background:#fff; color:#172033; }
+.stayhub-reauth-error { margin-top:14px; padding:10px 12px; border-radius:8px; background:#fee2e2; color:#991b1b; }
+.stayhub-reauth-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
+.stayhub-reauth-actions button { padding:11px 16px; border-radius:8px; font-weight:700; }
+.stayhub-reauth-cancel { border:1px solid #94a3b8; color:#334155; }
+.stayhub-reauth-submit { background:#182944; color:#fff; }
+html[data-theme="dark"] .stayhub-reauth-dialog { background:#182235; color:#f8fafc; border-color:#52627a; }
+html[data-theme="dark"] .stayhub-reauth-dialog p { color:#b8c4d4; }
+html[data-theme="dark"] .stayhub-reauth-field input { background:#0f172a !important; color:#f8fafc !important; border-color:#64748b !important; }
+html[data-theme="dark"] .stayhub-reauth-cancel { color:#e2e8f0; border-color:#64748b; }
+
 /* ============================================================
    StayHub 2026 visual refresh
    A modern editorial layer built on the existing brand palette.
