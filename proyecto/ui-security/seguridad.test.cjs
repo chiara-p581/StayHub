@@ -41,7 +41,8 @@ test('recuperar y resetear funcionan sin login y envían CSRF desde las páginas
   assert.equal(calls[1].options.headers['X-CSRF-Token'],'csrf-prueba');
   assert.equal(calls[1].options.credentials,'same-origin');
   assert.deepEqual(JSON.parse(calls[1].options.body),reset?{token:'token-recuperacion',nuevaPassword:'nueva-password'}:{email:'ana@test.com'});
-  assert.match(w.document.getElementById('aviso-pendiente').textContent,reset?/Contraseña actualizada/:/Si existe la cuenta/);
+  assert.match(w.document.getElementById('aviso-pendiente').textContent,
+    reset?/password has been updated/i:/If the account exists/i);
   assert.equal(w.Api.currentUser(),null);assert.deepEqual(errors,[]);dom.window.close();
  }
 });

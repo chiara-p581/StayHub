@@ -313,21 +313,60 @@ const Api = (() => {
         reautenticacionPendiente = new Promise(function (resolve, reject) {
             var fondo = document.createElement("div");
             fondo.className = "stayhub-reauth-backdrop";
-            fondo.innerHTML = '<section class="stayhub-reauth-dialog" role="dialog" aria-modal="true" aria-labelledby="stayhub-reauth-title">' +
-                '<h2 id="stayhub-reauth-title">Confirm your identity</h2>' +
-                '<p>This sensitive admin action requires your password and a current authenticator or recovery code.</p>' +
-                '<form id="stayhub-reauth-form">' +
-                '<label class="stayhub-reauth-field">Password<input id="stayhub-reauth-password" type="password" autocomplete="current-password" required></label>' +
-                '<label class="stayhub-reauth-field">Authenticator or recovery code<input id="stayhub-reauth-code" autocomplete="one-time-code" maxlength="14" placeholder="000000 or XXXX-XXXX-XXXX" required></label>' +
-                '<div id="stayhub-reauth-error" class="stayhub-reauth-error hidden" role="alert"></div>' +
-                '<div class="stayhub-reauth-actions"><button class="stayhub-reauth-cancel" type="button">Cancel</button><button class="stayhub-reauth-submit" type="submit">Confirm</button></div>' +
-                '</form></section>';
+            var dialogo = document.createElement("section");
+            dialogo.className = "stayhub-reauth-dialog";
+            dialogo.setAttribute("role", "dialog");
+            dialogo.setAttribute("aria-modal", "true");
+            dialogo.setAttribute("aria-labelledby", "stayhub-reauth-title");
+
+            var titulo = document.createElement("h2");
+            titulo.id = "stayhub-reauth-title";
+            titulo.textContent = "Confirm your identity";
+            var descripcion = document.createElement("p");
+            descripcion.textContent = "This sensitive admin action requires your password and a current authenticator or recovery code.";
+            var form = document.createElement("form");
+            form.id = "stayhub-reauth-form";
+
+            var etiquetaPassword = document.createElement("label");
+            etiquetaPassword.className = "stayhub-reauth-field";
+            etiquetaPassword.textContent = "Password";
+            var password = document.createElement("input");
+            password.id = "stayhub-reauth-password";
+            password.type = "password";
+            password.autocomplete = "current-password";
+            password.required = true;
+            etiquetaPassword.appendChild(password);
+
+            var etiquetaCodigo = document.createElement("label");
+            etiquetaCodigo.className = "stayhub-reauth-field";
+            etiquetaCodigo.textContent = "Authenticator or recovery code";
+            var codigo = document.createElement("input");
+            codigo.id = "stayhub-reauth-code";
+            codigo.autocomplete = "one-time-code";
+            codigo.maxLength = 14;
+            codigo.placeholder = "000000 or XXXX-XXXX-XXXX";
+            codigo.required = true;
+            etiquetaCodigo.appendChild(codigo);
+
+            var error = document.createElement("div");
+            error.id = "stayhub-reauth-error";
+            error.className = "stayhub-reauth-error hidden";
+            error.setAttribute("role", "alert");
+            var acciones = document.createElement("div");
+            acciones.className = "stayhub-reauth-actions";
+            var cancelarBoton = document.createElement("button");
+            cancelarBoton.className = "stayhub-reauth-cancel";
+            cancelarBoton.type = "button";
+            cancelarBoton.textContent = "Cancel";
+            var confirmar = document.createElement("button");
+            confirmar.className = "stayhub-reauth-submit";
+            confirmar.type = "submit";
+            confirmar.textContent = "Confirm";
+            acciones.append(cancelarBoton, confirmar);
+            form.append(etiquetaPassword, etiquetaCodigo, error, acciones);
+            dialogo.append(titulo, descripcion, form);
+            fondo.appendChild(dialogo);
             document.body.appendChild(fondo);
-            var form = fondo.querySelector("#stayhub-reauth-form");
-            var password = fondo.querySelector("#stayhub-reauth-password");
-            var codigo = fondo.querySelector("#stayhub-reauth-code");
-            var error = fondo.querySelector("#stayhub-reauth-error");
-            var confirmar = fondo.querySelector(".stayhub-reauth-submit");
 
             function cerrar() {
                 document.removeEventListener("keydown", teclado);
@@ -342,7 +381,7 @@ const Api = (() => {
             function teclado(evento) {
                 if (evento.key === "Escape") cancelar();
             }
-            fondo.querySelector(".stayhub-reauth-cancel").addEventListener("click", cancelar);
+            cancelarBoton.addEventListener("click", cancelar);
             document.addEventListener("keydown", teclado);
             form.addEventListener("submit", async function (evento) {
                 evento.preventDefault();

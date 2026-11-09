@@ -513,8 +513,18 @@ jobs:
           npx playwright test tests/session-security.spec.cjs
           reiniciar_estado_pruebas
 
-          # Esta suite agota intencionalmente el límite de login, por eso va última.
-          npx playwright test tests/live-security-matrix.spec.cjs
+          escenarios_seguridad=(
+            'mass assignment: registrarse nunca concede ADMIN'
+            'BOLA/IDOR: un usuario no puede consultar el perfil de otro'
+            'BFLA: un huésped no puede ejecutar una operación ADMIN'
+            'inyección SQL en un identificador se rechaza como entrada inválida'
+            'XSS: toda escritura HTML dinámica pasa por el sanitizador local'
+            'fuerza bruta: el límite de login responde 429 con Retry-After'
+          )
+          for escenario in "${escenarios_seguridad[@]}"; do
+            reiniciar_estado_pruebas
+            npx playwright test tests/live-security-matrix.spec.cjs --grep "$escenario"
+          done
       - name: Guardar logs de los contenedores
         if: always()
         run: |
