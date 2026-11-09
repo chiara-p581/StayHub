@@ -328,6 +328,38 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  zap-authenticated:
+    name: OWASP ZAP autenticado
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar Docker Compose
+        run: docker compose config --quiet
+      - name: Construir y levantar el entorno aislado
+        run: docker compose up --detach --build --wait --wait-timeout 600
+      - name: Cargar datos demostrativos
+        run: docker compose exec -T app /opt/jboss/load-demo.sh
+      - name: Escanear como huésped y administrador con MFA
+        run: bash security/zap/run-authenticated-scan.sh
+      - name: Resumir hallazgos
+        if: always()
+        run: cat ci-evidence/zap/summary.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+      - name: Diagnóstico del entorno
+        if: failure()
+        run: docker compose logs --no-color app postgres > ci-evidence/zap/compose.log || true
+      - name: Publicar evidencia de OWASP ZAP
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zap-authenticated-evidence
+          path: ci-evidence/zap/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Apagar el entorno
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
   integration-smoke:
     name: Integración Docker
     runs-on: ubuntu-latest

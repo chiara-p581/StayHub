@@ -19,6 +19,12 @@ e2e/test-results/
 # Base PostgreSQL y secretos locales usados para la demostración sin conexión
 .local-demo/
 
+# Binarios temporales de herramientas de auditoría (por ejemplo OWASP ZAP)
+.local-tools/
+
+# Evidencias generadas localmente; CI las publica como artefactos
+ci-evidence/
+
 # Reportes generados por las pruebas de UI (responsive y accesibilidad)
 ui-accesibilidad/reports/
 ui-accesibilidad/test-results/
