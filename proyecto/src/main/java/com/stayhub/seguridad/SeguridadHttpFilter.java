@@ -3,6 +3,7 @@ package com.stayhub.seguridad;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.WebFilter;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +13,8 @@ import java.util.*;
 
 @WebFilter(urlPatterns = "/*")
 public class SeguridadHttpFilter implements Filter {
-    private final LimitadorSolicitudes limitador = new LimitadorSolicitudes();
+    @Inject
+    private LimitadorSolicitudes limitador = new LimitadorSolicitudes();
     private final java.util.concurrent.Semaphore concurrentes = new java.util.concurrent.Semaphore(32);
     public static boolean httpLocalHabilitado() { return "true".equals(config("stayhub.seguridad.http-local")); }
     static String config(String clave) {
