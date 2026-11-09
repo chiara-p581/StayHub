@@ -431,6 +431,12 @@ jobs:
       - name: Ejecutar contrato SOAP desplegado con certificado PMS
         run: |
           set -euo pipefail
+          # Las colecciones REST anteriores comparten la IP del runner y ya
+          # consumieron parte del cupo. Se reinicia sólo el estado técnico del
+          # limitador en esta base efímera para que el contrato SOAP se pruebe
+          # de forma aislada, sin relajar los límites de producción.
+          docker compose exec -T postgres psql -U stayhub -d stayhub \
+            -v ON_ERROR_STOP=1 -c 'TRUNCATE TABLE limite_solicitud;'
           pms_p12="$(mktemp)"
           pms_crt="$(mktemp)"
           pms_key="$(mktemp)"
@@ -479,19 +485,24 @@ jobs:
             return 1
           }
 
-          # Newman ejecuta todas las colecciones desde la misma IP del runner y
-          # consume el cupo del limitador en memoria. Reiniciar sólo WildFly
-          # limpia ese estado sin perder los datos persistidos en PostgreSQL.
-          docker compose --project-directory .. restart app
-          esperar_app
+          reiniciar_estado_pruebas() {
+            docker compose --project-directory .. exec -T postgres \
+              psql -U stayhub -d stayhub -v ON_ERROR_STOP=1 \
+              -c 'TRUNCATE TABLE limite_solicitud;'
+            docker compose --project-directory .. restart app
+            esperar_app
+          }
+
+          # Cada suite comparte la IP del runner. El contador vive en
+          # PostgreSQL, por lo que se limpia únicamente la tabla técnica del
+          # limitador en esta base efímera antes de cada recorrido.
+          reiniciar_estado_pruebas
 
           npx playwright test tests/stayhub-critical.spec.cjs
-          docker compose --project-directory .. restart app
-          esperar_app
+          reiniciar_estado_pruebas
 
           npx playwright test tests/session-security.spec.cjs
-          docker compose --project-directory .. restart app
-          esperar_app
+          reiniciar_estado_pruebas
 
           # Esta suite agota intencionalmente el límite de login, por eso va última.
           npx playwright test tests/live-security-matrix.spec.cjs
