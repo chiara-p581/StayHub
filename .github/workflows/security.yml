@@ -381,8 +381,22 @@ jobs:
           echo "STAYHUB_ADMIN_MFA_SECRET=$mfa_secret" >> "$GITHUB_ENV"
           curl --fail --silent --show-error http://localhost:9080/health | tee ci-evidence/ota-health.txt
           curl --fail --silent --show-error http://localhost:9091/PmsLegacyService?wsdl > ci-evidence/pms-mock.wsdl
-          curl --insecure --fail --silent --show-error https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
-          jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json
+          catalogo_listo=false
+          for intento in {1..12}; do
+            curl --insecure --fail --silent --show-error \
+              https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
+            if jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json >/dev/null; then
+              catalogo_listo=true
+              break
+            fi
+            echo "El catálogo todavía no está visible (intento $intento/12); reintentando..."
+            sleep 5
+          done
+          if [[ "$catalogo_listo" != true ]]; then
+            echo 'La carga demo respondió correctamente, pero el catálogo REST siguió vacío:' >&2
+            jq . ci-evidence/hoteles.json >&2 || cat ci-evidence/hoteles.json >&2
+            exit 1
+          fi
           node contracts/verify-wsdl.mjs ci-evidence/pms-mock.wsdl sincronizarInventario
           pms_p12="$(mktemp)"
           pms_crt="$(mktemp)"
