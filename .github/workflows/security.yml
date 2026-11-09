@@ -397,6 +397,7 @@ jobs:
             jq . ci-evidence/hoteles.json >&2 || cat ci-evidence/hoteles.json >&2
             exit 1
           fi
+          demo_hotel_id="$(jq -er '.[0].id' ci-evidence/hoteles.json)"
           node contracts/verify-wsdl.mjs ci-evidence/pms-mock.wsdl sincronizarInventario
           pms_p12="$(mktemp)"
           pms_crt="$(mktemp)"
@@ -425,24 +426,35 @@ jobs:
 
           csrf="$(curl --insecure --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
             https://localhost:8443/StayHub/api/seguridad/csrf | jq -r .token)"
-          curl --insecure --fail --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+          if ! curl --insecure --fail-with-body --silent --show-error \
+            --output ci-evidence/login-huesped.json \
+            --cookie "$cookies" --cookie-jar "$cookies" \
             --header 'Origin: https://localhost:8443' \
             --header "X-CSRF-Token: $csrf" \
             --header 'Content-Type: application/json' \
             --data '{"email":"huesped@stayhub.local","password":"StayHubDemo2026!"}' \
-            https://localhost:8443/StayHub/api/usuarios/login >/dev/null
+            https://localhost:8443/StayHub/api/usuarios/login; then
+            cat ci-evidence/login-huesped.json >&2
+            exit 1
+          fi
+          jq -e '.rol == "HUESPED"' ci-evidence/login-huesped.json >/dev/null
           csrf="$(curl --insecure --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
             https://localhost:8443/StayHub/api/seguridad/csrf | jq -r .token)"
           desde="$(date -I -d '+7 days')"
           hasta="$(date -I -d '+9 days')"
-          reserva="$(curl --insecure --fail --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+          if ! curl --insecure --fail-with-body --silent --show-error \
+            --output ci-evidence/reserva-pms.json \
+            --cookie "$cookies" --cookie-jar "$cookies" \
             --header 'Origin: https://localhost:8443' \
             --header "X-CSRF-Token: $csrf" \
             --header 'Content-Type: application/json' \
-            --data "{\"hotelId\":1,\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"checkIn\":\"$desde\",\"checkOut\":\"$hasta\",\"huespedNombre\":\"PMS\",\"huespedApellido\":\"CI\",\"huespedEmail\":\"huesped@stayhub.local\",\"huespedTelefono\":\"+5491100000000\",\"precioTotal\":1,\"moneda\":\"ARS\"}" \
-            https://localhost:8443/StayHub/api/reservas)"
-          echo "$reserva" > ci-evidence/reserva-pms.json
-          echo "SOAP_RESERVA_ID=$(jq -r .id <<<"$reserva")" >> "$GITHUB_ENV"
+            --data "{\"hotelId\":$demo_hotel_id,\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"checkIn\":\"$desde\",\"checkOut\":\"$hasta\",\"huespedNombre\":\"PMS\",\"huespedApellido\":\"CI\",\"huespedEmail\":\"huesped@stayhub.local\",\"huespedTelefono\":\"+5491100000000\",\"precioTotal\":1,\"moneda\":\"ARS\"}" \
+            https://localhost:8443/StayHub/api/reservas; then
+            cat ci-evidence/reserva-pms.json >&2
+            exit 1
+          fi
+          echo "SOAP_RESERVA_ID=$(jq -er .id ci-evidence/reserva-pms.json)" >> "$GITHUB_ENV"
+          echo "SOAP_HOTEL_ID=$demo_hotel_id" >> "$GITHUB_ENV"
           echo "SOAP_DESDE=$desde" >> "$GITHUB_ENV"
           echo "SOAP_HASTA=$hasta" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
@@ -498,7 +510,7 @@ jobs:
             --ssl-client-key "$pms_key" \
             --env-var baseUrl=https://localhost:8443/StayHub \
             --env-var reservaId="$SOAP_RESERVA_ID" \
-            --env-var hotelId=1 \
+            --env-var hotelId="$SOAP_HOTEL_ID" \
             --env-var fecha="$SOAP_DESDE" \
             --env-var desde="$SOAP_DESDE" \
             --env-var hasta="$SOAP_HASTA" \
