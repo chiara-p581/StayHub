@@ -343,6 +343,10 @@ jobs:
           set -euo pipefail
           mkdir -p ci-evidence
           docker compose exec -T app /opt/jboss/load-demo.sh | tee ci-evidence/demo-load.log
+          mfa_secret="$(docker compose exec -T app cat /opt/jboss/local-security/demo-mfa-secret | tr -d '\r\n')"
+          test -n "$mfa_secret"
+          echo "::add-mask::$mfa_secret"
+          echo "STAYHUB_ADMIN_MFA_SECRET=$mfa_secret" >> "$GITHUB_ENV"
           curl --fail --silent --show-error http://localhost:9080/health | tee ci-evidence/ota-health.txt
           curl --fail --silent --show-error http://localhost:9091/PmsLegacyService?wsdl > ci-evidence/pms-mock.wsdl
           curl --insecure --fail --silent --show-error https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
@@ -415,12 +419,14 @@ jobs:
           done
       - name: Ejecutar colección de Canales Externos con Newman
         run: |
+          mfa_code="$(docker compose exec -T app java -cp /opt/jboss/ci-tools MfaTotpCode "$STAYHUB_ADMIN_MFA_SECRET" | tr -d '\r\n')"
           npx --yes newman@6.2.1 run postman/StayHub-ServicioDeCanalesExternos.postman_collection.json \
             --insecure \
             --folder "Autenticación demo" \
             --folder "Disponibilidad" \
             --folder "Sincronizaciones" \
             --folder "Catálogo multicanal" \
+            --env-var mfaCode="$mfa_code" \
             --reporters cli,junit --reporter-junit-export ci-evidence/newman-canales.xml
       - name: Ejecutar contrato SOAP desplegado con certificado PMS
         run: |

@@ -9,6 +9,7 @@ const webhookSecret = process.env.STAYHUB_WEBHOOK_SECRET || "demo-booking-webhoo
 const dockerVerification = process.env.STAYHUB_DOCKER_VERIFY === "true";
 const adminEmail = process.env.STAYHUB_ADMIN_EMAIL || "admin@stayhub.local";
 const adminPassword = process.env.STAYHUB_ADMIN_PASSWORD || "StayHubDemo2026!";
+const adminMfaSecret = process.env.STAYHUB_ADMIN_MFA_SECRET || "";
 
 function isoDate(days) {
   const date = new Date();
@@ -45,7 +46,36 @@ async function mutate(request, method, url, data) {
 
 async function login(request, email, password) {
   const response = await mutate(request, "POST", "api/usuarios/login", { email, password });
-  expect(response.status(), await response.text()).toBe(200);
+  const raw = await response.text();
+  expect(response.status(), raw).toBe(200);
+  const user = JSON.parse(raw);
+  if (user.mfaRequerido) {
+    expect(user.mfaConfigurado, "El administrador demo debe tener MFA activado").toBe(true);
+    expect(adminMfaSecret, "Falta STAYHUB_ADMIN_MFA_SECRET en CI").not.toBe("");
+    const verification = await mutate(request, "POST", "api/usuarios/mfa/verificar-login", {
+      codigo: totp(adminMfaSecret)
+    });
+    expect(verification.status(), await verification.text()).toBe(200);
+  }
+}
+
+function totp(secret) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let buffer = 0, bits = 0;
+  const bytes = [];
+  for (const char of secret.toUpperCase()) {
+    const value = alphabet.indexOf(char);
+    if (value < 0) throw new Error("Invalid Base32 MFA secret");
+    buffer = (buffer << 5) | value;
+    bits += 5;
+    if (bits >= 8) bytes.push((buffer >> (bits -= 8)) & 0xff);
+  }
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 1000 / 30)));
+  const hash = crypto.createHmac("sha1", Buffer.from(bytes)).update(counter).digest();
+  const offset = hash[hash.length - 1] & 15;
+  const number = (hash.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
+  return String(number).padStart(6, "0");
 }
 
 async function registerGuest(request, prefix) {
