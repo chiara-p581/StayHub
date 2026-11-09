@@ -496,9 +496,18 @@ jobs:
           # Cada suite comparte la IP del runner. El contador vive en
           # PostgreSQL, por lo que se limpia únicamente la tabla técnica del
           # limitador en esta base efímera antes de cada recorrido.
-          reiniciar_estado_pruebas
+          escenarios_criticos=(
+            'registro, login, carrito, reserva y pago persisten el resultado'
+            'cancelar una reserva devuelve el cupo al inventario'
+            'una reserva OTA firmada se procesa una sola vez y queda confirmada'
+            'la sincronización JMS llega a los mocks OTA y PMS'
+            'overbooking reubica, persiste el conflicto y publica la notificación'
+          )
+          for escenario in "${escenarios_criticos[@]}"; do
+            reiniciar_estado_pruebas
+            npx playwright test tests/stayhub-critical.spec.cjs --grep "$escenario"
+          done
 
-          npx playwright test tests/stayhub-critical.spec.cjs
           reiniciar_estado_pruebas
 
           npx playwright test tests/session-security.spec.cjs
