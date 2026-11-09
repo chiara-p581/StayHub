@@ -49,10 +49,7 @@ public class ConsumidorSolicitudNotificacionAsincrona
             );
 
         } catch (Exception e) {
-            throw new IllegalStateException(
-                    "No se pudo procesar el aviso de overbooking",
-                    e
-            );
+            throw FalloJms.reintentar(mensaje, "aviso-overbooking", e);
         }
     }
 }

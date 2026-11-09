@@ -1,7 +1,23 @@
 embed-server --server-config=standalone-full.xml --std-out=echo
 
 /subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=org.postgresql,driver-class-name=org.postgresql.Driver,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)
-/subsystem=datasources/data-source=StayHubDS:add(jndi-name=java:/PostgresDS,driver-name=postgresql,connection-url="jdbc:postgresql://postgres:5432/stayhub",user-name=stayhub,password="stayhub_local_2026",min-pool-size=2,max-pool-size=20,enabled=true,validate-on-match=true,background-validation=false)
+/subsystem=datasources/xa-data-source=StayHubDS:add(jndi-name=java:/PostgresDS,driver-name=postgresql,user-name=stayhub,password="stayhub_local_2026",min-pool-size=2,max-pool-size=20,enabled=true,validate-on-match=true,background-validation=false)
+/subsystem=datasources/xa-data-source=StayHubDS/xa-datasource-properties=ServerName:add(value=postgres)
+/subsystem=datasources/xa-data-source=StayHubDS/xa-datasource-properties=PortNumber:add(value=5432)
+/subsystem=datasources/xa-data-source=StayHubDS/xa-datasource-properties=DatabaseName:add(value=stayhub)
+
+# Reintentos acotados y DLQ común para todos los flujos de la aplicación.
+/subsystem=messaging-activemq/server=default/jms-queue=StayHubDLQ:add(entries=["java:/jms/queue/StayHubDLQ"])
+/subsystem=messaging-activemq/server=default/address-setting="jms.topic.UsuariosEventos":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="jms.topic.PagosEventos":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="jms.queue.UsuariosPassword":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="jms.queue.OverbookingNotificaciones":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="jms.queue.CanalesExternosSincronizaciones":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="UsuariosEventos":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="PagosEventos":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="UsuariosPassword":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="OverbookingNotificaciones":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
+/subsystem=messaging-activemq/server=default/address-setting="CanalesExternosSincronizaciones":add(dead-letter-address="jms.queue.StayHubDLQ",max-delivery-attempts=5,redelivery-delay=10000)
 
 /system-property=stayhub.ota.booking.url:add(value="http://ota-mock:9080/booking")
 /system-property=stayhub.ota.expedia.url:add(value="http://ota-mock:9080/expedia")
@@ -26,7 +42,9 @@ embed-server --server-config=standalone-full.xml --std-out=echo
 /subsystem=elytron/server-ssl-context=StayHubLocalSSC:add(key-manager=StayHubLocalKM,trust-manager=StayHubPmsTrustManager,want-client-auth=true,protocols=["TLSv1.3","TLSv1.2"])
 /subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=StayHubLocalSSC)
 
-# Seguridad declarativa (@RolesAllowed) con el login por sesión: ver config/seguridad-declarativa.cli
-/subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false)
+# Seguridad declarativa (@RolesAllowed) con dominio exclusivo del WAR.
+# "other" conserva integrated-jaspi=true para no confiar identidades de otros deployments.
+/subsystem=undertow/application-security-domain=StayHubSecurity:add(security-domain=ApplicationDomain,enable-jaspi=true,integrated-jaspi=false)
+/subsystem=ejb3/application-security-domain=StayHubSecurity:add(security-domain=ApplicationDomain)
 
 stop-embedded-server

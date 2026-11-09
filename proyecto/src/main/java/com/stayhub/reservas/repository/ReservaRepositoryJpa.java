@@ -63,6 +63,16 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     }
 
     @Override
+    public Optional<Reserva> buscarPorUsuarioYClaveIdempotencia(Long usuarioId, String clave) {
+        return em.createQuery(
+                        "SELECT r FROM Reserva r WHERE r.usuarioId=:usuarioId AND r.claveIdempotencia=:clave",
+                        Reserva.class)
+                .setParameter("usuarioId", usuarioId)
+                .setParameter("clave", clave)
+                .getResultStream().findFirst();
+    }
+
+    @Override
     public List<Reserva> listarPorHotel(Long hotelId) {
         return em.createQuery("SELECT r FROM Reserva r WHERE r.hotelId = :hotelId", Reserva.class)
                 .setParameter("hotelId", hotelId)

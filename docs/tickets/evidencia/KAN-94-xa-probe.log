@@ -1,0 +1,6 @@
+2026-11-09 11:08:58,273 INFO  [stdout] (ServerService Thread Pool -- 97) XA_PROBE PASS commitBoth
+2026-11-09 11:08:59,230 INFO  [stdout] (ServerService Thread Pool -- 97) XA_PROBE PASS actual DB failure: EJBException
+2026-11-09 11:09:00,163 INFO  [stdout] (ServerService Thread Pool -- 97) XA_PROBE PASS actual broker rejection: ActiveMQAddressFullException
+2026-11-09 11:09:01,001 INFO  [stdout] (ServerService Thread Pool -- 97) XA_PROBE PASS controlled application rollback
+2026-11-09 11:09:01,449 INFO  [stdout] (ServerService Thread Pool -- 97) XA_PROBE PASS final-state: DB only id=1; JMS only commit message
+2026-11-09 11:09:02,528 INFO  [stdout] (ServerService Thread Pool -- 97) XA_PROBE CLEANUP table dropped and test queues drained

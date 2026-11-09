@@ -58,7 +58,7 @@ public class ConsumidorEventoPassword implements MessageListener {
             };
             servicio.enviar("password:" + mensaje.getJMSMessageID(), dto);
         } catch (Exception ex) {
-            throw new IllegalStateException("No se pudo procesar el evento de password", ex);
+            throw FalloJms.reintentar(mensaje, "evento-password", ex);
         }
     }
 }

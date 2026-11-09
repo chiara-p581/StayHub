@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import org.junit.jupiter.api.*;
+import org.mockito.ArgumentCaptor;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static com.stayhub.seguridad.IdentidadFixture.*;
@@ -83,6 +84,20 @@ class ServicioDeReservasImplTest {
         var respuesta=servicio.crearReserva(request);
         assertEquals("PENDIENTE",respuesta.estado());assertEquals(new BigDecimal("300000"),respuesta.precioTotal());assertEquals("ARS",respuesta.moneda());
         verify(cupo).crearHold(1L,"DOBLE",2,desde,hasta);verify(repo,times(1)).guardar(any());
+    }
+    @Test void reintentoConMismaClaveDevuelveLaReservaSinRetenerNiPersistirOtraVez() {
+        var request=new ReservaRequest(1L,"DOBLE",1,desde,hasta,null,null,null,"123",null,null);
+        String clave="reserva-reintento-0001";
+        when(repo.buscarPorUsuarioYClaveIdempotencia(1L,clave)).thenReturn(Optional.empty());
+        var primera=servicio.crearReserva(request,clave);
+        ArgumentCaptor<Reserva> guardada=ArgumentCaptor.forClass(Reserva.class);
+        verify(repo).guardar(guardada.capture());
+        assertEquals(clave,guardada.getValue().getClaveIdempotencia());
+        when(repo.buscarPorUsuarioYClaveIdempotencia(1L,clave)).thenReturn(Optional.of(guardada.getValue()));
+        var repetida=servicio.crearReserva(request,clave);
+        assertEquals(primera.estado(),repetida.estado());
+        verify(cupo,times(1)).crearHold(any(),any(),anyInt(),any(),any());
+        verify(repo,times(1)).guardar(any());
     }
     @Test void fechasInvertidasYCantidadCeroSeRechazanAntesDeRetener() {
         assertThrows(SeguridadException.class,()->servicio.crearReserva(new ReservaRequest(1L,"DOBLE",1,hasta,desde,null,null,null,"123",null,null)));

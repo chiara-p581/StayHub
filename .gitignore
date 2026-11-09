@@ -12,6 +12,8 @@ mail.properties
 **/node_modules/
 e2e/playwright-report/
 e2e/test-results/
+performance/reports/*
+!performance/reports/.gitkeep
 
 # Certificados, claves, copias y configuración privada del servidor local
 .local-security/

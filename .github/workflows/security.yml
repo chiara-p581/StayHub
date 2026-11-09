@@ -551,3 +551,46 @@ jobs:
       - name: Apagar el entorno
         if: always()
         run: docker compose down --volumes --remove-orphans
+
+  performance-load:
+    name: Carga k6 (50 usuarios, 5 minutos)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Construir y levantar StayHub
+        run: docker compose up --detach --build --wait --wait-timeout 600
+      - name: Cargar catálogo e inventario demo
+        run: docker compose exec -T app /opt/jboss/load-demo.sh
+      - name: Ejecutar tres endpoints críticos con k6
+        run: |
+          mkdir -p performance/reports
+          docker run --rm --network host \
+            --volume "$PWD:/work" --workdir /work \
+            --env BASE_URL=https://localhost:8443/StayHub/api \
+            --env VUS=50 --env DURATION=5m \
+            grafana/k6:2.3.0 run performance/k6-critical-endpoints.js
+      - name: Incorporar el informe al resumen
+        if: always()
+        run: |
+          if [ -f performance/reports/k6-summary.md ]; then
+            cat performance/reports/k6-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Prueba de carga sin informe" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Guardar logs del entorno
+        if: always()
+        run: |
+          mkdir -p performance/reports
+          docker compose logs --no-color > performance/reports/compose.log
+      - name: Publicar informe de carga
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: load-test-evidence
+          path: performance/reports/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Apagar el entorno
+        if: always()
+        run: docker compose down --volumes --remove-orphans

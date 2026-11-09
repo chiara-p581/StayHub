@@ -94,7 +94,7 @@ public class ConsumidorEventoPago implements MessageListener {
                             null, null,
                             "Presentá este correo o el número de reserva al hacer el check-in.")));
         } catch (Exception ex) {
-            throw new IllegalStateException("No se pudo procesar el evento de pago", ex);
+            throw FalloJms.reintentar(mensaje, "evento-pago", ex);
         }
     }
 

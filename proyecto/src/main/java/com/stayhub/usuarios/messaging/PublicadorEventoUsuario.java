@@ -31,6 +31,6 @@ public class PublicadorEventoUsuario {
     private Topic topico;
 
     public void publicarUsuarioRegistrado(EventoUsuarioRegistrado evento) {
-        contexto.createProducer().send(topico, evento);
+        contexto.createProducer().setJMSCorrelationID("usuario:" + evento.usuarioId()).send(topico, evento);
     }
 }

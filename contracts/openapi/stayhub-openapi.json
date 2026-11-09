@@ -2122,7 +2122,16 @@
         "tags": [
           "pagos"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Recurso creado",
@@ -2234,7 +2243,16 @@
         "tags": [
           "pagos"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Recurso creado",
@@ -2433,7 +2451,16 @@
         "tags": [
           "reservas"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Recurso creado",
@@ -4245,6 +4272,23 @@
           "TIPO_HABITACION_INACTIVO",
           "HABITACION_INACTIVA",
           "TIPO_HABITACION_EN_USO"
+        ]
+      },
+      "Bloque": {
+        "type": "object",
+        "properties": {
+          "permisos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiraEn": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "permisos",
+          "expiraEn"
         ]
       },
       "CodigoErrorIntegracionPms": {

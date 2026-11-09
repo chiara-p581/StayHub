@@ -103,9 +103,12 @@ const Api = (() => {
         return url;
     }
 
-    async function request(path, { method = "GET", body, auth = false, params, skipReauth = false } = {}) {
+    async function request(path, { method = "GET", body, auth = false, params, skipReauth = false, extraHeaders } = {}) {
         const url = buildUrl(path, params);
         const headers = { Accept: "application/json" };
+        Object.entries(extraHeaders || {}).forEach(function (entry) {
+            if (entry[1] !== undefined && entry[1] !== null && entry[1] !== "") headers[entry[0]] = entry[1];
+        });
         if (body !== undefined) headers["Content-Type"] = "application/json";
         if (auth) {
             if (!isLoggedIn()) {
@@ -135,7 +138,7 @@ const Api = (() => {
         if (res.status === 204) return null;
 
         const contentType = res.headers.get("content-type") || "";
-        const isJson = contentType.includes("application/json");
+        const isJson = /application\/(?:[\w.-]+\+)?json\b/i.test(contentType);
         const raw = await res.text();
         const data = raw ? (isJson ? safeJson(raw) : raw) : null;
 
@@ -144,7 +147,7 @@ const Api = (() => {
                     && data.codigo === "REAUTENTICACION_REQUERIDA"
                     && currentUser() && currentUser().rol === "ADMIN") {
                 await solicitarReautenticacion();
-                return request(path, { method, body, auth, params, skipReauth: true });
+                return request(path, { method, body, auth, params, skipReauth: true, extraHeaders });
             }
             if (res.status === 401) {
                 sessionStorage.removeItem(USER_KEY);
@@ -152,7 +155,7 @@ const Api = (() => {
                 if (auth) requireLogin();
             }
             const msg =
-                (data && (data.mensaje || data.message || data.error)) ||
+                (data && (data.mensaje || data.detail || data.message || data.error)) ||
                 (typeof data === "string" && data) ||
                 `Error ${res.status}`;
             const err = new Error(msg);
@@ -569,7 +572,8 @@ const Api = (() => {
         carritoVaciar: () => request("carrito", { method: "DELETE", auth: true }),
 
         // ---- reservas ----
-        crearReserva: (dto) => request("reservas", { method: "POST", auth: true, body: {
+        crearReserva: (dto) => request("reservas", { method: "POST", auth: true,
+          extraHeaders: { "Idempotency-Key": dto.idempotencyKey || ("reserva:" + (dto.itemId || (Date.now() + "-" + localRandomHex()))) }, body: {
             hotelId: dto.hotelId, tipoHabitacion: dto.tipoHabitacion,
             cantidadHabitaciones: dto.cantidadHabitaciones, checkIn: dto.checkIn, checkOut: dto.checkOut,
             huespedNombre: dto.huespedNombre, huespedApellido: dto.huespedApellido,
@@ -613,8 +617,10 @@ const Api = (() => {
             }),
 
         // ---- pagos ----
-        procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true }),
-        procesarPagoLote: (dto) => request("pagos/lote", { method: "POST", body: dto, auth: true }),
+        procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true,
+            extraHeaders: { "Idempotency-Key": dto.claveIdempotencia } }),
+        procesarPagoLote: (dto) => request("pagos/lote", { method: "POST", body: dto, auth: true,
+            extraHeaders: { "Idempotency-Key": dto.claveIdempotencia } }),
         consultarPago: (id) => request(`pagos/${id}`, { auth: true }),
         listarMisPagos: () => request("pagos/mios", { auth: true }),
 

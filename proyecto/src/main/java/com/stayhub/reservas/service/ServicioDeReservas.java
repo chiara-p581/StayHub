@@ -16,6 +16,8 @@ public interface ServicioDeReservas {
 
     ReservaResponse crearReserva(ReservaRequest solicitud);
 
+    ReservaResponse crearReserva(ReservaRequest solicitud, String claveIdempotencia);
+
     ReservaResponse consultarReserva(Long id);
 
     ReservaResponse confirmarReserva(Long id);

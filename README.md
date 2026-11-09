@@ -128,6 +128,12 @@ docker compose down --volumes
 start-local.cmd
 ```
 
+## Prueba de carga
+
+La prueba reproducible de KAN-98 ejecuta 50 usuarios concurrentes durante cinco
+minutos sobre catálogo, disponibilidad y tarifas. Las instrucciones, umbrales y
+justificación de los endpoints están en [`performance/README.md`](performance/README.md).
+
 ### Opción alternativa: instalación manual
 
 Para `feature/seguridad-a`, consultar primero

@@ -23,6 +23,8 @@ public interface ReservaRepository {
 
     Optional<Reserva> buscarPorCanalYReferencia(String canal, String referenciaExterna);
 
+    Optional<Reserva> buscarPorUsuarioYClaveIdempotencia(Long usuarioId, String clave);
+
     List<Reserva> listarPorHotel(Long hotelId);
 
     List<Reserva> listarPorHuespedEmail(String email);

@@ -137,6 +137,9 @@ def aplicar(comandos, etiqueta):
         path.unlink(missing_ok=True)
 
 aplicar(cmds, 'TLS, listeners, identidad PMS y pool PostgreSQL')
+dominio_stayhub = [line for line in (root / 'config/seguridad-declarativa.cli').read_text().splitlines()
+                   if line.strip() != 'reload']
+aplicar(dominio_stayhub, 'Dominio de seguridad exclusivo de StayHub')
 aplicar((root / 'config/notificaciones-reintentos.cli').read_text().splitlines(), 'Cola de errores y reintentos de notificaciones')
 aplicar((root / 'config/seguridad-a-jms.cli').read_text().splitlines(), 'Límites de direcciones JMS')
 aplicar((root / 'config/seguridad-a-logging.cli').read_text().splitlines(), 'Auditoría y errores de seguridad')

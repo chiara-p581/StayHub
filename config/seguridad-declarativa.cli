@@ -1,13 +1,29 @@
-# Seguridad declarativa (@RolesAllowed) con el login por sesión de StayHub.
+# Seguridad declarativa (@RolesAllowed) aislada para StayHub.
 #
 # StayHub valida usuario y contraseña contra su propia base y guarda el rol en
 # la sesión. MecanismoSesionContenedor le pasa esa identidad al contenedor en
 # cada request. Por defecto WildFly exige que ese usuario exista también en su
-# ApplicationRealm (integrated-jaspi=true); con false acepta la identidad que
-# informa la aplicación, con los roles HUESPED o ADMIN.
+# ApplicationRealm (integrated-jaspi=true). El dominio exclusivo
+# StayHubSecurity usa JASPI no integrado para aceptar la identidad que informa
+# MecanismoSesionContenedor, con los roles HUESPED o ADMIN, sin relajar el
+# dominio compartido "other" ni el valor global de Undertow.
 #
 # Uso (con WildFly prendido):
 #   ~/wildfly/bin/jboss-cli.sh --connect --file=config/seguridad-declarativa.cli
-# El entorno Docker ya lo aplica en docker/wildfly/configure.cli.
-/subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false)
+# El entorno Docker aplica la misma configuración en docker/wildfly/configure.cli.
+if (outcome != success) of /subsystem=undertow/application-security-domain=StayHubSecurity:read-resource
+  /subsystem=undertow/application-security-domain=StayHubSecurity:add(security-domain=ApplicationDomain,enable-jaspi=true,integrated-jaspi=false)
+else
+  /subsystem=undertow/application-security-domain=StayHubSecurity:write-attribute(name=security-domain,value=ApplicationDomain)
+  /subsystem=undertow/application-security-domain=StayHubSecurity:write-attribute(name=enable-jaspi,value=true)
+  /subsystem=undertow/application-security-domain=StayHubSecurity:write-attribute(name=integrated-jaspi,value=false)
+end-if
+
+# Se registra también el nombre para EJB sin convertirlo en valor por defecto.
+# Así una futura anotación o descriptor puede usarlo sin afectar otros WAR/EAR.
+if (outcome != success) of /subsystem=ejb3/application-security-domain=StayHubSecurity:read-resource
+  /subsystem=ejb3/application-security-domain=StayHubSecurity:add(security-domain=ApplicationDomain)
+else
+  /subsystem=ejb3/application-security-domain=StayHubSecurity:write-attribute(name=security-domain,value=ApplicationDomain)
+end-if
 reload

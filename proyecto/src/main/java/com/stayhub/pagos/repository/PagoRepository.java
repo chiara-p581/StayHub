@@ -12,6 +12,8 @@ public interface PagoRepository {
 
     Optional<Pago> buscarPorClaveIdempotencia(Long usuarioId, String clave);
 
+    void bloquearUsuario(Long usuarioId);
+
     void bloquearReservas(List<Long> reservaIds);
 
     boolean existeAprobadoParaReserva(Long reservaId);

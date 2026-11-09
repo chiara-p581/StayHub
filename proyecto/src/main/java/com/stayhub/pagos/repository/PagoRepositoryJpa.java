@@ -36,6 +36,11 @@ public class PagoRepositoryJpa implements PagoRepository {
     }
 
     @Override
+    public void bloquearUsuario(Long usuarioId) {
+        em.find(com.stayhub.usuarios.model.Usuario.class, usuarioId, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+    }
+
+    @Override
     public void bloquearReservas(List<Long> reservaIds) {
         reservaIds.stream().sorted().forEach(id ->
                 em.createNativeQuery("SELECT pg_advisory_xact_lock(?1)").setParameter(1, id).getSingleResult());

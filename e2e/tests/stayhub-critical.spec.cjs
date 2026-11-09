@@ -4,7 +4,7 @@ const crypto = require("node:crypto");
 const path = require("node:path");
 
 const repo = path.resolve(__dirname, "../..");
-const origin = "https://localhost:8443";
+const origin = process.env.STAYHUB_ORIGIN || new URL(process.env.STAYHUB_BASE_URL || "https://localhost:8443/StayHub").origin;
 const webhookSecret = process.env.STAYHUB_WEBHOOK_SECRET || "demo-booking-webhook-secret-2026-0001";
 const dockerVerification = process.env.STAYHUB_DOCKER_VERIFY === "true";
 const adminEmail = process.env.STAYHUB_ADMIN_EMAIL || "admin@stayhub.local";
@@ -15,6 +15,17 @@ function isoDate(days) {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+async function availableRange(request, hotelId, start = 10) {
+  for (let days = start; days <= 43; days += 2) {
+    const checkIn = isoDate(days), checkOut = isoDate(days + 2);
+    const response = await request.get(`api/inventario-tarifas/disponibilidad?hotelId=${hotelId}&desde=${checkIn}&hasta=${checkOut}`);
+    expect(response.ok(), await response.text()).toBeTruthy();
+    const standard = (await response.json()).find(item => item.tipoHabitacion === "STANDARD");
+    if (standard?.unidadesDisponibles > 0) return { checkIn, checkOut };
+  }
+  throw new Error("No hay un rango STANDARD con cupo en los próximos 45 días");
 }
 
 function docker(...args) {
@@ -35,12 +46,12 @@ async function csrf(request) {
   return (await response.json()).token;
 }
 
-async function mutate(request, method, url, data) {
+async function mutate(request, method, url, data, extraHeaders = {}) {
   const token = await csrf(request);
   return request.fetch(url, {
     method,
     data,
-    headers: { Origin: origin, "X-CSRF-Token": token, "Content-Type": "application/json" }
+    headers: { Origin: origin, "X-CSRF-Token": token, "Content-Type": "application/json", ...extraHeaders }
   });
 }
 
@@ -133,7 +144,7 @@ test.describe("StayHub — cinco recorridos críticos", () => {
     expect(user.passwordHash).toBeUndefined();
     await login(request, email, password);
     const hotel = await firstHotel(request);
-    const checkIn = isoDate(20), checkOut = isoDate(22);
+    const { checkIn, checkOut } = await availableRange(request, hotel.id, 10);
     expect((await mutate(request, "POST", "api/carrito/hotel", {
       hotelId: hotel.id, tipoHabitacion: "STANDARD", cantidadHabitaciones: 1
     })).status()).toBe(200);
@@ -150,13 +161,20 @@ test.describe("StayHub — cinco recorridos críticos", () => {
     expect(bookingResponse.status(), await bookingResponse.text()).toBe(200);
     const booking = await bookingResponse.json();
     expect(booking.estado).toBe("PENDIENTE");
-    const paymentResponse = await mutate(request, "POST", "api/pagos", {
+    const paymentKey = `e2e-payment-${booking.id}-${Date.now()}`;
+    const paymentBody = {
       reservaId: booking.id, monto: booking.precioTotal, moneda: booking.moneda,
-      claveIdempotencia: `e2e-payment-${booking.id}-${Date.now()}`
-    });
+      claveIdempotencia: paymentKey
+    };
+    const paymentResponse = await mutate(request, "POST", "api/pagos", paymentBody,
+      { "Idempotency-Key": paymentKey });
     expect(paymentResponse.status(), await paymentResponse.text()).toBe(201);
     const payment = await paymentResponse.json();
     expect(payment.estado).toBe("APROBADO");
+    const repeatedPayment = await mutate(request, "POST", "api/pagos", paymentBody,
+      { "Idempotency-Key": paymentKey });
+    expect(repeatedPayment.status(), await repeatedPayment.text()).toBe(201);
+    expect((await repeatedPayment.json()).id).toBe(payment.id);
     const persistedBooking = await request.get(`api/reservas/${booking.id}`);
     expect((await persistedBooking.json()).estado).toBe("CONFIRMADA");
     const persistedPayment = await request.get(`api/pagos/${payment.id}`);
@@ -171,16 +189,23 @@ test.describe("StayHub — cinco recorridos críticos", () => {
   test("cancelar una reserva devuelve el cupo al inventario", async ({ request }) => {
     const guest = await registerGuest(request, "e2e.cancelacion");
     const hotel = await firstHotel(request);
-    const checkIn = isoDate(25), checkOut = isoDate(27);
+    const { checkIn, checkOut } = await availableRange(request, hotel.id, 12);
     const before = await availability(request, hotel.id, checkIn, checkOut);
-    const creation = await mutate(request, "POST", "api/reservas", {
+    const bookingKey = `e2e-booking-${Date.now()}`;
+    const bookingBody = {
       hotelId: hotel.id, tipoHabitacion: "STANDARD", cantidadHabitaciones: 1,
       checkIn, checkOut, huespedNombre: "Demo", huespedApellido: "Huésped",
       huespedEmail: guest.email, huespedTelefono: "1155550001",
       precioTotal: 1, moneda: "USD"
-    });
+    };
+    const creation = await mutate(request, "POST", "api/reservas", bookingBody,
+      { "Idempotency-Key": bookingKey });
     expect(creation.status(), await creation.text()).toBe(201);
     const booking = await creation.json();
+    const repeatedCreation = await mutate(request, "POST", "api/reservas", bookingBody,
+      { "Idempotency-Key": bookingKey });
+    expect(repeatedCreation.status(), await repeatedCreation.text()).toBe(201);
+    expect((await repeatedCreation.json()).id).toBe(booking.id);
     expect(await availability(request, hotel.id, checkIn, checkOut)).toBe(before - 1);
     const cancellation = await mutate(request, "DELETE", `api/reservas/${booking.id}`);
     expect(cancellation.status(), await cancellation.text()).toBe(200);
@@ -197,8 +222,9 @@ test.describe("StayHub — cinco recorridos críticos", () => {
     const hotel = await firstHotel(request);
     const externalId = `e2e-ota-${Date.now()}`;
     const route = "canales-externos/otas/BOOKING/reservas";
+    const { checkIn, checkOut } = await availableRange(request, hotel.id, 14);
     const body = JSON.stringify({ idExterno: externalId, canal: "BOOKING", hotelId: hotel.id,
-      checkIn: isoDate(30), checkOut: isoDate(32), tipoHabitacion: "STANDARD", cantidadHabitaciones: 1,
+      checkIn, checkOut, tipoHabitacion: "STANDARD", cantidadHabitaciones: 1,
       huesped: { nombre: "E2E", apellido: "OTA", email: "e2e.ota@stayhub.local", telefono: "1155550002" },
       precioTotal: 100000, moneda: "ARS", estado: "CONFIRMADA" });
     const response = await request.post(`api/${route}`, { data: body, headers: signWebhook("POST", route, body) });

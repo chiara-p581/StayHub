@@ -11,10 +11,13 @@ import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
-@WebFilter(urlPatterns = "/*")
+@WebFilter(filterName = "SeguridadHttpFilter", urlPatterns = "/*")
 public class SeguridadHttpFilter implements Filter {
     @Inject
     private LimitadorSolicitudes limitador = new LimitadorSolicitudes();
+    @Inject
+    private com.stayhub.infraestructura.cache.CuotasLecturasPublicas cuotasPublicas =
+            new com.stayhub.infraestructura.cache.CuotasLecturasPublicas();
     private final java.util.concurrent.Semaphore concurrentes = new java.util.concurrent.Semaphore(32);
     public static boolean httpLocalHabilitado() { return "true".equals(config("stayhub.seguridad.http-local")); }
     static String config(String clave) {
@@ -103,6 +106,13 @@ public class SeguridadHttpFilter implements Filter {
     }
     private void cuotas(HttpServletRequest request, String ruta) {
         long ahora = System.currentTimeMillis(); String ip = request.getRemoteAddr();
+        boolean lecturaPublica = "GET".equals(request.getMethod())
+                && (ruta.equals("/api/hoteles") || ruta.equals("/api/inventario-tarifas/disponibilidad")
+                || ruta.equals("/api/inventario-tarifas/tarifas"));
+        if (lecturaPublica) {
+            if (!cuotasPublicas.permitir(ip, 6000, ahora)) throw new SeguridadException(429, "Demasiadas solicitudes");
+            return;
+        }
         if (!limitador.permitir("global:" + ip, 180, ahora)) throw new SeguridadException(429, "Demasiadas solicitudes");
         String grupo = ruta.contains("login") ? "login" : ruta.equals("/api/usuarios") ? "registro" :
                 ruta.contains("notificaciones") || ruta.contains("overbooking") ? "notificaciones" :

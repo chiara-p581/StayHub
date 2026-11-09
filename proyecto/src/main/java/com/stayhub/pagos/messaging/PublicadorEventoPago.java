@@ -25,6 +25,8 @@ public class PublicadorEventoPago {
     private Topic topico;
 
     public void publicarPagoAprobado(EventoPagoAprobado evento) {
-        contexto.createProducer().send(topico, evento);
+        contexto.createProducer()
+                .setJMSCorrelationID("pago:" + evento.pagoId() + ":reserva:" + evento.reservaId())
+                .send(topico, evento);
     }
 }

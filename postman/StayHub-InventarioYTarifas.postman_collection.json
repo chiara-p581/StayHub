@@ -270,6 +270,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-inventario-hold-{{$guid}}"
               }
             ],
             "body": {
@@ -496,6 +500,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-inventario-rechazo-{{$guid}}"
               }
             ],
             "body": {

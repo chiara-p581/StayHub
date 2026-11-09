@@ -47,8 +47,10 @@ public class ReservaResource {
     }
 
     @POST
-    public Response crear(ReservaRequest solicitud) {
-        ReservaResponse creada = servicio.crearReserva(solicitud);
+    public Response crear(@HeaderParam("Idempotency-Key") String claveIdempotencia,
+                          ReservaRequest solicitud) {
+        ReservaResponse creada = servicio.crearReserva(solicitud,
+                com.stayhub.seguridad.ClaveIdempotencia.requerida(claveIdempotencia));
         // UriInfo.getAbsolutePathBuilder() ya apunta a la URL completa de este
         // POST (con esquema, host y puerto reales); antes se armaba a mano
         // como "api/reservas/<id>", una URL relativa que no sigue el estándar

@@ -1,0 +1,6 @@
+# Recursos temporales exclusivos: no usar nombres de destinos de negocio.
+batch
+/subsystem=messaging-activemq/server=default/jms-queue=StayHubXaProbe:add(entries=["java:/jms/queue/StayHubXaProbe"])
+/subsystem=messaging-activemq/server=default/jms-queue=StayHubXaRejectedProbe:add(entries=["java:/jms/queue/StayHubXaRejectedProbe"])
+/subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubXaRejectedProbe":add(address-full-policy=FAIL,max-size-bytes=2048,page-size-bytes=1024)
+run-batch
