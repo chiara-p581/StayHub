@@ -48,7 +48,7 @@
         Api.activarMfa(document.getElementById("codigo").value.trim()).then(function (respuesta) {
             usuarioActivado = respuesta.usuario;
             codigosRecuperacion = respuesta.codigosRecuperacion || [];
-            contenedorCodigos.innerHTML = "";
+            contenedorCodigos.replaceChildren();
             codigosRecuperacion.forEach(function (codigo) {
                 var elemento = document.createElement("code");
                 elemento.textContent = codigo;

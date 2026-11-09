@@ -496,16 +496,35 @@ jobs:
           # Cada suite comparte la IP del runner. El contador vive en
           # PostgreSQL, por lo que se limpia únicamente la tabla técnica del
           # limitador en esta base efímera antes de cada recorrido.
-          reiniciar_estado_pruebas
+          escenarios_criticos=(
+            'registro, login, carrito, reserva y pago persisten el resultado'
+            'cancelar una reserva devuelve el cupo al inventario'
+            'una reserva OTA firmada se procesa una sola vez y queda confirmada'
+            'la sincronización JMS llega a los mocks OTA y PMS'
+            'overbooking reubica, persiste el conflicto y publica la notificación'
+          )
+          for escenario in "${escenarios_criticos[@]}"; do
+            reiniciar_estado_pruebas
+            npx playwright test tests/stayhub-critical.spec.cjs --grep "$escenario"
+          done
 
-          npx playwright test tests/stayhub-critical.spec.cjs
           reiniciar_estado_pruebas
 
           npx playwright test tests/session-security.spec.cjs
           reiniciar_estado_pruebas
 
-          # Esta suite agota intencionalmente el límite de login, por eso va última.
-          npx playwright test tests/live-security-matrix.spec.cjs
+          escenarios_seguridad=(
+            'mass assignment: registrarse nunca concede ADMIN'
+            'BOLA/IDOR: un usuario no puede consultar el perfil de otro'
+            'BFLA: un huésped no puede ejecutar una operación ADMIN'
+            'inyección SQL en un identificador se rechaza como entrada inválida'
+            'XSS: toda escritura HTML dinámica pasa por el sanitizador local'
+            'fuerza bruta: el límite de login responde 429 con Retry-After'
+          )
+          for escenario in "${escenarios_seguridad[@]}"; do
+            reiniciar_estado_pruebas
+            npx playwright test tests/live-security-matrix.spec.cjs --grep "$escenario"
+          done
       - name: Guardar logs de los contenedores
         if: always()
         run: |

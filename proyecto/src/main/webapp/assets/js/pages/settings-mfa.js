@@ -18,7 +18,7 @@
         regenerar.disabled = true;
         Api.regenerarCodigosMfa().then(function (respuesta) {
             codigos = respuesta.codigosRecuperacion || [];
-            lista.innerHTML = "";
+            lista.replaceChildren();
             codigos.forEach(function (codigo) {
                 var elemento = document.createElement("code");
                 elemento.textContent = codigo;
