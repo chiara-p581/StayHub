@@ -447,6 +447,7 @@ jobs:
             --cookie "$cookies" --cookie-jar "$cookies" \
             --header 'Origin: https://localhost:8443' \
             --header "X-CSRF-Token: $csrf" \
+            --header "Idempotency-Key: ci-reserva-pms-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --header 'Content-Type: application/json' \
             --data "{\"hotelId\":$demo_hotel_id,\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"checkIn\":\"$desde\",\"checkOut\":\"$hasta\",\"huespedNombre\":\"PMS\",\"huespedApellido\":\"CI\",\"huespedEmail\":\"huesped@stayhub.local\",\"huespedTelefono\":\"+5491100000000\",\"precioTotal\":1,\"moneda\":\"ARS\"}" \
             https://localhost:8443/StayHub/api/reservas; then
