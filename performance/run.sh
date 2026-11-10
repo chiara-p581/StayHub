@@ -11,6 +11,9 @@ if command -v k6 >/dev/null 2>&1; then
 fi
 
 if command -v docker >/dev/null 2>&1; then
+  # La imagen oficial de k6 no corre como el usuario del host. Sin este permiso
+  # el bind mount permite ejecutar la prueba, pero impide guardar el resumen.
+  chmod 0777 "$script_dir/reports"
   base_url="${BASE_URL:-https://host.docker.internal:8443/StayHub/api}"
   exec docker run --rm \
     --add-host=host.docker.internal:host-gateway \

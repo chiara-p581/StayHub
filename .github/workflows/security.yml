@@ -624,6 +624,10 @@ jobs:
       - name: Ejecutar tres endpoints críticos con k6
         run: |
           mkdir -p performance/reports
+          # k6 se ejecuta con un usuario no-root dentro del contenedor. El
+          # directorio debe ser escribible para que handleSummary publique los
+          # JSON/Markdown que después se conservan como evidencia.
+          chmod 0777 performance/reports
           docker run --rm --network host \
             --volume "$PWD:/work" --workdir /work \
             --env BASE_URL=https://localhost:8443/StayHub/api \
