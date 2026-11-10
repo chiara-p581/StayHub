@@ -330,15 +330,15 @@ const Api = (() => {
             var form = document.createElement("form");
             form.id = "stayhub-reauth-form";
 
-            var etiquetaPassword = document.createElement("label");
-            etiquetaPassword.className = "stayhub-reauth-field";
-            etiquetaPassword.textContent = "Password";
-            var password = document.createElement("input");
-            password.id = "stayhub-reauth-password";
-            password.type = "password";
-            password.autocomplete = "current-password";
-            password.required = true;
-            etiquetaPassword.appendChild(password);
+            var etiquetaClave = document.createElement("label");
+            etiquetaClave.className = "stayhub-reauth-field";
+            etiquetaClave.textContent = "Password";
+            var campoClave = document.createElement("input");
+            campoClave.id = "stayhub-reauth-password";
+            campoClave.type = "password";
+            campoClave.autocomplete = "current-password";
+            campoClave.required = true;
+            etiquetaClave.appendChild(campoClave);
 
             var etiquetaCodigo = document.createElement("label");
             etiquetaCodigo.className = "stayhub-reauth-field";
@@ -366,7 +366,7 @@ const Api = (() => {
             confirmar.type = "submit";
             confirmar.textContent = "Confirm";
             acciones.append(cancelarBoton, confirmar);
-            form.append(etiquetaPassword, etiquetaCodigo, error, acciones);
+            form.append(etiquetaClave, etiquetaCodigo, error, acciones);
             dialogo.append(titulo, descripcion, form);
             fondo.appendChild(dialogo);
             document.body.appendChild(fondo);
@@ -393,11 +393,11 @@ const Api = (() => {
                 try {
                     await request("usuarios/reautenticar", {
                         method: "POST",
-                        body: { password: password.value, codigoMfa: codigo.value.trim() },
+                        body: { password: campoClave.value, codigoMfa: codigo.value.trim() },
                         auth: true,
                         skipReauth: true
                     });
-                    password.value = "";
+                    campoClave.value = "";
                     codigo.value = "";
                     cerrar();
                     resolve();
@@ -409,7 +409,7 @@ const Api = (() => {
                     codigo.select();
                 }
             });
-            password.focus();
+            campoClave.focus();
         }).finally(function () {
             reautenticacionPendiente = null;
         });

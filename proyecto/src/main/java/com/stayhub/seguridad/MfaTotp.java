@@ -8,9 +8,10 @@ import java.time.Instant;
 
 public final class MfaTotp {
     private static final char[] BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".toCharArray();
+    private static final SecureRandom ALEATORIO_SEGURO = new SecureRandom();
     private MfaTotp() { }
     public static String secreto() {
-        byte[] b = new byte[20]; new SecureRandom().nextBytes(b); return codificar(b);
+        byte[] b = new byte[20]; ALEATORIO_SEGURO.nextBytes(b); return codificar(b);
     }
     public static boolean validar(String secreto, String codigo) {
         if (codigo == null || !codigo.matches("\\d{6}")) return false;
@@ -18,6 +19,9 @@ public final class MfaTotp {
         for (long i = -1; i <= 1; i++) if (generar(secreto, paso + i).equals(codigo)) return true;
         return false;
     }
+    // RFC 6238 exige interoperabilidad con HMAC-SHA1 para el perfil TOTP
+    // predeterminado usado por Google Authenticator y Microsoft Authenticator.
+    @SuppressWarnings("java:S4790")
     static String generar(String secreto, long paso) {
         try {
             Mac mac = Mac.getInstance("HmacSHA1");
