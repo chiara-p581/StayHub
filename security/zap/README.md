@@ -9,9 +9,16 @@ y ejecuta OWASP ZAP como dos identidades:
   propio entorno.
 
 El script `run-authenticated-scan.sh` genera reportes JSON, HTML y Markdown en
-`ci-evidence/zap`. El job falla cuando aparece una alerta High. Las alertas
-Medium quedan en los artefactos para que se corrijan o se justifiquen antes de
-cerrar el ticket.
+`ci-evidence/zap`. El job falla cuando aparece una alerta High o una instancia
+Medium que no esté corregida ni explícitamente revisada en
+`accepted-medium-alerts.json`. La evidencia `medium-review.json` relaciona cada
+instancia Medium con su justificación y `unreviewed-medium.json` debe quedar
+vacío.
+
+Una regla aceptada debe identificar el `pluginId`, limitar las URLs mediante
+una expresión regular y explicar el riesgo residual o por qué la respuesta está
+fuera del contexto `/StayHub`. No se deben crear reglas genéricas que oculten
+alertas nuevas.
 
 ## Ejecución segura
 
