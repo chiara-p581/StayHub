@@ -64,5 +64,36 @@ clasifica como falso positivo reproducible.
 El workflow `StayHub CI` incorpora el job `OWASP ZAP autenticado`. Este job usa
 una base PostgreSQL descartable y ejecuta el análisis como Huésped y como
 Administrador con MFA. Publica reportes HTML, JSON y Markdown y falla si existe
-alguna alerta High. Esta es la ejecución válida para cargas activas porque no
-afecta los datos compartidos de Aiven.
+alguna alerta High o una instancia Medium nueva que no esté corregida ni
+justificada. Esta es la ejecución válida para cargas activas porque no afecta
+los datos compartidos de Aiven.
+
+### Resultado de la ejecución autenticada
+
+Ejecución de referencia: 9 de noviembre de 2026, workflow `StayHub CI`, job
+`OWASP ZAP autenticado`.
+
+| Rol | High | Medium | Tratamiento |
+|---|---:|---:|---|
+| Huésped | 0 | 3 | Revisadas |
+| Administrador + MFA | 0 | 3 | Revisadas |
+
+Las seis alertas Medium son la duplicación, para ambos roles, de tres hallazgos:
+
+1. **CSP `style-src 'unsafe-inline'` en páginas de StayHub.** Es el riesgo
+   residual descrito anteriormente. La excepción está limitada a estilos; la
+   ejecución de scripts inline continúa bloqueada.
+2. **CSP ausente en `/`, `/noredirect.html`, `/robots.txt` y `/sitemap.xml`.**
+   Son respuestas de sondeo de la raíz de WildFly y no pertenecen al contexto
+   desplegado `/StayHub`. No exponen datos ni funcionalidad de la aplicación.
+   Dentro de `/StayHub`, `SeguridadHttpFilter` agrega la CSP.
+3. **Protección anti-clickjacking ausente en `/` y `/noredirect.html`.** Son
+   las mismas respuestas externas al contexto. Todas las páginas de StayHub
+   reciben `X-Frame-Options: DENY` y `frame-ancestors 'none'`.
+
+La lista controlada se encuentra en
+`security/zap/accepted-medium-alerts.json`. El escaneo produce
+`medium-findings.json`, `medium-review.json` y `unreviewed-medium.json`; el
+último debe estar vacío. La coincidencia exige tanto el identificador de la
+regla ZAP como una URL acotada, por lo que un Medium nuevo no queda oculto y
+hace fallar el pipeline.

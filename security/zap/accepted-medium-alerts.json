@@ -1,0 +1,19 @@
+{
+  "accepted": [
+    {
+      "pluginId": "10055",
+      "uriRegex": "^https://localhost:8443/StayHub/(index|admin-dashboard)\\.html$",
+      "justification": "La CSP de StayHub mantiene temporalmente style-src 'unsafe-inline' porque el frontend heredado todavía contiene estilos inline. script-src no admite unsafe-inline y se conservan object-src 'none', frame-ancestors 'none', base-uri 'self' y form-action 'self'. La migración visual completa queda registrada como riesgo residual."
+    },
+    {
+      "pluginId": "10038",
+      "uriRegex": "^https://localhost:8443/(|noredirect\\.html|robots\\.txt|sitemap\\.xml)$",
+      "justification": "La respuesta pertenece a la raíz y a recursos de sondeo del servidor WildFly, fuera del contexto desplegado /StayHub. No contiene datos ni funcionalidad de StayHub; todas las respuestas dentro de /StayHub reciben CSP mediante SeguridadHttpFilter."
+    },
+    {
+      "pluginId": "10020",
+      "uriRegex": "^https://localhost:8443/(|noredirect\\.html)$",
+      "justification": "La respuesta pertenece a la página raíz o de sondeo de WildFly, fuera del contexto /StayHub. Las páginas de StayHub reciben X-Frame-Options DENY y CSP frame-ancestors 'none' mediante SeguridadHttpFilter."
+    }
+  ]
+}
