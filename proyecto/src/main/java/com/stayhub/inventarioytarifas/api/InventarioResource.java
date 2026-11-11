@@ -7,12 +7,15 @@ import com.stayhub.inventarioytarifas.dto.DisponibilidadDTO;
 import com.stayhub.inventarioytarifas.dto.TarifaDTO;
 import com.stayhub.inventarioytarifas.exception.CodigoErrorInventarioTarifas;
 import com.stayhub.inventarioytarifas.exception.InventarioTarifasException;
+import com.stayhub.inventarioytarifas.cache.VersionLecturasInventario;
+import com.stayhub.infraestructura.cache.CacheLecturas;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDate;
+import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
@@ -28,6 +31,11 @@ import java.util.List;
 @Path("/inventario-tarifas")
 @Produces(MediaType.APPLICATION_JSON)
 public class InventarioResource {
+    private static final Duration TTL_LECTURA = Duration.ofSeconds(10);
+    private static final CacheLecturas<Consulta, List<DisponibilidadDTO>> CACHE_DISPONIBILIDAD =
+            new CacheLecturas<>(TTL_LECTURA);
+    private static final CacheLecturas<Consulta, List<TarifaDTO>> CACHE_TARIFAS =
+            new CacheLecturas<>(TTL_LECTURA);
 
     @Inject
     private ServicioDeInventarioYTarifas servicio;
@@ -39,7 +47,11 @@ public class InventarioResource {
             @QueryParam("desde") String desde,
             @QueryParam("hasta") String hasta) {
 
-        return servicio.consultarDisponibilidad(hotelId, aFecha(desde, "desde"), aFecha(hasta, "hasta"));
+        LocalDate fechaDesde = aFecha(desde, "desde");
+        LocalDate fechaHasta = aFecha(hasta, "hasta");
+        Consulta clave = new Consulta(hotelId, fechaDesde, fechaHasta, VersionLecturasInventario.actual());
+        return CACHE_DISPONIBILIDAD.obtener(clave,
+                () -> List.copyOf(servicio.consultarDisponibilidad(hotelId, fechaDesde, fechaHasta)));
     }
 
     @GET
@@ -49,7 +61,11 @@ public class InventarioResource {
             @QueryParam("desde") String desde,
             @QueryParam("hasta") String hasta) {
 
-        return servicio.consultarTarifas(hotelId, aFecha(desde, "desde"), aFecha(hasta, "hasta"));
+        LocalDate fechaDesde = aFecha(desde, "desde");
+        LocalDate fechaHasta = aFecha(hasta, "hasta");
+        Consulta clave = new Consulta(hotelId, fechaDesde, fechaHasta, VersionLecturasInventario.actual());
+        return CACHE_TARIFAS.obtener(clave,
+                () -> List.copyOf(servicio.consultarTarifas(hotelId, fechaDesde, fechaHasta)));
     }
 
     @POST
@@ -57,6 +73,9 @@ public class InventarioResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response cargar(CargaInventarioRequest solicitud) {
         CargaInventarioResponse resultado = servicio.cargarInventario(solicitud);
+        VersionLecturasInventario.invalidar();
+        CACHE_DISPONIBILIDAD.invalidarTodo();
+        CACHE_TARIFAS.invalidarTodo();
         return Response.status(Response.Status.CREATED).entity(resultado).build();
     }
 
@@ -81,4 +100,6 @@ public class InventarioResource {
                     "El parámetro '" + nombreParametro + "' no es una fecha ISO válida (YYYY-MM-DD): " + valor, ex);
         }
     }
+
+    private record Consulta(Long hotelId, LocalDate desde, LocalDate hasta, long versionInventario) { }
 }

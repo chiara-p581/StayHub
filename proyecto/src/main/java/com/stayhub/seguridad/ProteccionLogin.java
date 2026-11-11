@@ -1,6 +1,7 @@
 package com.stayhub.seguridad;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;
@@ -16,6 +17,8 @@ public class ProteccionLogin {
     static final int MAX_FALLOS = 5;
     static final long VENTANA_SEGUNDOS = 900;
     private final Map<String, Ventana> fallos = new ConcurrentHashMap<>();
+    @Inject
+    private LimitadorSolicitudes limitador;
     private final Clock reloj;
 
     public ProteccionLogin() { this(Clock.systemUTC()); }
@@ -34,11 +37,17 @@ public class ProteccionLogin {
     }
 
     public void registrarExito(String email, String ip) {
+        if (limitador != null) {
+            limitador.eliminar("login:" + claveCuenta(email));
+            limitador.eliminar("login:" + claveIp(ip));
+            return;
+        }
         fallos.remove(claveCuenta(email));
         fallos.remove(claveIp(ip));
     }
 
     private boolean bloqueada(String clave, long ahora) {
+        if (limitador != null) return limitador.cantidad("login:" + clave, ahora * 1000) >= MAX_FALLOS;
         Ventana v = fallos.get(clave);
         if (v == null) return false;
         if (ahora - v.inicio >= VENTANA_SEGUNDOS) { fallos.remove(clave, v); return false; }
@@ -46,6 +55,10 @@ public class ProteccionLogin {
     }
 
     private void incrementar(String clave, long ahora) {
+        if (limitador != null) {
+            limitador.incrementar("login:" + clave, ahora * 1000, VENTANA_SEGUNDOS * 1000);
+            return;
+        }
         fallos.compute(clave, (k, v) -> v == null || ahora - v.inicio >= VENTANA_SEGUNDOS
                 ? new Ventana(ahora, 1) : new Ventana(v.inicio, v.cantidad + 1));
     }

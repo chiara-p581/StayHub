@@ -7,6 +7,7 @@ import jakarta.ejb.MessageDriven;
 import jakarta.inject.Inject;
 import jakarta.jms.Message;
 import jakarta.jms.MessageListener;
+import com.stayhub.notificaciones.messaging.FalloJms;
 
 @MessageDriven(activationConfig = {
         @ActivationConfigProperty(
@@ -31,10 +32,8 @@ public class ConsumidorSincronizacion implements MessageListener {
                         solicitud.desde(), solicitud.hasta());
                 case PMS -> procesador.sincronizarPms(solicitud.hotelId(), solicitud.desde(), solicitud.hasta());
             }
-        } catch (RuntimeException ex) {
-            throw ex;
         } catch (Exception ex) {
-            throw new IllegalStateException("No se pudo procesar el mensaje de sincronización", ex);
+            throw FalloJms.reintentar(mensaje, "sincronizacion-canales", ex);
         }
     }
 

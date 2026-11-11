@@ -51,7 +51,7 @@ public class ConsumidorEventoUsuarioRegistrado implements MessageListener {
                     "¡Bienvenido a StayHub, " + evento.nombre() + "!",
                     html));
         } catch (Exception ex) {
-            throw new IllegalStateException("No se pudo procesar el evento de usuario registrado", ex);
+            throw FalloJms.reintentar(mensaje, "usuario-registrado", ex);
         }
     }
 }

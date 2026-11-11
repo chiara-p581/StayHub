@@ -3,6 +3,7 @@ package com.stayhub.reservas.service;
 import com.stayhub.seguridad.*;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.inventarioytarifas.contrato.ServicioDeInventarioYTarifas;
+import com.stayhub.inventarioytarifas.cache.VersionLecturasInventario;
 import com.stayhub.pagos.repository.PagoRepository;
 import com.stayhub.canalesexternos.contrato.interno.ResultadoOperacionReserva;
 import com.stayhub.canalesexternos.contrato.interno.ServicioDeReservasPort;
@@ -106,6 +107,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             Reserva reserva = ReservaMapper.nuevaDesdeCanal(solicitud);
             holdYConfirmarEnUnPaso(reserva);
             repositorio.guardar(reserva);
+            VersionLecturasInventario.invalidar();
             return ReservaMapper.aResultadoOperacion(reserva);
         });
     }
@@ -127,6 +129,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
 
             reemplazarHoldYConfirmar(reserva, solicitud);
             repositorio.guardar(reserva);
+            VersionLecturasInventario.invalidar();
             return ReservaMapper.aResultadoOperacion(reserva);
         });
     }
@@ -149,6 +152,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             liberarHoldSiExiste(reserva);
             reserva.cancelar();
             repositorio.guardar(reserva);
+            VersionLecturasInventario.invalidar();
             return ReservaMapper.aResultadoOperacion(reserva);
         });
     }
@@ -160,10 +164,21 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     @Override
     @PermitAll
     public ReservaResponse crearReserva(ReservaRequest solicitud) {
+        return crearReserva(solicitud, null);
+    }
+
+    @Override
+    @PermitAll
+    public ReservaResponse crearReserva(ReservaRequest solicitud, String claveIdempotencia) {
         identidad.exigirHuesped();
         var usuario = usuarios.buscarPorId(identidad.usuarioId());
         validarDirecta(solicitud);
+        String clave = ClaveIdempotencia.normalizar(claveIdempotencia);
         repositorio.bloquearUsuario(usuario.id());
+        if (clave != null) {
+            Optional<Reserva> existente = repositorio.buscarPorUsuarioYClaveIdempotencia(usuario.id(), clave);
+            if (existente.isPresent()) return ReservaMapper.aResponse(existente.get());
+        }
         if (repositorio.contarPendientesPorUsuario(usuario.id()) >= 10)
             throw new SeguridadException(429, "Tenés demasiadas reservas pendientes de pago");
         var tarifa = precio(solicitud.hotelId(), solicitud.tipoHabitacion(), solicitud.cantidadHabitaciones(), solicitud.checkIn(), solicitud.checkOut());
@@ -172,8 +187,10 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
                 solicitud.huespedTelefono(), tarifa.importe().multiply(java.math.BigDecimal.valueOf(solicitud.cantidadHabitaciones())), tarifa.moneda());
         Reserva reserva = ReservaMapper.nuevaDirecta(segura);
         reserva.asignarPropietario(usuario.id());
+        if (clave != null) reserva.asignarClaveIdempotencia(clave);
         iniciarHold(reserva);
         repositorio.guardar(reserva);
+        VersionLecturasInventario.invalidar();
         return ReservaMapper.aResponse(reserva);
     }
 
@@ -216,6 +233,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         liberarHoldSiExiste(reserva);
         reserva.cancelar();
         repositorio.guardar(reserva);
+        VersionLecturasInventario.invalidar();
         return ReservaMapper.aResponse(reserva);
     }
 
@@ -267,6 +285,7 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
         }
         repositorio.guardar(reserva);
         repositorio.sincronizar();
+        VersionLecturasInventario.invalidar();
         return ReservaMapper.aResponse(reserva);
     }
 

@@ -59,6 +59,13 @@ public class AutenticacionFilter implements ContainerRequestFilter {
             abortar(contexto, Response.Status.UNAUTHORIZED, "NO_AUTENTICADO", "Iniciá sesión para continuar");
             return;
         }
+        if ("ADMIN".equals(rol)
+                && !Boolean.TRUE.equals(sesion.getAttribute("mfaVerificada"))
+                && !esFlujoMfaPermitido(ruta, metodo)) {
+            abortar(contexto, Response.Status.FORBIDDEN, "MFA_REQUERIDO",
+                    "Activá y validá MFA para continuar");
+            return;
+        }
         if ("ADMIN".equals(rol) && esCompra(ruta, metodo)) {
             abortar(contexto, Response.Status.FORBIDDEN, "ADMIN_NO_COMPRA",
                     "Las cuentas ADMIN administran StayHub y no pueden realizar reservas ni compras");
@@ -66,6 +73,18 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         }
         if (requiereAdmin(ruta, metodo) && !"ADMIN".equals(rol)) {
             abortar(contexto, Response.Status.FORBIDDEN, "ACCESO_DENEGADO", "Esta operación requiere rol ADMIN");
+            return;
+        }
+        if (requiereAdmin(ruta, metodo) && "ADMIN".equals(rol)
+                && !Boolean.TRUE.equals(sesion.getAttribute("mfaVerificada"))) {
+            abortar(contexto, Response.Status.FORBIDDEN, "MFA_REQUERIDO", "Activá y validá MFA para continuar");
+            return;
+        }
+        if (requiereReautenticacion(ruta, metodo) && "ADMIN".equals(rol)) {
+            Object valor = sesion.getAttribute("reautenticadoEn");
+            long ahora = System.currentTimeMillis();
+            if (!(valor instanceof Long instante) || instante > ahora || ahora - instante > 5 * 60_000L)
+                abortar(contexto, Response.Status.FORBIDDEN, "REAUTENTICACION_REQUERIDA", "Volvé a confirmar contraseña y MFA");
         }
     }
 
@@ -93,7 +112,8 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     boolean esPublica(String ruta, String metodo) {
         // Registro, login y recuperación de contraseña: se usan sin sesión iniciada
         if ("POST".equals(metodo) && ("usuarios".equals(ruta) || "usuarios/login".equals(ruta)
-                || "usuarios/recuperar-password".equals(ruta) || "usuarios/resetear-password".equals(ruta))) return true;
+                || "usuarios/recuperar-password".equals(ruta) || "usuarios/resetear-password".equals(ruta)
+                || "usuarios/mfa/verificar-login".equals(ruta))) return true;
         if ("GET".equals(metodo) && ruta.equals("seguridad/csrf")) return true;
         if ("GET".equals(metodo) && (ruta.equals("hoteles") || ruta.startsWith("hoteles/"))) return true;
         if ("GET".equals(metodo) && ruta.startsWith("catalogo-canales/")) return true;
@@ -113,6 +133,19 @@ public class AutenticacionFilter implements ContainerRequestFilter {
                 || (!"GET".equals(metodo) && ruta.startsWith("hoteles"))
                 || (!"GET".equals(metodo) && ruta.startsWith("inventario-tarifas/"))
                 || ("GET".equals(metodo) && "reservas".equals(ruta));
+    }
+
+    boolean requiereReautenticacion(String ruta, String metodo) {
+        return !"GET".equals(metodo) && (requiereAdmin(ruta, metodo)
+                || "usuarios/mfa/codigos-recuperacion/regenerar".equals(ruta)
+                || "usuarios/mfa/reiniciar".equals(ruta));
+    }
+
+    boolean esFlujoMfaPermitido(String ruta, String metodo) {
+        return ("POST".equals(metodo) && ("usuarios/mfa/preparar".equals(ruta)
+                || "usuarios/mfa/activar".equals(ruta)))
+                || ("GET".equals(metodo) && "usuarios/mfa/estado".equals(ruta))
+                || ("DELETE".equals(metodo) && "usuarios/sesion".equals(ruta));
     }
 
     boolean esWebhookOta(String ruta) {

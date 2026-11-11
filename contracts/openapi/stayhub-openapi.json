@@ -2122,7 +2122,16 @@
         "tags": [
           "pagos"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Recurso creado",
@@ -2234,7 +2243,16 @@
         "tags": [
           "pagos"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Recurso creado",
@@ -2433,7 +2451,16 @@
         "tags": [
           "reservas"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Recurso creado",
@@ -2560,7 +2587,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaResponse"
+                  "type": "object"
                 }
               }
             }
@@ -2614,7 +2641,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaResponse"
+                  "type": "object"
                 }
               }
             }
@@ -2650,7 +2677,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReservaRequest"
+                "type": "string"
               }
             }
           }
@@ -3091,6 +3118,347 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ActualizacionUsuarioRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/mfa/activar": {
+      "post": {
+        "operationId": "Usuario_activarMfa",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivacionMfaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodigoMfaRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/mfa/codigos-recuperacion/regenerar": {
+      "post": {
+        "operationId": "Usuario_regenerarCodigosRecuperacion",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/mfa/estado": {
+      "get": {
+        "operationId": "Usuario_estadoMfa",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/mfa/preparar": {
+      "post": {
+        "operationId": "Usuario_prepararMfa",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/mfa/reiniciar": {
+      "post": {
+        "operationId": "Usuario_reiniciarMfa",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Sin contenido"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java"
+      }
+    },
+    "/api/usuarios/mfa/verificar-login": {
+      "post": {
+        "operationId": "Usuario_verificarMfaLogin",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Operación procesada correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodigoMfaRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/reautenticar": {
+      "post": {
+        "operationId": "Usuario_reautenticar",
+        "tags": [
+          "usuarios"
+        ],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Sin contenido"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-stayhub-source": "proyecto/src/main/java/com/stayhub/usuarios/api/UsuarioResource.java",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReautenticacionRequest"
               }
             }
           }
@@ -3906,6 +4274,23 @@
           "TIPO_HABITACION_EN_USO"
         ]
       },
+      "Bloque": {
+        "type": "object",
+        "properties": {
+          "permisos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiraEn": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "permisos",
+          "expiraEn"
+        ]
+      },
       "CodigoErrorIntegracionPms": {
         "type": "string",
         "enum": [
@@ -3917,7 +4302,8 @@
           "DEPENDENCIA_NO_DISPONIBLE",
           "ERROR_INTERNO",
           "RESERVA_DUPLICADA",
-          "NO_AUTORIZADO"
+          "NO_AUTORIZADO",
+          "VERSION_REQUERIDA"
         ]
       },
       "inventarioytarifas_ErrorDTO": {
@@ -4571,6 +4957,10 @@
           "fechaCreacion": {
             "type": "string",
             "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
           }
         },
         "required": [
@@ -4588,7 +4978,8 @@
           "precioTotal",
           "moneda",
           "estado",
-          "fechaCreacion"
+          "fechaCreacion",
+          "version"
         ]
       },
       "SeleccionFechasRequest": {
@@ -4859,6 +5250,50 @@
           "fecha"
         ]
       },
+      "CodigoMfaRequest": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo"
+        ]
+      },
+      "ReautenticacionRequest": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "codigoMfa": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "password",
+          "codigoMfa"
+        ]
+      },
+      "ActivacionMfaResponse": {
+        "type": "object",
+        "properties": {
+          "usuario": {
+            "$ref": "#/components/schemas/UsuarioResponse"
+          },
+          "codigosRecuperacion": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "usuario",
+          "codigosRecuperacion"
+        ]
+      },
       "ActualizacionUsuarioRequest": {
         "type": "object",
         "properties": {
@@ -4968,6 +5403,12 @@
           },
           "rol": {
             "type": "string"
+          },
+          "mfaRequerido": {
+            "type": "boolean"
+          },
+          "mfaConfigurado": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -4975,7 +5416,9 @@
           "email",
           "nombre",
           "apellido",
-          "rol"
+          "rol",
+          "mfaRequerido",
+          "mfaConfigurado"
         ]
       },
       "CodigoErrorUsuario": {

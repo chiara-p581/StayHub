@@ -5,6 +5,7 @@ import jakarta.annotation.Resource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.jms.JMSContext;
+import jakarta.jms.JMSConnectionFactory;
 import jakarta.jms.JMSDestinationDefinition;
 import jakarta.jms.Queue;
 
@@ -21,6 +22,7 @@ public class PublicadorSincronizacion {
     public static final String JNDI_COLA = "java:/jms/queue/CanalesExternosSincronizaciones";
 
     @Inject
+    @JMSConnectionFactory("java:/JmsXA")
     private JMSContext contexto;
 
     @Resource(lookup = JNDI_COLA)

@@ -43,10 +43,17 @@ public class Reserva {
     @Column(name = "usuario_id")
     private Long usuarioId;
 
+    @Column(name = "clave_idempotencia", length = 80)
+    private String claveIdempotencia;
+
     public Long getUsuarioId() { return usuarioId; }
     public void asignarPropietario(Long id) {
         if (usuarioId != null || id == null) throw new IllegalStateException("Propietario inmutable");
         usuarioId = id;
+    }
+    public void asignarClaveIdempotencia(String clave) {
+        if (claveIdempotencia != null || clave == null) throw new IllegalStateException("Clave de idempotencia inmutable");
+        claveIdempotencia = clave;
     }
 
     @Column(name = "hotel_id", nullable = false)
@@ -166,6 +173,7 @@ public class Reserva {
     public Long getVersion() { return version; }
     public String getCanal() { return canal; }
     public String getReferenciaExterna() { return referenciaExterna; }
+    public String getClaveIdempotencia() { return claveIdempotencia; }
     public Long getHotelId() { return hotelId; }
     public String getTipoHabitacion() { return tipoHabitacion; }
     public int getCantidadHabitaciones() { return cantidadHabitaciones; }

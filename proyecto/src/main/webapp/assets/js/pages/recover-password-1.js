@@ -8,7 +8,7 @@
         aviso.classList.remove("hidden");
         try {
             await Api.solicitarRecuperacionPassword(document.getElementById("email").value);
-            aviso.textContent = "Si existe la cuenta, recibirás un enlace de recuperación. Revisá también Spam.";
+            aviso.textContent = "If the account exists, you will receive a password reset link. Please also check your spam folder.";
         } catch (e) {
             aviso.textContent = e.message;
         } finally {

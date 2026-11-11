@@ -1,0 +1,6 @@
+# Ejecutar después de retirar la sonda y comprobar que las colas están vacías.
+batch
+/subsystem=messaging-activemq/server=default/jms-queue=StayHubXaProbe:remove
+/subsystem=messaging-activemq/server=default/jms-queue=StayHubXaRejectedProbe:remove
+/subsystem=messaging-activemq/server=default/address-setting="jms.queue.StayHubXaRejectedProbe":remove
+run-batch

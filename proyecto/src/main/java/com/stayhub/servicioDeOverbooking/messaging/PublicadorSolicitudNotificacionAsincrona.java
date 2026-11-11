@@ -27,6 +27,6 @@ public class PublicadorSolicitudNotificacionAsincrona {
     private Queue cola;
 
     public void publicar(SolicitudNotificacionAsincrona solicitud) {
-        contexto.createProducer().send(cola, solicitud);
+        contexto.createProducer().setJMSCorrelationID("overbooking:" + java.util.UUID.randomUUID()).send(cola, solicitud);
     }
 }

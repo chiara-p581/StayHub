@@ -12,6 +12,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class SeguridadHttpFilterTest {
+    @Test void registroAnotadoCoincideConElDescriptorParaEvitarDuplicarElFiltro() throws Exception {
+        var annotation = SeguridadHttpFilter.class.getAnnotation(jakarta.servlet.annotation.WebFilter.class);
+        var xml = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                .parse(new File(System.getProperty("basedir"), "src/main/webapp/WEB-INF/web.xml"));
+        var filters = xml.getElementsByTagName("filter");
+        int coincidencias = 0;
+        for (int i = 0; i < filters.getLength(); i++) {
+            var filter = (org.w3c.dom.Element) filters.item(i);
+            if (filter.getElementsByTagName("filter-class").item(0).getTextContent()
+                    .equals(SeguridadHttpFilter.class.getName())) {
+                assertEquals(annotation.filterName(), filter.getElementsByTagName("filter-name").item(0).getTextContent());
+                coincidencias++;
+            }
+        }
+        assertEquals(1, coincidencias);
+    }
     HttpServletRequest req; HttpServletResponse res; FilterChain chain; SeguridadHttpFilter filtro;
     StringWriter body;
     @BeforeEach void preparar() throws Exception {
@@ -86,6 +102,23 @@ class SeguridadHttpFilterTest {
     }
     @Test void fuerzaBrutaDevuelve429() throws Exception {
         when(req.getRequestURI()).thenReturn("/api/usuarios/login");for(int i=0;i<61;i++)filtro.doFilter(req,res,chain);verify(res).setStatus(429);verify(res).setHeader("Retry-After","900");
+    }
+
+    @Test void lecturaPublicaToleraUsuariosConcurrentesSinRelajarOperacionesProtegidas() throws Exception {
+        for (int i=0;i<181;i++) filtro.doFilter(req,res,chain);
+        verify(chain,times(181)).doFilter(req,res);
+        verify(res,never()).setStatus(429);
+
+        when(req.getRequestURI()).thenReturn("/api/reservas/mias");
+        filtro.doFilter(req,res,chain);
+        verify(chain,times(182)).doFilter(req,res);
+        verify(res,never()).setStatus(429);
+
+        var filtroProtegido = new SeguridadHttpFilter();
+        reset(chain,res); when(res.getWriter()).thenReturn(new PrintWriter(body));
+        when(req.getRequestURI()).thenReturn("/api/reservas/mias");
+        for (int i=0;i<61;i++) filtroProtegido.doFilter(req,res,chain);
+        verify(res).setStatus(429);
     }
 
     @Test void webhookHmacNoRequiereCsrfNiClaveGlobal() throws Exception {

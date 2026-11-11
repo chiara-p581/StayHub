@@ -4,10 +4,12 @@ import com.stayhub.hoteles.dto.*;
 import com.stayhub.hoteles.exception.CodigoErrorHotel;
 import com.stayhub.hoteles.exception.HotelException;
 import com.stayhub.hoteles.service.ServicioDeHoteles;
+import com.stayhub.infraestructura.cache.CacheLecturas;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -18,12 +20,16 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class HotelResource {
+    private static final CacheLecturas<ConsultaHoteles, List<HotelResponse>> CACHE_LISTADO =
+            new CacheLecturas<>(Duration.ofSeconds(10));
+
     @Inject
     private ServicioDeHoteles servicio;
 
     @POST
     public Response crear(HotelRequest solicitud, @Context UriInfo uriInfo) {
         HotelResponse creado = servicio.crearHotel(solicitud);
+        CACHE_LISTADO.invalidarTodo();
         URI ubicacion = uriInfo.getAbsolutePathBuilder().path(creado.id().toString()).build();
         return Response.created(ubicacion).entity(creado).build();
     }
@@ -31,7 +37,10 @@ public class HotelResource {
     public List<HotelResponse> listar(
             @QueryParam("incluirInactivos") @DefaultValue("false") boolean incluir,
             @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
-        return servicio.listarHoteles(incluir, offset, limite);
+        // Las consultas administrativas conservan todas las comprobaciones del servicio.
+        if (incluir) return servicio.listarHoteles(true, offset, limite);
+        var clave = new ConsultaHoteles(incluir, offset, limite);
+        return CACHE_LISTADO.obtener(clave, () -> List.copyOf(servicio.listarHoteles(incluir, offset, limite)));
     }
 
     @GET
@@ -43,13 +52,17 @@ public class HotelResource {
     @PUT
     @Path("/{id}")
     public HotelResponse modificar(@PathParam("id") String id, HotelRequest solicitud) {
-        return servicio.modificarHotel(parsearId(id, "hotel"), solicitud);
+        HotelResponse modificado = servicio.modificarHotel(parsearId(id, "hotel"), solicitud);
+        CACHE_LISTADO.invalidarTodo();
+        return modificado;
     }
 
     @DELETE
     @Path("/{id}")
     public HotelResponse eliminar(@PathParam("id") String id) {
-        return servicio.darDeBajaHotel(parsearId(id, "hotel"));
+        HotelResponse eliminado = servicio.darDeBajaHotel(parsearId(id, "hotel"));
+        CACHE_LISTADO.invalidarTodo();
+        return eliminado;
     }
 
     @POST
@@ -148,4 +161,6 @@ public class HotelResource {
                     "El id de " + campo + " debe ser un número positivo");
         }
     }
+
+    private record ConsultaHoteles(boolean incluirInactivos, int offset, int limite) { }
 }

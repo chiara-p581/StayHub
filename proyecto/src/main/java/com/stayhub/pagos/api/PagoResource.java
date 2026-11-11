@@ -11,6 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.List;
+import com.stayhub.seguridad.ClaveIdempotencia;
 
 /**
  * Controlador GRASP de Pagos: solo traduce HTTP a llamadas al servicio.
@@ -33,7 +34,12 @@ public class PagoResource {
     }
 
     @POST
-    public Response procesar(PagoRequest solicitud) {
+    public Response procesar(@HeaderParam("Idempotency-Key") String headerIdempotencia,
+                             PagoRequest solicitud) {
+        String clave = ClaveIdempotencia.requerida(ClaveIdempotencia.combinar(
+                headerIdempotencia, solicitud == null ? null : solicitud.claveIdempotencia()));
+        if (solicitud != null) solicitud = new PagoRequest(
+                solicitud.reservaId(), solicitud.monto(), solicitud.moneda(), clave);
         PagoResponse pago = servicio.procesarPago(solicitud);
         return Response.status(Response.Status.CREATED)
                 .location(URI.create("api/pagos/" + pago.id()))
@@ -43,7 +49,12 @@ public class PagoResource {
 
     @POST
     @Path("/lote")
-    public Response procesarLote(PagoLoteRequest solicitud) {
+    public Response procesarLote(@HeaderParam("Idempotency-Key") String headerIdempotencia,
+                                 PagoLoteRequest solicitud) {
+        String clave = ClaveIdempotencia.requerida(ClaveIdempotencia.combinar(
+                headerIdempotencia, solicitud == null ? null : solicitud.claveIdempotencia()));
+        if (solicitud != null) solicitud = new PagoLoteRequest(
+                solicitud.reservaIds(), solicitud.monto(), solicitud.moneda(), clave);
         PagoResponse pago = servicio.procesarLote(solicitud);
         return Response.status(Response.Status.CREATED)
                 .location(URI.create("api/pagos/" + pago.id()))

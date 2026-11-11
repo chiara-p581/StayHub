@@ -12,12 +12,20 @@ mail.properties
 **/node_modules/
 e2e/playwright-report/
 e2e/test-results/
+performance/reports/*
+!performance/reports/.gitkeep
 
 # Certificados, claves, copias y configuración privada del servidor local
 .local-security/
 
 # Base PostgreSQL y secretos locales usados para la demostración sin conexión
 .local-demo/
+
+# Binarios temporales de herramientas de auditoría (por ejemplo OWASP ZAP)
+.local-tools/
+
+# Evidencias generadas localmente; CI las publica como artefactos
+ci-evidence/
 
 # Reportes generados por las pruebas de UI (responsive y accesibilidad)
 ui-accesibilidad/reports/

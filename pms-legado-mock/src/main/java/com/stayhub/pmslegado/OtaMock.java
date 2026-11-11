@@ -17,12 +17,13 @@ public final class OtaMock {
 
     public static void main(String[] args) throws IOException {
         int puerto = Integer.getInteger("ota.puerto", 9080);
-        HttpServer servidor = HttpServer.create(new InetSocketAddress("0.0.0.0", puerto), 0);
+        String host = System.getProperty("ota.host", "0.0.0.0");
+        HttpServer servidor = HttpServer.create(new InetSocketAddress(host, puerto), 0);
         servidor.createContext("/health", intercambio -> responder(intercambio, 200, "{\"estado\":\"ok\"}"));
         servidor.createContext("/", OtaMock::procesar);
         servidor.setExecutor(Executors.newCachedThreadPool());
         servidor.start();
-        System.out.println("Mock REST de OTAs escuchando en http://0.0.0.0:" + puerto);
+        System.out.println("Mock REST de OTAs escuchando en http://" + host + ":" + puerto);
     }
 
     private static void procesar(HttpExchange intercambio) throws IOException {

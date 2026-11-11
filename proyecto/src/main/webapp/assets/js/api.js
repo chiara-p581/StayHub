@@ -32,6 +32,7 @@ const Api = (() => {
         }
         sessionStorage.setItem(USER_KEY, JSON.stringify(usuario));
     }
+    function forgetLocalSession() { sessionStorage.removeItem(USER_KEY); }
 
     async function clearSession() {
         await request("usuarios/sesion", { method: "DELETE" });
@@ -102,9 +103,12 @@ const Api = (() => {
         return url;
     }
 
-    async function request(path, { method = "GET", body, auth = false, params } = {}) {
+    async function request(path, { method = "GET", body, auth = false, params, skipReauth = false, extraHeaders } = {}) {
         const url = buildUrl(path, params);
         const headers = { Accept: "application/json" };
+        Object.entries(extraHeaders || {}).forEach(function (entry) {
+            if (entry[1] !== undefined && entry[1] !== null && entry[1] !== "") headers[entry[0]] = entry[1];
+        });
         if (body !== undefined) headers["Content-Type"] = "application/json";
         if (auth) {
             if (!isLoggedIn()) {
@@ -134,18 +138,24 @@ const Api = (() => {
         if (res.status === 204) return null;
 
         const contentType = res.headers.get("content-type") || "";
-        const isJson = contentType.includes("application/json");
+        const isJson = /application\/(?:[\w.-]+\+)?json\b/i.test(contentType);
         const raw = await res.text();
         const data = raw ? (isJson ? safeJson(raw) : raw) : null;
 
         if (!res.ok) {
+            if (!skipReauth && res.status === 403 && data
+                    && data.codigo === "REAUTENTICACION_REQUERIDA"
+                    && currentUser() && currentUser().rol === "ADMIN") {
+                await solicitarReautenticacion();
+                return request(path, { method, body, auth, params, skipReauth: true, extraHeaders });
+            }
             if (res.status === 401) {
                 sessionStorage.removeItem(USER_KEY);
                 csrfPendiente = null;
                 if (auth) requireLogin();
             }
             const msg =
-                (data && (data.mensaje || data.message || data.error)) ||
+                (data && (data.mensaje || data.detail || data.message || data.error)) ||
                 (typeof data === "string" && data) ||
                 `Error ${res.status}`;
             const err = new Error(msg);
@@ -299,9 +309,121 @@ const Api = (() => {
             mutations.disconnect();
         }, { once: true });
     }
+
+    var reautenticacionPendiente = null;
+    function solicitarReautenticacion() {
+        if (reautenticacionPendiente) return reautenticacionPendiente;
+        reautenticacionPendiente = new Promise(function (resolve, reject) {
+            var fondo = document.createElement("div");
+            fondo.className = "stayhub-reauth-backdrop";
+            var dialogo = document.createElement("section");
+            dialogo.className = "stayhub-reauth-dialog";
+            dialogo.setAttribute("role", "dialog");
+            dialogo.setAttribute("aria-modal", "true");
+            dialogo.setAttribute("aria-labelledby", "stayhub-reauth-title");
+
+            var titulo = document.createElement("h2");
+            titulo.id = "stayhub-reauth-title";
+            titulo.textContent = "Confirm your identity";
+            var descripcion = document.createElement("p");
+            descripcion.textContent = "This sensitive admin action requires your password and a current authenticator or recovery code.";
+            var form = document.createElement("form");
+            form.id = "stayhub-reauth-form";
+
+            var etiquetaClave = document.createElement("label");
+            etiquetaClave.className = "stayhub-reauth-field";
+            etiquetaClave.textContent = "Password";
+            var campoClave = document.createElement("input");
+            campoClave.id = "stayhub-reauth-password";
+            campoClave.type = "password";
+            campoClave.autocomplete = "current-password";
+            campoClave.required = true;
+            etiquetaClave.appendChild(campoClave);
+
+            var etiquetaCodigo = document.createElement("label");
+            etiquetaCodigo.className = "stayhub-reauth-field";
+            etiquetaCodigo.textContent = "Authenticator or recovery code";
+            var codigo = document.createElement("input");
+            codigo.id = "stayhub-reauth-code";
+            codigo.autocomplete = "one-time-code";
+            codigo.maxLength = 14;
+            codigo.placeholder = "000000 or XXXX-XXXX-XXXX";
+            codigo.required = true;
+            etiquetaCodigo.appendChild(codigo);
+
+            var error = document.createElement("div");
+            error.id = "stayhub-reauth-error";
+            error.className = "stayhub-reauth-error hidden";
+            error.setAttribute("role", "alert");
+            var acciones = document.createElement("div");
+            acciones.className = "stayhub-reauth-actions";
+            var cancelarBoton = document.createElement("button");
+            cancelarBoton.className = "stayhub-reauth-cancel";
+            cancelarBoton.type = "button";
+            cancelarBoton.textContent = "Cancel";
+            var confirmar = document.createElement("button");
+            confirmar.className = "stayhub-reauth-submit";
+            confirmar.type = "submit";
+            confirmar.textContent = "Confirm";
+            acciones.append(cancelarBoton, confirmar);
+            form.append(etiquetaClave, etiquetaCodigo, error, acciones);
+            dialogo.append(titulo, descripcion, form);
+            fondo.appendChild(dialogo);
+            document.body.appendChild(fondo);
+
+            function cerrar() {
+                document.removeEventListener("keydown", teclado);
+                fondo.remove();
+            }
+            function cancelar() {
+                cerrar();
+                var cancelado = new Error("Identity confirmation was cancelled.");
+                cancelado.codigo = "REAUTENTICACION_CANCELADA";
+                reject(cancelado);
+            }
+            function teclado(evento) {
+                if (evento.key === "Escape") cancelar();
+            }
+            cancelarBoton.addEventListener("click", cancelar);
+            document.addEventListener("keydown", teclado);
+            form.addEventListener("submit", async function (evento) {
+                evento.preventDefault();
+                confirmar.disabled = true;
+                error.classList.add("hidden");
+                try {
+                    await request("usuarios/reautenticar", {
+                        method: "POST",
+                        body: { password: campoClave.value, codigoMfa: codigo.value.trim() },
+                        auth: true,
+                        skipReauth: true
+                    });
+                    campoClave.value = "";
+                    codigo.value = "";
+                    cerrar();
+                    resolve();
+                } catch (ex) {
+                    error.textContent = ex.message || "Identity confirmation failed.";
+                    error.classList.remove("hidden");
+                    confirmar.disabled = false;
+                    codigo.focus();
+                    codigo.select();
+                }
+            });
+            campoClave.focus();
+        }).finally(function () {
+            reautenticacionPendiente = null;
+        });
+        return reautenticacionPendiente;
+    }
     function initShell() {
         if (!document.body || document.querySelector(".stayhub-global-header")) return;
         var page = location.pathname.split("/").pop() || "index.html";
+        var authPages = ["login.html", "register.html", "recover-password.html", "reset-password.html", "mfa-setup.html", "mfa-verify.html"];
+        if (authPages.indexOf(page) !== -1) {
+            document.body.classList.add("stayhub-unified", "stayhub-auth-only");
+            initMotion();
+            return;
+        }
         var usuario = currentUser();
         var adminPages = ["admin-dashboard.html", "inventory.html", "hotel-management.html", "channels-sync.html", "payments.html", "alerts.html"];
         var esAdminPage = usuario && usuario.rol === "ADMIN" && adminPages.indexOf(page) !== -1;
@@ -369,7 +491,6 @@ const Api = (() => {
         updateCartBadge();
         document.addEventListener("stayhub:cart-changed", updateCartBadge);
 
-        var authPages = ["login.html", "register.html", "recover-password.html", "reset-password.html"];
         if (!esAdminPage && authPages.indexOf(page) === -1 && !document.querySelector(".stayhub-global-footer")) {
             var footer = document.createElement("footer");
             footer.className = "stayhub-global-footer";
@@ -382,6 +503,7 @@ const Api = (() => {
     return {
         // ---- sesión ----
         setSession,
+        forgetLocalSession,
         clearSession,
         currentUser,
         isLoggedIn,
@@ -400,6 +522,11 @@ const Api = (() => {
         resetearPassword: (dto) => request("usuarios/resetear-password", { method: "POST", body: dto }),
         registrarUsuario: (dto) => request("usuarios", { method: "POST", body: dto }),
         loginUsuario: (dto) => request("usuarios/login", { method: "POST", body: dto }),
+        prepararMfa: () => request("usuarios/mfa/preparar", { method: "POST", body: {} }),
+        activarMfa: (codigo) => request("usuarios/mfa/activar", { method: "POST", body: { codigo: codigo } }),
+        verificarMfaLogin: (codigo) => request("usuarios/mfa/verificar-login", { method: "POST", body: { codigo: codigo } }),
+        regenerarCodigosMfa: () => request("usuarios/mfa/codigos-recuperacion/regenerar", { method: "POST", body: {}, auth: true }),
+        reiniciarMfa: () => request("usuarios/mfa/reiniciar", { method: "POST", body: {}, auth: true }),
         consultarUsuario: (id) => request(`usuarios/${id}`, { auth: true }),
         actualizarMiPerfil: (dto) => request("usuarios/me", { method: "PUT", body: dto, auth: true }),
 
@@ -445,7 +572,8 @@ const Api = (() => {
         carritoVaciar: () => request("carrito", { method: "DELETE", auth: true }),
 
         // ---- reservas ----
-        crearReserva: (dto) => request("reservas", { method: "POST", auth: true, body: {
+        crearReserva: (dto) => request("reservas", { method: "POST", auth: true,
+          extraHeaders: { "Idempotency-Key": dto.idempotencyKey || ("reserva:" + (dto.itemId || (Date.now() + "-" + localRandomHex()))) }, body: {
             hotelId: dto.hotelId, tipoHabitacion: dto.tipoHabitacion,
             cantidadHabitaciones: dto.cantidadHabitaciones, checkIn: dto.checkIn, checkOut: dto.checkOut,
             huespedNombre: dto.huespedNombre, huespedApellido: dto.huespedApellido,
@@ -489,8 +617,10 @@ const Api = (() => {
             }),
 
         // ---- pagos ----
-        procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true }),
-        procesarPagoLote: (dto) => request("pagos/lote", { method: "POST", body: dto, auth: true }),
+        procesarPago: (dto) => request("pagos", { method: "POST", body: dto, auth: true,
+            extraHeaders: { "Idempotency-Key": dto.claveIdempotencia } }),
+        procesarPagoLote: (dto) => request("pagos/lote", { method: "POST", body: dto, auth: true,
+            extraHeaders: { "Idempotency-Key": dto.claveIdempotencia } }),
         consultarPago: (id) => request(`pagos/${id}`, { auth: true }),
         listarMisPagos: () => request("pagos/mios", { auth: true }),
 

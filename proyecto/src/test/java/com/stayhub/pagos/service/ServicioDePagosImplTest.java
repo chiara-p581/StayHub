@@ -100,6 +100,57 @@ class ServicioDePagosImplTest {
 
     // ---------------------------------------------------------------- procesarPago
 
+    @Test void falloAlPersistirPagoImpideCobroYEvento() {
+        reservaPendiente(7,"100","ARS");
+        var fallo=new IllegalStateException("persistencia controlada");when(repositorio.guardar(any())).thenThrow(fallo);
+        assertSame(fallo,assertThrows(IllegalStateException.class,()->servicio.procesarPago(new PagoRequest(7L,new BigDecimal("100"),"ARS"))));
+        verifyNoInteractions(pasarela,publicador);
+    }
+    @Test void falloAlConfirmarReservaImpidePublicarAprobacion() {
+        reservaPendiente(7,"100","ARS");pasarelaAprueba();
+        var fallo=new IllegalStateException("confirmacion controlada");when(reservas.confirmarReserva(7L)).thenThrow(fallo);
+        assertSame(fallo,assertThrows(IllegalStateException.class,()->servicio.procesarPago(new PagoRequest(7L,new BigDecimal("100"),"ARS"))));
+        verifyNoInteractions(publicador);
+    }
+    @Test void falloDeEventoTrasCobroYConfirmacionSePropagaAlContenedor() {
+        reservaPendiente(7,"100","ARS");pasarelaAprueba();
+        var fallo=new IllegalStateException("broker controlado");doThrow(fallo).when(publicador).publicarPagoAprobado(any());
+        assertSame(fallo,assertThrows(IllegalStateException.class,()->servicio.procesarPago(new PagoRequest(7L,new BigDecimal("100"),"ARS"))));
+        verify(reservas).confirmarReserva(7L);verify(publicador).publicarPagoAprobado(any());
+    }
+
+    @Test void falloDelSegundoEventoDeLoteSePropagaAlContenedorParaRollbackCompleto() {
+        reservaPendiente(7,"100","ARS");reservaPendiente(8,"100","ARS");pasarelaAprueba();
+        var fallo=new IllegalStateException("segundo evento controlado");
+        doNothing().doThrow(fallo).when(publicador).publicarPagoAprobado(any());
+        assertSame(fallo,assertThrows(IllegalStateException.class,()->servicio.procesarLote(
+                new PagoLoteRequest(List.of(7L,8L),new BigDecimal("200"),"ARS"))));
+        verify(publicador,times(2)).publicarPagoAprobado(any());
+        verify(reservas).confirmarReserva(7L);verify(reservas).confirmarReserva(8L);
+    }
+
+    @Test void unaClaveExistenteNoPuedeUsarseParaOtroPagoNiOtroLote() throws Exception {
+        Pago existente = conId(new Pago(1L, List.of(7L), BigDecimal.TEN, "ARS", CLAVE_VALIDA), 70L);
+        when(repositorio.buscarPorClaveIdempotencia(1L, CLAVE_VALIDA)).thenReturn(Optional.of(existente));
+        assertEquals(409, assertThrows(SeguridadException.class, () -> servicio.procesarPago(
+                new PagoRequest(8L, BigDecimal.TEN, "ARS", CLAVE_VALIDA))).getEstado());
+        assertEquals(409, assertThrows(SeguridadException.class, () -> servicio.procesarLote(
+                new PagoLoteRequest(List.of(7L, 8L), new BigDecimal("20"), "ARS", CLAVE_VALIDA))).getEstado());
+        assertEquals(409, assertThrows(SeguridadException.class, () -> servicio.procesarPago(
+                new PagoRequest(7L, BigDecimal.ONE, "ARS", CLAVE_VALIDA))).getEstado());
+        verifyNoInteractions(pasarela, publicador);
+        verify(repositorio, never()).guardar(any());
+    }
+
+    @Test void bloqueoDeUsuarioPrecedeBusquedaDeClaveYBloqueosDeReserva() {
+        reservaPendiente(7, "100", "ARS"); pasarelaAprueba();
+        servicio.procesarPago(new PagoRequest(7L, new BigDecimal("100"), "ARS", CLAVE_VALIDA));
+        var orden = inOrder(repositorio);
+        orden.verify(repositorio).bloquearUsuario(1L);
+        orden.verify(repositorio).buscarPorClaveIdempotencia(1L, CLAVE_VALIDA);
+        orden.verify(repositorio).bloquearReservas(List.of(7L));
+    }
+
     @Test
     void pagoAprobadoConfirmaLaReservaYPublicaElEvento() {
         reservaPendiente(7, "100.00", "ARS");

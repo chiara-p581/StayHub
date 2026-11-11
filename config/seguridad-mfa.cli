@@ -1,0 +1,6 @@
+# Ejecutar con STAYHUB_MFA_MASTER_KEY definido como 32 bytes aleatorios en Base64.
+if (outcome != success) of /system-property=stayhub.mfa.master-key:read-resource
+ /system-property=stayhub.mfa.master-key:add(value="${env.STAYHUB_MFA_MASTER_KEY}")
+else
+ /system-property=stayhub.mfa.master-key:write-attribute(name=value,value="${env.STAYHUB_MFA_MASTER_KEY}")
+end-if

@@ -52,6 +52,12 @@ REST, SOAP, PostgreSQL y WildFly. Los informes, binarios y logs quedan publicado
 como artefactos durante 14 días. Cada trabajo tiene un límite explícito y la
 validación completa no puede superar los 15 minutos.
 
+La evidencia consolidada de QA se mantiene en:
+
+- [Informe de ejecución de pruebas](docs/qa/INFORME_EJECUCION_PRUEBAS.md)
+- [Registro de defectos](docs/qa/REGISTRO_DEFECTOS.md)
+- [Informe de seguridad y matriz SEC01–SEC13](docs/qa/MATRIZ_SEC.md)
+
 **Requisito:** Docker Desktop iniciado, con Docker Compose disponible. No hace
 falta instalar PostgreSQL, Maven ni WildFly en la computadora.
 
@@ -127,6 +133,12 @@ Para reiniciar completamente los datos de prueba:
 docker compose down --volumes
 start-local.cmd
 ```
+
+## Prueba de carga
+
+La prueba reproducible de KAN-98 ejecuta 50 usuarios concurrentes durante cinco
+minutos sobre catálogo, disponibilidad y tarifas. Las instrucciones, umbrales y
+justificación de los endpoints están en [`performance/README.md`](performance/README.md).
 
 ### Opción alternativa: instalación manual
 

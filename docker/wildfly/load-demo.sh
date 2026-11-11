@@ -29,12 +29,43 @@ csrf() {
 
 token="$(csrf)"
 test -n "$token"
-solicitar "Login del administrador demo" --cookie "$cookies" --cookie-jar "$cookies" \
+login="$(solicitar "Login del administrador demo" --cookie "$cookies" --cookie-jar "$cookies" \
   --header "Origin: https://localhost:8443" \
   --header "X-CSRF-Token: $token" \
   --header "Content-Type: application/json" \
   --data '{"email":"admin@stayhub.local","password":"StayHubDemo2026!"}' \
-  "$base/api/usuarios/login" >/dev/null
+  "$base/api/usuarios/login")"
+
+secret_file="/opt/jboss/local-security/demo-mfa-secret"
+if grep -q '"mfaConfigurado":false' <<<"$login"; then
+  token="$(csrf)"
+  preparacion="$(solicitar "Preparación del MFA demo" --cookie "$cookies" --cookie-jar "$cookies" \
+    --header "Origin: https://localhost:8443" \
+    --header "X-CSRF-Token: $token" \
+    --header "Content-Type: application/json" \
+    --data '{}' "$base/api/usuarios/mfa/preparar")"
+  secret="$(sed -n 's/.*"secreto":"\([^"]*\)".*/\1/p' <<<"$preparacion")"
+  test -n "$secret"
+  printf '%s' "$secret" > "$secret_file"
+  chmod 600 "$secret_file"
+  code="$(java -cp /opt/jboss/ci-tools MfaTotpCode "$secret")"
+  token="$(csrf)"
+  solicitar "Activación del MFA demo" --cookie "$cookies" --cookie-jar "$cookies" \
+    --header "Origin: https://localhost:8443" \
+    --header "X-CSRF-Token: $token" \
+    --header "Content-Type: application/json" \
+    --data "{\"codigo\":\"$code\"}" "$base/api/usuarios/mfa/activar" >/dev/null
+else
+  test -s "$secret_file" || { echo "Falta el secreto MFA del administrador demo" >&2; exit 1; }
+  secret="$(cat "$secret_file")"
+  code="$(java -cp /opt/jboss/ci-tools MfaTotpCode "$secret")"
+  token="$(csrf)"
+  solicitar "Verificación del MFA demo" --cookie "$cookies" --cookie-jar "$cookies" \
+    --header "Origin: https://localhost:8443" \
+    --header "X-CSRF-Token: $token" \
+    --header "Content-Type: application/json" \
+    --data "{\"codigo\":\"$code\"}" "$base/api/usuarios/mfa/verificar-login" >/dev/null
+fi
 
 token="$(csrf)"
 test -n "$token"

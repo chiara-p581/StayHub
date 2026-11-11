@@ -33,6 +33,9 @@ public class PublicadorEventoPassword {
     private Queue cola;
 
     public void publicar(EventoPassword evento) {
-        contexto.createProducer().setTimeToLive(VIDA_MENSAJE_MS).send(cola, evento);
+        contexto.createProducer()
+                .setTimeToLive(VIDA_MENSAJE_MS)
+                .setJMSCorrelationID("usuario:" + evento.usuarioId() + ":password:" + evento.tipo())
+                .send(cola, evento);
     }
 }

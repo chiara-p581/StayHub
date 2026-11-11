@@ -328,6 +328,38 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  zap-authenticated:
+    name: OWASP ZAP autenticado
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validar Docker Compose
+        run: docker compose config --quiet
+      - name: Construir y levantar el entorno aislado
+        run: docker compose up --detach --build --wait --wait-timeout 600
+      - name: Cargar datos demostrativos
+        run: docker compose exec -T app /opt/jboss/load-demo.sh
+      - name: Escanear como huésped y administrador con MFA
+        run: bash security/zap/run-authenticated-scan.sh
+      - name: Resumir hallazgos
+        if: always()
+        run: cat ci-evidence/zap/summary.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+      - name: Diagnóstico del entorno
+        if: failure()
+        run: docker compose logs --no-color app postgres > ci-evidence/zap/compose.log || true
+      - name: Publicar evidencia de OWASP ZAP
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zap-authenticated-evidence
+          path: ci-evidence/zap/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Apagar el entorno
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
   integration-smoke:
     name: Integración Docker
     runs-on: ubuntu-latest
@@ -343,10 +375,29 @@ jobs:
           set -euo pipefail
           mkdir -p ci-evidence
           docker compose exec -T app /opt/jboss/load-demo.sh | tee ci-evidence/demo-load.log
+          mfa_secret="$(docker compose exec -T app cat /opt/jboss/local-security/demo-mfa-secret | tr -d '\r\n')"
+          test -n "$mfa_secret"
+          echo "::add-mask::$mfa_secret"
+          echo "STAYHUB_ADMIN_MFA_SECRET=$mfa_secret" >> "$GITHUB_ENV"
           curl --fail --silent --show-error http://localhost:9080/health | tee ci-evidence/ota-health.txt
           curl --fail --silent --show-error http://localhost:9091/PmsLegacyService?wsdl > ci-evidence/pms-mock.wsdl
-          curl --insecure --fail --silent --show-error https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
-          jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json
+          catalogo_listo=false
+          for intento in {1..12}; do
+            curl --insecure --fail --silent --show-error \
+              https://localhost:8443/StayHub/api/hoteles > ci-evidence/hoteles.json
+            if jq -e 'type == "array" and length > 0' ci-evidence/hoteles.json >/dev/null; then
+              catalogo_listo=true
+              break
+            fi
+            echo "El catálogo todavía no está visible (intento $intento/12); reintentando..."
+            sleep 5
+          done
+          if [[ "$catalogo_listo" != true ]]; then
+            echo 'La carga demo respondió correctamente, pero el catálogo REST siguió vacío:' >&2
+            jq . ci-evidence/hoteles.json >&2 || cat ci-evidence/hoteles.json >&2
+            exit 1
+          fi
+          demo_hotel_id="$(jq -er '.[0].id' ci-evidence/hoteles.json)"
           node contracts/verify-wsdl.mjs ci-evidence/pms-mock.wsdl sincronizarInventario
           pms_p12="$(mktemp)"
           pms_crt="$(mktemp)"
@@ -375,24 +426,36 @@ jobs:
 
           csrf="$(curl --insecure --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
             https://localhost:8443/StayHub/api/seguridad/csrf | jq -r .token)"
-          curl --insecure --fail --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+          if ! curl --insecure --fail-with-body --silent --show-error \
+            --output ci-evidence/login-huesped.json \
+            --cookie "$cookies" --cookie-jar "$cookies" \
             --header 'Origin: https://localhost:8443' \
             --header "X-CSRF-Token: $csrf" \
             --header 'Content-Type: application/json' \
             --data '{"email":"huesped@stayhub.local","password":"StayHubDemo2026!"}' \
-            https://localhost:8443/StayHub/api/usuarios/login >/dev/null
+            https://localhost:8443/StayHub/api/usuarios/login; then
+            cat ci-evidence/login-huesped.json >&2
+            exit 1
+          fi
+          jq -e '.rol == "HUESPED"' ci-evidence/login-huesped.json >/dev/null
           csrf="$(curl --insecure --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
             https://localhost:8443/StayHub/api/seguridad/csrf | jq -r .token)"
           desde="$(date -I -d '+7 days')"
           hasta="$(date -I -d '+9 days')"
-          reserva="$(curl --insecure --fail --silent --show-error --cookie "$cookies" --cookie-jar "$cookies" \
+          if ! curl --insecure --fail-with-body --silent --show-error \
+            --output ci-evidence/reserva-pms.json \
+            --cookie "$cookies" --cookie-jar "$cookies" \
             --header 'Origin: https://localhost:8443' \
             --header "X-CSRF-Token: $csrf" \
+            --header "Idempotency-Key: ci-reserva-pms-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --header 'Content-Type: application/json' \
-            --data "{\"hotelId\":1,\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"checkIn\":\"$desde\",\"checkOut\":\"$hasta\",\"huespedNombre\":\"PMS\",\"huespedApellido\":\"CI\",\"huespedEmail\":\"huesped@stayhub.local\",\"huespedTelefono\":\"+5491100000000\",\"precioTotal\":1,\"moneda\":\"ARS\"}" \
-            https://localhost:8443/StayHub/api/reservas)"
-          echo "$reserva" > ci-evidence/reserva-pms.json
-          echo "SOAP_RESERVA_ID=$(jq -r .id <<<"$reserva")" >> "$GITHUB_ENV"
+            --data "{\"hotelId\":$demo_hotel_id,\"tipoHabitacion\":\"STANDARD\",\"cantidadHabitaciones\":1,\"checkIn\":\"$desde\",\"checkOut\":\"$hasta\",\"huespedNombre\":\"PMS\",\"huespedApellido\":\"CI\",\"huespedEmail\":\"huesped@stayhub.local\",\"huespedTelefono\":\"+5491100000000\",\"precioTotal\":1,\"moneda\":\"ARS\"}" \
+            https://localhost:8443/StayHub/api/reservas; then
+            cat ci-evidence/reserva-pms.json >&2
+            exit 1
+          fi
+          echo "SOAP_RESERVA_ID=$(jq -er .id ci-evidence/reserva-pms.json)" >> "$GITHUB_ENV"
+          echo "SOAP_HOTEL_ID=$demo_hotel_id" >> "$GITHUB_ENV"
           echo "SOAP_DESDE=$desde" >> "$GITHUB_ENV"
           echo "SOAP_HASTA=$hasta" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
@@ -415,16 +478,24 @@ jobs:
           done
       - name: Ejecutar colección de Canales Externos con Newman
         run: |
+          mfa_code="$(docker compose exec -T app java -cp /opt/jboss/ci-tools MfaTotpCode "$STAYHUB_ADMIN_MFA_SECRET" | tr -d '\r\n')"
           npx --yes newman@6.2.1 run postman/StayHub-ServicioDeCanalesExternos.postman_collection.json \
             --insecure \
             --folder "Autenticación demo" \
             --folder "Disponibilidad" \
             --folder "Sincronizaciones" \
             --folder "Catálogo multicanal" \
+            --env-var mfaCode="$mfa_code" \
             --reporters cli,junit --reporter-junit-export ci-evidence/newman-canales.xml
       - name: Ejecutar contrato SOAP desplegado con certificado PMS
         run: |
           set -euo pipefail
+          # Las colecciones REST anteriores comparten la IP del runner y ya
+          # consumieron parte del cupo. Se reinicia sólo el estado técnico del
+          # limitador en esta base efímera para que el contrato SOAP se pruebe
+          # de forma aislada, sin relajar los límites de producción.
+          docker compose exec -T postgres psql -U stayhub -d stayhub \
+            -v ON_ERROR_STOP=1 -c 'TRUNCATE TABLE limite_solicitud;'
           pms_p12="$(mktemp)"
           pms_crt="$(mktemp)"
           pms_key="$(mktemp)"
@@ -440,7 +511,7 @@ jobs:
             --ssl-client-key "$pms_key" \
             --env-var baseUrl=https://localhost:8443/StayHub \
             --env-var reservaId="$SOAP_RESERVA_ID" \
-            --env-var hotelId=1 \
+            --env-var hotelId="$SOAP_HOTEL_ID" \
             --env-var fecha="$SOAP_DESDE" \
             --env-var desde="$SOAP_DESDE" \
             --env-var hasta="$SOAP_HASTA" \
@@ -473,15 +544,30 @@ jobs:
             return 1
           }
 
-          # Newman ejecuta todas las colecciones desde la misma IP del runner y
-          # consume el cupo del limitador en memoria. Reiniciar sólo WildFly
-          # limpia ese estado sin perder los datos persistidos en PostgreSQL.
-          docker compose --project-directory .. restart app
-          esperar_app
+          reiniciar_estado_pruebas() {
+            docker compose --project-directory .. exec -T postgres \
+              psql -U stayhub -d stayhub -v ON_ERROR_STOP=1 \
+              -c 'TRUNCATE TABLE limite_solicitud;'
+            docker compose --project-directory .. restart app
+            esperar_app
+          }
 
-          npx playwright test tests/stayhub-critical.spec.cjs
-          docker compose --project-directory .. restart app
-          esperar_app
+          # Cada suite comparte la IP del runner. El contador vive en
+          # PostgreSQL, por lo que se limpia únicamente la tabla técnica del
+          # limitador en esta base efímera antes de cada recorrido.
+          escenarios_criticos=(
+            'registro, login, carrito, reserva y pago persisten el resultado'
+            'cancelar una reserva devuelve el cupo al inventario'
+            'una reserva OTA firmada se procesa una sola vez y queda confirmada'
+            'la sincronización JMS llega a los mocks OTA y PMS'
+            'overbooking reubica, persiste el conflicto y publica la notificación'
+          )
+          for escenario in "${escenarios_criticos[@]}"; do
+            reiniciar_estado_pruebas
+            npx playwright test tests/stayhub-critical.spec.cjs --grep "$escenario"
+          done
+
+          reiniciar_estado_pruebas
 
           # KAN-91: mata el broker (SIGKILL al contenedor app) en medio de pagos y
           # mensajes encolados, lo vuelve a levantar y verifica la recuperación.
@@ -490,11 +576,20 @@ jobs:
           esperar_app
 
           npx playwright test tests/session-security.spec.cjs
-          docker compose --project-directory .. restart app
-          esperar_app
+          reiniciar_estado_pruebas
 
-          # Esta suite agota intencionalmente el límite de login, por eso va última.
-          npx playwright test tests/live-security-matrix.spec.cjs
+          escenarios_seguridad=(
+            'mass assignment: registrarse nunca concede ADMIN'
+            'BOLA/IDOR: un usuario no puede consultar el perfil de otro'
+            'BFLA: un huésped no puede ejecutar una operación ADMIN'
+            'inyección SQL en un identificador se rechaza como entrada inválida'
+            'XSS: toda escritura HTML dinámica pasa por el sanitizador local'
+            'fuerza bruta: el límite de login responde 429 con Retry-After'
+          )
+          for escenario in "${escenarios_seguridad[@]}"; do
+            reiniciar_estado_pruebas
+            npx playwright test tests/live-security-matrix.spec.cjs --grep "$escenario"
+          done
       - name: Guardar logs de los contenedores
         if: always()
         run: |
@@ -517,6 +612,53 @@ jobs:
             e2e/playwright-report/
             e2e/test-results/
           if-no-files-found: warn
+          retention-days: 14
+      - name: Apagar el entorno
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  performance-load:
+    name: Carga k6 (50 usuarios, 5 minutos)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Construir y levantar StayHub
+        run: docker compose up --detach --build --wait --wait-timeout 600
+      - name: Cargar catálogo e inventario demo
+        run: docker compose exec -T app /opt/jboss/load-demo.sh
+      - name: Ejecutar tres endpoints críticos con k6
+        run: |
+          mkdir -p performance/reports
+          # k6 se ejecuta con un usuario no-root dentro del contenedor. El
+          # directorio debe ser escribible para que handleSummary publique los
+          # JSON/Markdown que después se conservan como evidencia.
+          chmod 0777 performance/reports
+          docker run --rm --network host \
+            --volume "$PWD:/work" --workdir /work \
+            --env BASE_URL=https://localhost:8443/StayHub/api \
+            --env VUS=50 --env DURATION=5m \
+            grafana/k6:2.3.0 run performance/k6-critical-endpoints.js
+      - name: Incorporar el informe al resumen
+        if: always()
+        run: |
+          if [ -f performance/reports/k6-summary.md ]; then
+            cat performance/reports/k6-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Prueba de carga sin informe" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Guardar logs del entorno
+        if: always()
+        run: |
+          mkdir -p performance/reports
+          docker compose logs --no-color > performance/reports/compose.log
+      - name: Publicar informe de carga
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: load-test-evidence
+          path: performance/reports/
+          if-no-files-found: error
           retention-days: 14
       - name: Apagar el entorno
         if: always()

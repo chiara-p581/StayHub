@@ -59,9 +59,12 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         identidad.exigirHuesped();
         Long usuarioId = identidad.usuarioId();
         validar(solicitud);
-        PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia());
+        repositorio.bloquearUsuario(usuarioId);
+        PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia(), List.of(solicitud.reservaId()), solicitud.monto(), solicitud.moneda());
         if (repetido != null) return repetido;
         repositorio.bloquearReservas(List.of(solicitud.reservaId()));
+        repetido = buscarRepetido(solicitud.claveIdempotencia(), List.of(solicitud.reservaId()), solicitud.monto(), solicitud.moneda());
+        if (repetido != null) return repetido;
         var reserva = reservas.consultarParaPago(solicitud.reservaId());
         if (!"PENDIENTE".equals(reserva.estado())) throw new SeguridadException(409, "La reserva no está pendiente de pago");
         verificarNoPagada(solicitud.reservaId());
@@ -92,9 +95,12 @@ public class ServicioDePagosImpl implements ServicioDePagos {
             throw new PagoException(CodigoErrorPago.SOLICITUD_INVALIDA,
                     "El checkout debe incluir reservas únicas, monto y moneda válidos");
         }
-        PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia());
+        repositorio.bloquearUsuario(usuarioId);
+        PagoResponse repetido = buscarRepetido(solicitud.claveIdempotencia(), solicitud.reservaIds(), solicitud.monto(), solicitud.moneda());
         if (repetido != null) return repetido;
         repositorio.bloquearReservas(solicitud.reservaIds());
+        repetido = buscarRepetido(solicitud.claveIdempotencia(), solicitud.reservaIds(), solicitud.monto(), solicitud.moneda());
+        if (repetido != null) return repetido;
         // Consultar todas antes de cobrar verifica autorización y estado también para cada ID del lote.
         var reservasAutorizadas = solicitud.reservaIds().stream().sorted().map(reservas::consultarParaPago).toList();
         if (reservasAutorizadas.stream().anyMatch(r -> !"PENDIENTE".equals(r.estado()))) throw new SeguridadException(409, "El lote contiene reservas no pendientes");
@@ -160,10 +166,16 @@ public class ServicioDePagosImpl implements ServicioDePagos {
         }
     }
 
-    private PagoResponse buscarRepetido(String clave) {
+    private PagoResponse buscarRepetido(String clave, List<Long> reservaIds, BigDecimal monto, String moneda) {
         String normalizada = normalizarClave(clave);
         if (normalizada == null) return null;
-        return repositorio.buscarPorClaveIdempotencia(identidad.usuarioId(), normalizada).map(p -> consultarPago(p.getId())).orElse(null);
+        return repositorio.buscarPorClaveIdempotencia(identidad.usuarioId(), normalizada).map(p -> {
+            if (!p.getReservaIds().stream().sorted().toList().equals(reservaIds.stream().sorted().toList())
+                    || p.getMonto().compareTo(monto) != 0 || !p.getMoneda().equalsIgnoreCase(moneda)) {
+                throw new SeguridadException(409, "La clave de idempotencia ya está asociada a otro pago");
+            }
+            return consultarPago(p.getId());
+        }).orElse(null);
     }
 
     private String normalizarClave(String clave) {

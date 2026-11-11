@@ -416,6 +416,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-reserva-directa-{{$guid}}"
               }
             ],
             "url": {
@@ -624,6 +628,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-reserva-propia-{{$guid}}"
               }
             ],
             "url": {
@@ -688,6 +696,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "postman-reserva-ajena-{{$guid}}"
               }
             ],
             "url": {
