@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Unidad de persistencia SOLO para las pruebas de integración (src/test).
+  Usa Hibernate directo contra el PostgreSQL de Testcontainers (RESOURCE_LOCAL) y valida el
+  esquema creado por docker/postgres/01-schema.sql, igual que hace WildFly con "validate".
+  No reemplaza ni pisa a StayHubPU (la de producción, en src/main/resources/META-INF).
+-->
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+                                 https://jakarta.ee/xml/ns/persistence/persistence_3_1.xsd"
+             version="3.1">
+
+    <persistence-unit name="StayHubIT" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <class>com.stayhub.hoteles.model.Hotel</class>
+        <class>com.stayhub.hoteles.model.TipoHabitacion</class>
+        <class>com.stayhub.hoteles.model.Habitacion</class>
+        <class>com.stayhub.inventarioytarifas.model.InventarioDiario</class>
+        <class>com.stayhub.inventarioytarifas.model.Hold</class>
+        <class>com.stayhub.reservas.model.Reserva</class>
+        <class>com.stayhub.reservas.model.Huesped</class>
+        <class>com.stayhub.pagos.model.Pago</class>
+        <class>com.stayhub.usuarios.model.Usuario</class>
+        <class>com.stayhub.servicioDeOverbooking.model.ConflictoOverbooking</class>
+        <class>com.stayhub.notificaciones.model.EnvioCorreo</class>
+        <class>com.stayhub.canalesexternos.model.SincronizacionProcesada</class>
+
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    </persistence-unit>
+
+</persistence>
