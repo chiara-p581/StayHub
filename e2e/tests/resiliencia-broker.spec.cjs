@@ -164,6 +164,13 @@ function invariantesDeConsistencia(reservaIds) {
 test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
   test.skip(!dockerVerification, "Requiere el entorno docker compose y STAYHUB_DOCKER_VERIFY=true");
 
+  // Pase lo que pase, el broker queda levantado para la prueba siguiente (o el reintento).
+  test.afterEach(async ({ request }) => {
+    test.setTimeout(300_000);
+    docker("start", "app");
+    await esperarApp(request);
+  });
+
   test("caída abrupta del broker: sin pérdida de mensajes, recuperación automática y operación consistente",
     async ({ request }, testInfo) => {
       test.setTimeout(420_000);
@@ -224,11 +231,13 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
           data: { reservaId: r.id, monto: r.precioTotal, moneda: r.moneda, claveIdempotencia: r.clave },
           headers: { Origin: origin, "X-CSRF-Token": csrfPago, "Content-Type": "application/json", "Idempotency-Key": r.clave },
           timeout: 30_000
-        }));
+        })
+          // El corte de conexión es el efecto esperado de la caída: se registra en el
+          // momento, para que no quede como rechazo sin manejar mientras se mata el broker.
+          .then(respuesta => respuesta.status(), () => "sin respuesta"));
         await new Promise(r => setTimeout(r, 50)); // deja salir las solicitudes
         await execFileAsync("docker", ["compose", "kill", "app"], { cwd: repo }); // SIGKILL: caída abrupta
-        const resultados = await Promise.allSettled(pagos);
-        return resultados.map(r => (r.status === "fulfilled" ? r.value.status() : "sin respuesta"));
+        return Promise.all(pagos);
       });
       testInfo.annotations.push({ type: "pagos al momento de la caída", description: JSON.stringify(resultadosEnVuelo) });
 
