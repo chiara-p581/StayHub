@@ -26,7 +26,7 @@ const adminMfaSecret = process.env.STAYHUB_ADMIN_MFA_SECRET || "";
 const MENSAJES_EN_COLA = 5;   // sincronizaciones encoladas antes de la caída
 const PAGOS_EN_VUELO = 4;     // pagos que se disparan justo antes de matar el broker
 const CANAL = "EXPEDIA";      // canal exclusivo de esta prueba para contar sin ruido en el mock
-const RUTA_MOCK = "/expedia/disponibilidad";
+const RUTA_MOCK = "/expedia/inventario"; // OtaRestClientImpl publica la disponibilidad en {url}/inventario
 const MDB = "/deployment=StayHub.war/subsystem=ejb3/message-driven-bean=ConsumidorSincronizacion";
 const COLA = "CanalesExternosSincronizaciones";
 
