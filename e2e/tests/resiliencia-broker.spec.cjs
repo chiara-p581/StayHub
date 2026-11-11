@@ -17,10 +17,11 @@ const path = require("node:path");
 
 const execFileAsync = promisify(execFile);
 const repo = path.resolve(__dirname, "../..");
-const origin = "https://localhost:8443";
+const origin = process.env.STAYHUB_ORIGIN || new URL(process.env.STAYHUB_BASE_URL || "https://localhost:8443/StayHub").origin;
 const dockerVerification = process.env.STAYHUB_DOCKER_VERIFY === "true";
 const adminEmail = process.env.STAYHUB_ADMIN_EMAIL || "admin@stayhub.local";
 const adminPassword = process.env.STAYHUB_ADMIN_PASSWORD || "StayHubDemo2026!";
+const adminMfaSecret = process.env.STAYHUB_ADMIN_MFA_SECRET || "";
 
 const MENSAJES_EN_COLA = 5;   // sincronizaciones encoladas antes de la caída
 const PAGOS_EN_VUELO = 4;     // pagos que se disparan justo antes de matar el broker
@@ -87,9 +88,50 @@ async function mutate(request, method, url, data) {
   });
 }
 
+/** Login con segundo factor: el administrador demo tiene MFA (TOTP) obligatorio. */
 async function login(request, email, password) {
   const response = await mutate(request, "POST", "api/usuarios/login", { email, password });
-  expect(response.status(), await response.text()).toBe(200);
+  const raw = await response.text();
+  expect(response.status(), raw).toBe(200);
+  const user = JSON.parse(raw);
+  if (user.mfaRequerido) {
+    expect(user.mfaConfigurado, "El administrador demo debe tener MFA activado").toBe(true);
+    expect(adminMfaSecret, "Falta STAYHUB_ADMIN_MFA_SECRET").not.toBe("");
+    const verificacion = await mutate(request, "POST", "api/usuarios/mfa/verificar-login", { codigo: totp(adminMfaSecret) });
+    expect(verificacion.status(), await verificacion.text()).toBe(200);
+  }
+}
+
+function totp(secret) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let buffer = 0, bits = 0;
+  const bytes = [];
+  for (const char of secret.toUpperCase()) {
+    const value = alphabet.indexOf(char);
+    if (value < 0) throw new Error("Invalid Base32 MFA secret");
+    buffer = (buffer << 5) | value;
+    bits += 5;
+    if (bits >= 8) bytes.push((buffer >> (bits -= 8)) & 0xff);
+  }
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 1000 / 30)));
+  const hash = crypto.createHmac("sha1", Buffer.from(bytes)).update(counter).digest();
+  const offset = hash[hash.length - 1] & 15;
+  return String((hash.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, "0");
+}
+
+/** Busca rangos de dos noches con cupo STANDARD, sin pisar los que usan otras pruebas (días 10 a 45). */
+async function rangosConCupo(request, hotelId, cantidad) {
+  const rangos = [];
+  for (let dias = 60; dias <= 170 && rangos.length < cantidad; dias += 3) {
+    const checkIn = isoDate(dias), checkOut = isoDate(dias + 2);
+    const r = await request.get(`api/inventario-tarifas/disponibilidad?hotelId=${hotelId}&desde=${checkIn}&hasta=${checkOut}`);
+    expect(r.ok(), await r.text()).toBeTruthy();
+    const standard = (await r.json()).find(item => item.tipoHabitacion === "STANDARD");
+    if (standard?.unidadesDisponibles > 0) rangos.push({ checkIn, checkOut });
+  }
+  expect(rangos.length, "No hay suficientes rangos STANDARD con cupo").toBe(cantidad);
+  return rangos;
 }
 
 async function esperarApp(request) {
@@ -159,10 +201,11 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
         expect(alta.status(), await alta.text()).toBe(201);
         await login(request, guest.email, guest.password);
         const creadas = [];
+        const rangos = await rangosConCupo(request, hotel.id, PAGOS_EN_VUELO);
         for (let i = 0; i < PAGOS_EN_VUELO; i++) {
           const r = await mutate(request, "POST", "api/reservas", {
             hotelId: hotel.id, tipoHabitacion: "STANDARD", cantidadHabitaciones: 1,
-            checkIn: isoDate(60 + i * 3), checkOut: isoDate(62 + i * 3),
+            checkIn: rangos[i].checkIn, checkOut: rangos[i].checkOut,
             huespedNombre: "KAN91", huespedApellido: "Broker", huespedEmail: guest.email,
             huespedTelefono: "1155550091", precioTotal: 1, moneda: "USD"
           });
