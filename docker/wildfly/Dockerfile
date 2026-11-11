@@ -50,6 +50,9 @@ RUN keytool -genkeypair -alias stayhub-local -keyalg RSA -keysize 3072 -validity
     /opt/jboss/wildfly/bin/jboss-cli.sh --file=/tmp/configure-pms-security.cli && \
     chmod +x /opt/jboss/load-demo.sh
 
+# KAN-91: puntos de montaje propiedad de jboss para los volúmenes del broker y de transacciones.
+RUN mkdir -p /opt/jboss/wildfly/standalone/data/activemq /opt/jboss/wildfly/standalone/data/tx-object-store
+
 COPY --from=build --chown=jboss:root /build/target/StayHub.war /opt/jboss/wildfly/standalone/deployments/StayHub.war
 
 EXPOSE 8443
