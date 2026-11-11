@@ -79,12 +79,12 @@ async function csrf(request) {
   return (await response.json()).token;
 }
 
-async function mutate(request, method, url, data) {
+async function mutate(request, method, url, data, extraHeaders = {}) {
   const token = await csrf(request);
   return request.fetch(url, {
     method,
     data,
-    headers: { Origin: origin, "X-CSRF-Token": token, "Content-Type": "application/json" }
+    headers: { Origin: origin, "X-CSRF-Token": token, "Content-Type": "application/json", ...extraHeaders }
   });
 }
 
@@ -203,12 +203,13 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
         const creadas = [];
         const rangos = await rangosConCupo(request, hotel.id, PAGOS_EN_VUELO);
         for (let i = 0; i < PAGOS_EN_VUELO; i++) {
+          const claveReserva = `kan91-reserva-${i}-${Date.now()}`;
           const r = await mutate(request, "POST", "api/reservas", {
             hotelId: hotel.id, tipoHabitacion: "STANDARD", cantidadHabitaciones: 1,
             checkIn: rangos[i].checkIn, checkOut: rangos[i].checkOut,
             huespedNombre: "KAN91", huespedApellido: "Broker", huespedEmail: guest.email,
             huespedTelefono: "1155550091", precioTotal: 1, moneda: "USD"
-          });
+          }, { "Idempotency-Key": claveReserva });
           expect(r.status(), await r.text()).toBe(201);
           const reserva = await r.json();
           creadas.push({ ...reserva, clave: `kan91-${reserva.id}-${Date.now()}` });
@@ -221,7 +222,7 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
         const pagos = reservas.map(r => request.fetch("api/pagos", {
           method: "POST",
           data: { reservaId: r.id, monto: r.precioTotal, moneda: r.moneda, claveIdempotencia: r.clave },
-          headers: { Origin: origin, "X-CSRF-Token": csrfPago, "Content-Type": "application/json" },
+          headers: { Origin: origin, "X-CSRF-Token": csrfPago, "Content-Type": "application/json", "Idempotency-Key": r.clave },
           timeout: 30_000
         }));
         await new Promise(r => setTimeout(r, 50)); // deja salir las solicitudes
@@ -255,7 +256,7 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
         for (const [i, r] of reservas.entries()) {
           const pago = await mutate(request, "POST", "api/pagos", {
             reservaId: r.id, monto: r.precioTotal, moneda: r.moneda, claveIdempotencia: r.clave
-          });
+          }, { "Idempotency-Key": r.clave });
           expect(pago.status(), `reserva ${r.id} (estado en la caída: ${resultadosEnVuelo[i]}): ${await pago.text()}`).toBe(201);
           expect((await pago.json()).estado).toBe("APROBADO");
         }
