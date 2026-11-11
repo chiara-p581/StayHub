@@ -22,18 +22,26 @@ public class ConsumidorSincronizacion implements MessageListener {
     @Inject
     private ProcesadorSincronizacion procesador;
 
+    @Inject
+    private SincronizacionIdempotente idempotente;
+
     @Override
     public void onMessage(Message mensaje) {
         try {
             SolicitudSincronizacion solicitud = mensaje.getBody(SolicitudSincronizacion.class);
             validar(solicitud);
-            switch (solicitud.destino()) {
-                case OTA -> procesador.sincronizarOta(solicitud.hotelId(), solicitud.canal(),
-                        solicitud.desde(), solicitud.hasta());
-                case PMS -> procesador.sincronizarPms(solicitud.hotelId(), solicitud.desde(), solicitud.hasta());
-            }
+            // Clave persistente = solicitudId: un duplicado no repite la sincronización.
+            idempotente.ejecutar(solicitud.solicitudId(), () -> procesar(solicitud));
         } catch (Exception ex) {
             throw FalloJms.reintentar(mensaje, "sincronizacion-canales", ex);
+        }
+    }
+
+    private void procesar(SolicitudSincronizacion solicitud) {
+        switch (solicitud.destino()) {
+            case OTA -> procesador.sincronizarOta(solicitud.hotelId(), solicitud.canal(),
+                    solicitud.desde(), solicitud.hasta());
+            case PMS -> procesador.sincronizarPms(solicitud.hotelId(), solicitud.desde(), solicitud.hasta());
         }
     }
 
@@ -45,4 +53,5 @@ public class ConsumidorSincronizacion implements MessageListener {
             throw new IllegalArgumentException("Mensaje de sincronización inválido");
         }
         Limites.rango(solicitud.desde(), solicitud.hasta());
-    }}
+    }
+}
