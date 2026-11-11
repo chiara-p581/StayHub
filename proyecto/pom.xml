@@ -18,6 +18,8 @@
         <testcontainers.version>2.0.5</testcontainers.version>
         <!-- Cliente y broker Artemis deben ir en la misma versión (la imagen está en EntornoIntegracion.java) -->
         <artemis.version>2.44.0</artemis.version>
+        <!-- Netty llega de rebote con el cliente de Artemis; se fuerza una versión sin vulnerabilidades conocidas (OSV) -->
+        <netty.version>4.1.137.Final</netty.version>
 
         <!-- SonarCloud. La organización, la clave del proyecto y el token se pasan por
              línea de comandos (-Dsonar.organization, -Dsonar.projectKey, SONAR_TOKEN):
@@ -32,6 +34,18 @@
         <!-- La cobertura se mide sobre la capa de negocio, igual que el umbral de JaCoCo -->
         <sonar.coverage.exclusions>src/main/webapp/**,**/api/**,**/dto/**,**/repository/**,**/client/**,**/messaging/**,**/config/**,**/exception/**,**/contrato/**,**/seguridad/**,**/demo/**,**/RestApplication.java,**/SaludoResource.java,**/SaludoService.java,**/LocalDateParamConverterProvider.java</sonar.coverage.exclusions>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -82,7 +96,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.7</version>
+            <version>42.7.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
