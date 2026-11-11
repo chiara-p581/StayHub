@@ -569,6 +569,11 @@ jobs:
 
           reiniciar_estado_pruebas
 
+          # KAN-91: mata el broker (SIGKILL al contenedor app) en medio de pagos y
+          # mensajes encolados, lo vuelve a levantar y verifica la recuperación.
+          npx playwright test tests/resiliencia-broker.spec.cjs
+          reiniciar_estado_pruebas
+
           npx playwright test tests/session-security.spec.cjs
           reiniciar_estado_pruebas
 

@@ -64,8 +64,15 @@ services:
       - "8443:8443"
     volumes:
       - wildfly_security:/opt/jboss/local-security
+      # KAN-91: el journal de Artemis (broker embebido) y el registro de transacciones
+      # XA sobreviven aunque el contenedor se recree; sin esto, un `docker compose down`
+      # perdería los mensajes persistentes pendientes.
+      - wildfly_messaging:/opt/jboss/wildfly/standalone/data/activemq
+      - wildfly_tx:/opt/jboss/wildfly/standalone/data/tx-object-store
     restart: unless-stopped
 
 volumes:
   postgres_data:
   wildfly_security:
+  wildfly_messaging:
+  wildfly_tx:
