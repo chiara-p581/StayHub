@@ -14,6 +14,13 @@
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <!-- Testcontainers 2.x: las 1.x no se conectan a Docker Desktop reciente (Docker Engine 29+) -->
+        <testcontainers.version>2.0.5</testcontainers.version>
+        <!-- Cliente y broker Artemis deben ir en la misma versión (la imagen está en EntornoIntegracion.java) -->
+        <artemis.version>2.44.0</artemis.version>
+        <!-- Netty llega de rebote con el cliente de Artemis; se fuerza una versión sin vulnerabilidades conocidas (OSV) -->
+        <netty.version>4.1.137.Final</netty.version>
+
         <!-- SonarCloud. La organización, la clave del proyecto y el token se pasan por
              línea de comandos (-Dsonar.organization, -Dsonar.projectKey, SONAR_TOKEN):
              no van en el repositorio. -->
@@ -27,6 +34,18 @@
         <!-- La cobertura se mide sobre la capa de negocio, igual que el umbral de JaCoCo -->
         <sonar.coverage.exclusions>src/main/webapp/**,**/api/**,**/dto/**,**/repository/**,**/client/**,**/messaging/**,**/config/**,**/exception/**,**/contrato/**,**/seguridad/**,**/demo/**,**/RestApplication.java,**/SaludoResource.java,**/SaludoService.java,**/LocalDateParamConverterProvider.java</sonar.coverage.exclusions>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -59,6 +78,33 @@
             <version>1.1.9</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Pruebas de integración (src/test/java/com/stayhub/integracion/*IT):
+             PostgreSQL y Artemis reales en contenedores. Todo con scope test: no entra al WAR. -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>6.6.4.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-jakarta-client</artifactId>
+            <version>${artemis.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -85,6 +131,33 @@
                       <junit.jupiter.execution.timeout.mode>enabled</junit.jupiter.execution.timeout.mode>
                   </systemPropertyVariables>
               </configuration>
+          </plugin>
+
+          <!-- Pruebas de integración (*IT): se ejecutan en `mvn verify`, NO en `mvn test`.
+               Necesitan Docker (Testcontainers). Para saltearlas: -DskipITs -->
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-failsafe-plugin</artifactId>
+              <version>3.5.2</version>
+              <configuration>
+                  <includes>
+                      <include>**/*IT.java</include>
+                  </includes>
+                  <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
+                  <systemPropertyVariables>
+                      <!-- Margen amplio: la primera corrida descarga las imágenes de PostgreSQL y Artemis -->
+                      <junit.jupiter.execution.timeout.default>600s</junit.jupiter.execution.timeout.default>
+                      <junit.jupiter.execution.timeout.mode>enabled</junit.jupiter.execution.timeout.mode>
+                  </systemPropertyVariables>
+              </configuration>
+              <executions>
+                  <execution>
+                      <goals>
+                          <goal>integration-test</goal>
+                          <goal>verify</goal>
+                      </goals>
+                  </execution>
+              </executions>
           </plugin>
 
           <plugin>
@@ -157,6 +230,10 @@
                   <targetTests>
                       <param>com.stayhub.*</param>
                   </targetTests>
+                  <!-- Las pruebas de integración (contenedores) no se re-ejecutan por cada mutante -->
+                  <excludedTestClasses>
+                      <param>com.stayhub.integracion.*</param>
+                  </excludedTestClasses>
                   <mutationThreshold>60</mutationThreshold>
                   <threads>2</threads>
                   <timeoutConstant>8000</timeoutConstant>
