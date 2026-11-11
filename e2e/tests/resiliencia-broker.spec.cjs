@@ -67,6 +67,48 @@ function mensajesEnCola() {
   return null;
 }
 
+function leerAtributo(ruta, atributo) {
+  const salida = cli(`${ruta}:read-attribute(name=${atributo})`);
+  const valor = salida.match(/"result" => ([^\s,}]+)/);
+  return valor ? valor[1].replace(/L$/, "") : salida.trim().slice(0, 200);
+}
+
+/** Estado del broker, del consumidor, de las transacciones y del log: se adjunta a cualquier falla. */
+function diagnostico() {
+  const partes = [];
+  const intentar = (titulo, fn) => {
+    try { partes.push(`${titulo}: ${fn()}`); } catch (e) { partes.push(`${titulo}: no disponible (${String(e.message).split("\n")[0]})`); }
+  };
+  intentar("mensajes en cola", () => String(mensajesEnCola()));
+  intentar("mensajes en DLQ", () => leerAtributo("/subsystem=messaging-activemq/server=default/jms-queue=StayHubDLQ", "message-count"));
+  intentar("MDB delivery-active", () => leerAtributo(MDB, "delivery-active"));
+  intentar("transacciones XA preparadas en PostgreSQL", () => dbScalar("SELECT count(*) FROM pg_prepared_xacts"));
+  intentar("sincronizaciones recibidas por el mock", () => String(sincronizacionesRecibidasPorMock()));
+  intentar("log de la app (filtrado)", () => "\n" + docker("logs", "--no-color", "--tail", "4000", "app")
+    .split("\n")
+    .filter(l => /jms_failure|ARJUNA|AMQ[0-9]{6}|WFLYEJB|WFLYJCA|ERROR|Exception|sincronizacion/i.test(l))
+    .slice(-30).map(l => l.slice(0, 400)).join("\n"));
+  return partes.join("\n");
+}
+
+/** Espera activa con mensaje de error que incluye el diagnóstico completo. */
+async function esperarHasta(descripcion, timeoutMs, condicion) {
+  const fin = Date.now() + timeoutMs;
+  let ultimo;
+  while (Date.now() < fin) {
+    ultimo = await condicion();
+    if (ultimo.ok) return ultimo.valor;
+    await new Promise(r => setTimeout(r, 3_000));
+  }
+  throw new Error(`${descripcion} — no se cumplió en ${timeoutMs / 1000} s (último valor: ${ultimo?.valor})\n--- diagnóstico ---\n${diagnostico()}`);
+}
+
+async function sincronizarOta(request, hotelId, desde, hasta) {
+  const r = await mutate(request, "POST",
+    `api/canales-externos/otas/${CANAL}/sincronizaciones?hotelId=${hotelId}&desde=${desde}&hasta=${hasta}`, {});
+  expect(r.status(), await r.text()).toBe(202);
+}
+
 function sincronizacionesRecibidasPorMock() {
   return docker("logs", "--no-color", "ota-mock")
     .split("\n")
@@ -165,15 +207,21 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
   test.skip(!dockerVerification, "Requiere el entorno docker compose y STAYHUB_DOCKER_VERIFY=true");
 
   // Pase lo que pase, el broker queda levantado para la prueba siguiente (o el reintento).
-  test.afterEach(async ({ request }) => {
+  test.afterEach(async ({ request }, testInfo) => {
     test.setTimeout(300_000);
+    if (testInfo.status !== testInfo.expectedStatus) {
+      let texto;
+      try { texto = diagnostico(); } catch (e) { texto = String(e); }
+      console.log(`--- diagnóstico KAN-91 ---\n${texto}`);
+      await testInfo.attach("diagnostico-kan91.txt", { body: texto, contentType: "text/plain" });
+    }
     docker("start", "app");
     await esperarApp(request);
   });
 
   test("caída abrupta del broker: sin pérdida de mensajes, recuperación automática y operación consistente",
     async ({ request }, testInfo) => {
-      test.setTimeout(420_000);
+      test.setTimeout(540_000);
       const hotel = await test.step("preparar datos", async () => {
         await login(request, adminEmail, adminPassword);
         const response = await request.get("api/hoteles");
@@ -182,15 +230,20 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
       });
       const desde = isoDate(10), hasta = isoDate(12);
 
+      await test.step("línea de base: la mensajería EXPEDIA funciona antes de la caída", async () => {
+        const antes = sincronizacionesRecibidasPorMock();
+        await sincronizarOta(request, hotel.id, desde, hasta);
+        await esperarHasta("La sincronización previa a la caída no llegó al mock OTA", 60_000, () => {
+          const valor = sincronizacionesRecibidasPorMock() - antes;
+          return { ok: valor >= 1, valor };
+        });
+      });
+
       // ---- Criterio 1: mensajes persistentes en cola al momento de la caída ----
       const recibidasAntes = sincronizacionesRecibidasPorMock();
       await test.step("detener el consumo y encolar mensajes persistentes", async () => {
         expect(cli(`${MDB}:stop-delivery`)).toContain("success");
-        for (let i = 0; i < MENSAJES_EN_COLA; i++) {
-          const r = await mutate(request, "POST",
-            `api/canales-externos/otas/${CANAL}/sincronizaciones?hotelId=${hotel.id}&desde=${desde}&hasta=${hasta}`, {});
-          expect(r.status(), await r.text()).toBe(202);
-        }
+        for (let i = 0; i < MENSAJES_EN_COLA; i++) await sincronizarOta(request, hotel.id, desde, hasta);
         // Con el consumo detenido, nada llega al mock: los mensajes están sólo en el broker.
         await new Promise(r => setTimeout(r, 3_000));
         expect(sincronizacionesRecibidasPorMock()).toBe(recibidasAntes);
@@ -254,9 +307,14 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
       });
 
       await test.step("los mensajes encolados antes de la caída se procesan sin intervención", async () => {
-        await expect.poll(() => sincronizacionesRecibidasPorMock() - recibidasAntes, { timeout: 120_000, intervals: [3_000] })
-          .toBeGreaterThanOrEqual(MENSAJES_EN_COLA);
-        await expect.poll(() => mensajesEnCola() ?? 0, { timeout: 60_000, intervals: [3_000] }).toBe(0);
+        await esperarHasta(`Los ${MENSAJES_EN_COLA} mensajes encolados antes de la caída no llegaron al mock OTA`, 150_000, () => {
+          const valor = sincronizacionesRecibidasPorMock() - recibidasAntes;
+          return { ok: valor >= MENSAJES_EN_COLA, valor };
+        });
+        await esperarHasta("La cola no quedó vacía después de la recuperación", 60_000, () => {
+          const valor = mensajesEnCola() ?? 0;
+          return { ok: valor === 0, valor };
+        });
       });
 
       // ---- Criterio 3 (parte 2): el usuario reintenta y todo converge ----
@@ -280,11 +338,11 @@ test.describe("KAN-91 — recuperación ante caída del broker JMS", () => {
       await test.step("la mensajería sigue operativa después de la recuperación", async () => {
         await login(request, adminEmail, adminPassword);
         const antes = sincronizacionesRecibidasPorMock();
-        const r = await mutate(request, "POST",
-          `api/canales-externos/otas/${CANAL}/sincronizaciones?hotelId=${hotel.id}&desde=${desde}&hasta=${hasta}`, {});
-        expect(r.status(), await r.text()).toBe(202);
-        await expect.poll(() => sincronizacionesRecibidasPorMock() - antes, { timeout: 60_000, intervals: [2_000] })
-          .toBeGreaterThanOrEqual(1);
+        await sincronizarOta(request, hotel.id, desde, hasta);
+        await esperarHasta("Una sincronización nueva después de la recuperación no llegó al mock OTA", 60_000, () => {
+          const valor = sincronizacionesRecibidasPorMock() - antes;
+          return { ok: valor >= 1, valor };
+        });
       });
     });
 });
