@@ -182,6 +182,11 @@ CREATE TABLE notificacion_email_enviada (
     fecha TIMESTAMP(6) WITH TIME ZONE NOT NULL
 );
 
+CREATE TABLE sincronizacion_procesada (
+    solicitud_id VARCHAR(64) PRIMARY KEY,
+    fecha TIMESTAMP(6) WITH TIME ZONE NOT NULL
+);
+
 CREATE TABLE limite_solicitud (
     clave VARCHAR(180) PRIMARY KEY,
     ventana_inicio BIGINT NOT NULL,
