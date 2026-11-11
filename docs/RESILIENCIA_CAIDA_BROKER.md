@@ -102,10 +102,30 @@ en lugar de cobrar otra vez.
 
 ## 6. Evidencia
 
-Completar con la ejecución real:
+Ejecución en GitHub Actions, workflow `StayHub CI` (`security.yml`), job **Integración
+Docker**, PR #93, run **#125**. Las tres corridas seguidas dieron el mismo resultado,
+así que la prueba no es inestable.
 
-| Corrida | Fecha | Resultado | Pagos en vuelo (anotación) | Link CI / reporte |
+| Corrida | Fecha | Resultado | Duración del job | Referencia |
 | --- | --- | --- | --- | --- |
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
+| 1 | 11/11/2026 | Pasada | — | Run #125, intento 1 (falló sólo *Responsive y accesibilidad* por DNS del runner, ajeno a esta prueba) |
+| 2 | 11/11/2026 | Pasada | 6 min 37 s | Run #125, intento 2 (todos los jobs en verde) |
+| 3 | 11/11/2026 | Pasada | 6 min 18 s | Run #125, intento 3 (todos los jobs en verde) |
+
+Las anotaciones del reporte de Playwright (artefacto `e2e-evidence`) registran los
+mensajes en cola antes de la caída y la respuesta de cada pago en vuelo.
+
+### Defectos de la prueba corregidos durante el desarrollo
+
+Estos fueron errores del propio test, no defectos del sistema. Se dejan registrados como
+lecciones aprendidas.
+
+- El admin demo pasó a requerir MFA: el test ahora completa el segundo factor (TOTP).
+- `POST /api/reservas` y `POST /api/pagos` exigen el header `Idempotency-Key`.
+- Los cortes de conexión de los pagos en vuelo se manejan en el momento, para que no
+  queden como rechazos sin manejar.
+- El test contaba las llamadas en una ruta equivocada del mock. `OtaRestClientImpl`
+  publica en `{url}/inventario`, no en `/disponibilidad`.
+- La prueba E2E crítica existente (*la sincronización JMS llega a los mocks*) valida el
+  log OTA con un patrón genérico que también coincide con las llamadas a la pasarela de
+  pagos. Se recomienda filtrar por ruta (`/booking/inventario`).
