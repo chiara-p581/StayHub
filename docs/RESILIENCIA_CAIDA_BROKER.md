@@ -84,10 +84,11 @@ en lugar de cobrar otra vez.
   la pasarela es un mock. Para producción, la mitigación sería conciliar usando la
   referencia `reserva-<id>`, que la pasarela recibe en cada cobro y es idempotente, o
   usar un outbox. Queda documentado como riesgo, no como defecto del alcance actual.
-- **Datasource no XA.** `PostgresDS` es un datasource local (no XA). Narayana lo coordina
-  con el recurso XA de JMS mediante *Last Resource Commit Optimization*. Hay una ventana
-  mínima teórica de inconsistencia si la caída ocurre justo entre el commit de la base y
-  el del broker. Mitigación posible: pasar a `xa-data-source`.
+- **Transacción distribuida.** `PostgresDS` es un `xa-data-source` (PostgreSQL con
+  `max_prepared_transactions=100`) y JMS usa `java:/JmsXA`, así que el pago y el evento
+  se confirman con *two-phase commit*. Si la caída ocurre entre la preparación y el
+  commit, Narayana completa o revierte la transacción al reiniciar, usando su registro
+  en `tx-object-store`. Por eso ese directorio también va en un volumen.
 - **Entrega al menos una vez.** Un mensaje que estaba en proceso al momento de la caída
   puede reentregarse. El consumidor de notificaciones es idempotente
   (`notificacion_email_enviada`). La sincronización OTA/PMS reenvía el estado completo,
