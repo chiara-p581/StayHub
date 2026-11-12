@@ -16,11 +16,20 @@ import jakarta.persistence.PersistenceContext;
 @Stateless
 public class SincronizacionIdempotente {
 
+    /**
+     * Acción a ejecutar una sola vez. Es una interfaz propia (y no Runnable) porque en
+     * componentes EJB/MDB Sonar marca el uso de Runnable como manejo de hilos; acá no hay hilos.
+     */
+    @FunctionalInterface
+    public interface Accion {
+        void ejecutar();
+    }
+
     @PersistenceContext(unitName = "StayHubPU")
     private EntityManager em;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void ejecutar(String solicitudId, Runnable accion) {
+    public void ejecutar(String solicitudId, Accion accion) {
         // Evita que dos consumidores procesen a la vez la misma solicitud (PostgreSQL).
         em.createNativeQuery("select cast(pg_advisory_xact_lock(cast(:clave as bigint)) as text)")
                 .setParameter("clave", (long) ("sync:" + solicitudId).hashCode())
@@ -30,7 +39,7 @@ public class SincronizacionIdempotente {
             return;
         }
 
-        accion.run();
+        accion.ejecutar();
 
         em.persist(new SincronizacionProcesada(solicitudId));
         em.flush();
