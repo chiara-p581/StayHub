@@ -45,14 +45,22 @@ Toda respuesta REST de error pasa por `RespuestaSeguraFilter`: agrega correlaci�
 
 ## Seguridad de sesiones (KAN-101)
 
-StayHub no usa JWT: la autenticación del navegador se implementa con una sesión HTTP
-administrada por WildFly. Por eso los casos de alteración de firma o claims de un JWT no
-aplican literalmente; se cubren sus riesgos equivalentes sobre `JSESSIONID`.
+StayHub autentica con **JWT** (HS256, `TokenJwt` + `MecanismoJwt`). Al hacer login se emite
+un token con `iss=stayhub`, `aud=stayhub-api`, `sub` (usuario), `rol`, `mfa`, `auth_time`, `iat`,
+`exp` (15 minutos) y `jti`. El navegador lo recibe en la cookie `STAYHUB_TOKEN` (`HttpOnly`,
+`SameSite=Lax` y `Secure` fuera del modo HTTP local); los clientes de API pueden enviarlo en
+`Authorization: Bearer <token>` (en ese caso no se pide token CSRF, porque el navegador no lo
+manda solo).
 
-La cookie se limita al canal HTTPS, es `HttpOnly`, usa `SameSite=Lax` y no admite el id de
-sesión en la URL. El login invalida cualquier sesión anterior, crea una nueva y rota su
-identificador; el logout la invalida. La inactividad vence a los 15 minutos y existe además
-un límite absoluto de ocho horas validado en cada request autenticada. Las mutaciones usan
+Un token vencido, con la firma alterada, con `alg=none` u otro algoritmo, de otro emisor u
+otra audiencia, revocado o con más de ocho horas desde el login recibe **401 `TOKEN_INVALIDO`**
+(`TokenJwtTest`). El logout revoca el `jti` en el servidor y borra la cookie. Mientras se usa,
+el token se renueva solo cuando le quedan menos de cinco minutos.
+
+La clave se configura con la propiedad `stayhub.jwt.secreto` o la variable `STAYHUB_JWT_SECRETO`
+(Base64, 32 bytes o más) y nunca se versiona; si falta, WildFly genera una aleatoria al arrancar.
+La sesión HTTP (`JSESSIONID`) ya no guarda la identidad: solo el token CSRF y el paso pendiente
+de MFA durante el login, y se rota en cada login. Las mutaciones usan
 un token CSRF asociado a esa misma sesión.
 
 La suite automatizada verifica cookie manipulada, rotación al iniciar sesión, reutilización

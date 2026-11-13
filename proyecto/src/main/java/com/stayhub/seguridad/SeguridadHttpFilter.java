@@ -63,7 +63,9 @@ public class SeguridadHttpFilter implements Filter {
             }
             if (soap) autenticarPms(request);
             boolean mutacion = Set.of("POST", "PUT", "PATCH", "DELETE").contains(request.getMethod());
-            if (api && mutacion && !esWebhookOta(ruta)) {
+            // CSRF solo aplica cuando la credencial viaja en una cookie que el navegador manda solo.
+            // Un cliente de API que manda "Authorization: Bearer" sin la cookie no es vulnerable a CSRF.
+            if (api && mutacion && !esWebhookOta(ruta) && !TokenJwt.usaHeaderAuthorization(request)) {
                 validarOrigen(request);
                 if (!Csrf.valido(request.getSession(false), request.getHeader("X-CSRF-Token")))
                     throw new SeguridadException(403, "Token CSRF ausente o inválido");
@@ -119,8 +121,8 @@ public class SeguridadHttpFilter implements Filter {
                 ruta.contains("sincronizaciones") ? "sincronizacion" : "operacion";
         int limite = switch (grupo) { case "login" -> 60; case "registro" -> 5; case "notificaciones", "sincronizacion" -> 10; default -> 60; };
         if (!limitador.permitir(grupo + ":ip:" + ip, limite, ahora)) throw new SeguridadException(429, "Demasiadas solicitudes");
-        HttpSession sesion = request.getSession(false);
-        Object id = sesion == null ? null : sesion.getAttribute("usuarioId");
+        CredencialActual credencial = CredencialActual.de(request);
+        Object id = credencial == null ? null : credencial.usuarioId();
         if (id != null && !limitador.permitir(grupo + ":usuario:" + id, limite, ahora)) throw new SeguridadException(429, "Demasiadas solicitudes");
     }
     private static void validarOrigen(HttpServletRequest req) {
