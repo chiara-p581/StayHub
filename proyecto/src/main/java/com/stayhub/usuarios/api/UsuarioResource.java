@@ -1,10 +1,12 @@
 package com.stayhub.usuarios.api;
 
+import com.stayhub.seguridad.CredencialActual;
 import com.stayhub.seguridad.Csrf;
 import com.stayhub.seguridad.IdentidadActual;
 import com.stayhub.seguridad.SeguridadException;
 import com.stayhub.seguridad.ProteccionLogin;
 import com.stayhub.seguridad.MfaService;
+import com.stayhub.seguridad.TokenJwt;
 import com.stayhub.usuarios.exception.UsuarioException;
 import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 import com.stayhub.usuarios.dto.ActualizacionUsuarioRequest;
@@ -17,6 +19,7 @@ import com.stayhub.usuarios.model.RolUsuario;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
@@ -30,8 +33,6 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UsuarioResource {
-    private static final String INICIO_ABSOLUTO_SESION = "inicioAbsolutoSesion";
-
     @Inject
     private ServicioDeUsuarios servicio;
 
@@ -41,6 +42,7 @@ public class UsuarioResource {
     @Inject
     private IdentidadActual identidad;
     @Inject private MfaService mfa;
+    @Inject private TokenJwt tokens;
 
     @POST
     public Response registrar(RegistroUsuarioRequest solicitud) {
@@ -55,7 +57,8 @@ public class UsuarioResource {
 
     @POST
     @Path("/login")
-    public UsuarioResponse login(LoginRequest credenciales, @Context HttpServletRequest request) {
+    public UsuarioResponse login(LoginRequest credenciales, @Context HttpServletRequest request,
+                                 @Context HttpServletResponse response) {
         String email = credenciales == null ? null : credenciales.email();
         String ip = request.getRemoteAddr();
         proteccionLogin.verificar(email, ip);
@@ -69,8 +72,12 @@ public class UsuarioResource {
         proteccionLogin.registrarExito(email, ip);
         boolean admin = "ADMIN".equals(usuario.rol());
         boolean mfaHabilitado = admin && mfa.habilitado(usuario.id());
+        // Un login nuevo descarta el token anterior y la sesión anterior (fijación de sesión).
+        tokens.revocar(CredencialActual.de(request));
+        TokenJwt.borrarCookie(request, response);
         HttpSession anterior = request.getSession(false);
         if (anterior != null) anterior.invalidate();
+        // La sesión ya no guarda la identidad: solo el token CSRF y el paso pendiente de MFA.
         HttpSession sesion = request.getSession(true);
         request.changeSessionId();
         sesion.setMaxInactiveInterval(900);
@@ -78,7 +85,7 @@ public class UsuarioResource {
             sesion.setAttribute("mfaPendienteUsuarioId", usuario.id());
             sesion.setAttribute("mfaPendienteDesde", System.currentTimeMillis());
         } else {
-            completarSesion(sesion, usuario, !admin);
+            emitirToken(request, response, usuario, !admin);
         }
         Csrf.token(sesion);
         return admin ? new UsuarioResponse(usuario.id(), usuario.email(), usuario.nombre(), usuario.apellido(), usuario.rol(), true, mfaHabilitado) : usuario;
@@ -89,7 +96,8 @@ public class UsuarioResource {
     public record ActivacionMfaResponse(UsuarioResponse usuario, List<String> codigosRecuperacion) { }
 
     @POST @Path("/mfa/verificar-login")
-    public UsuarioResponse verificarMfaLogin(CodigoMfaRequest body, @Context HttpServletRequest request) {
+    public UsuarioResponse verificarMfaLogin(CodigoMfaRequest body, @Context HttpServletRequest request,
+                                             @Context HttpServletResponse response) {
         HttpSession sesion=request.getSession(false);
         Object id=sesion==null?null:sesion.getAttribute("mfaPendienteUsuarioId");
         Object desde=sesion==null?null:sesion.getAttribute("mfaPendienteDesde");
@@ -97,7 +105,7 @@ public class UsuarioResource {
         if(!(id instanceof Long usuarioId)||!(desde instanceof Long inicio)||inicio>ahora||ahora-inicio>300_000L
                 ||body==null||!mfa.validarAcceso(usuarioId,body.codigo())) throw new SeguridadException(401,"Código MFA requerido o inválido");
         UsuarioResponse usuario=servicio.buscarPorId(usuarioId);
-        completarSesion(sesion,usuario,true);
+        emitirToken(request, response, usuario, true);
         sesion.removeAttribute("mfaPendienteUsuarioId");sesion.removeAttribute("mfaPendienteDesde");
         return usuario;
     }
@@ -115,11 +123,11 @@ public class UsuarioResource {
     }
 
     @POST @Path("/mfa/activar")
-    public ActivacionMfaResponse activarMfa(CodigoMfaRequest body, @Context HttpServletRequest request) {
+    public ActivacionMfaResponse activarMfa(CodigoMfaRequest body, @Context HttpServletRequest request,
+                                            @Context HttpServletResponse response) {
         if (!identidad.admin()) throw new SeguridadException(403,"Sólo disponible para administradores");
         List<String> codigos = mfa.activar(identidad.usuarioId(), body == null ? null : body.codigo());
-        request.getSession(false).setAttribute("mfaVerificada", true);
-        request.getSession(false).setAttribute("reautenticadoEn", System.currentTimeMillis());
+        reemitirToken(request, response, true, System.currentTimeMillis());
         return new ActivacionMfaResponse(servicio.buscarPorId(identidad.usuarioId()), codigos);
     }
 
@@ -130,36 +138,54 @@ public class UsuarioResource {
     }
 
     @POST @Path("/mfa/reiniciar")
-    public Response reiniciarMfa(@Context HttpServletRequest request) {
+    public Response reiniciarMfa(@Context HttpServletRequest request, @Context HttpServletResponse response) {
         if (!identidad.admin()) throw new SeguridadException(403,"Sólo disponible para administradores");
         mfa.reiniciar(identidad.usuarioId());
-        HttpSession sesion = request.getSession(false);
-        sesion.setAttribute("mfaVerificada", false);
-        sesion.removeAttribute("reautenticadoEn");
+        reemitirToken(request, response, false, 0L);
         return Response.noContent().build();
     }
 
     @POST @Path("/reautenticar")
-    public Response reautenticar(ReautenticacionRequest body, @Context HttpServletRequest request) {
+    public Response reautenticar(ReautenticacionRequest body, @Context HttpServletRequest request,
+                                 @Context HttpServletResponse response) {
         if (!identidad.admin() || body == null) throw new SeguridadException(403,"Reautenticación administrativa requerida");
         UsuarioResponse actual = servicio.buscarPorId(identidad.usuarioId());
         servicio.autenticar(new LoginRequest(actual.email(), body.password()));
         if (!mfa.habilitado(actual.id()) || !mfa.validarAcceso(actual.id(), body.codigoMfa()))
             throw new SeguridadException(401,"Código MFA requerido o inválido");
-        request.getSession(false).setAttribute("reautenticadoEn", System.currentTimeMillis());
+        reemitirToken(request, response, true, System.currentTimeMillis());
         return Response.noContent().build();
     }
 
-    private void completarSesion(HttpSession sesion, UsuarioResponse usuario, boolean mfaVerificada) {
-        sesion.setAttribute("usuarioId",usuario.id());sesion.setAttribute("usuarioRol",usuario.rol());
-        sesion.setAttribute(INICIO_ABSOLUTO_SESION,System.currentTimeMillis());
-        sesion.setAttribute("mfaVerificada",mfaVerificada);
-        if(mfaVerificada)sesion.setAttribute("reautenticadoEn",System.currentTimeMillis());
+    /** Emite el JWT del login y lo guarda en la cookie HttpOnly. */
+    private void emitirToken(HttpServletRequest request, HttpServletResponse response,
+                             UsuarioResponse usuario, boolean mfaVerificada) {
+        long ahora = System.currentTimeMillis();
+        String token = tokens.emitir(usuario.id(), usuario.rol(), mfaVerificada, ahora, mfaVerificada ? ahora : 0L);
+        TokenJwt.escribirCookie(request, response, token);
+    }
+
+    /** Cambia datos del token actual (MFA, reautenticación, rol): revoca el viejo y emite otro. */
+    private void reemitirToken(HttpServletRequest request, HttpServletResponse response,
+                               boolean mfaVerificada, long reautenticadoEn) {
+        reemitirToken(request, response, null, mfaVerificada, reautenticadoEn);
+    }
+
+    private void reemitirToken(HttpServletRequest request, HttpServletResponse response, String rol,
+                               boolean mfaVerificada, long reautenticadoEn) {
+        CredencialActual actual = CredencialActual.de(request);
+        if (actual == null) throw new SeguridadException(401, "Iniciá sesión para continuar");
+        tokens.revocar(actual);
+        String token = tokens.reemitir(actual, rol == null ? actual.rol() : rol, mfaVerificada, reautenticadoEn);
+        TokenJwt.escribirCookie(request, response, token);
     }
 
     @DELETE
     @Path("/sesion")
-    public Response cerrarSesion(@Context HttpServletRequest request) {
+    public Response cerrarSesion(@Context HttpServletRequest request, @Context HttpServletResponse response) {
+        // SEC-W04: el token queda revocado en el servidor; aunque alguien lo haya copiado, ya no sirve.
+        tokens.revocar(CredencialActual.de(request));
+        TokenJwt.borrarCookie(request, response);
         HttpSession sesion = request.getSession(false);
         if (sesion != null) sesion.invalidate();
         return Response.noContent().build();
@@ -181,13 +207,16 @@ public class UsuarioResource {
     @PUT
     @Path("/me")
     public UsuarioResponse actualizarMiPerfil(ActualizacionUsuarioRequest solicitud,
-                                              @Context HttpServletRequest request) {
-        HttpSession sesion = request.getSession(false);
-        if (sesion == null || sesion.getAttribute("usuarioId") == null) {
+                                              @Context HttpServletRequest request,
+                                              @Context HttpServletResponse response) {
+        CredencialActual actual = CredencialActual.de(request);
+        if (actual == null) {
             throw new WebApplicationException("Iniciá sesión para continuar", Response.Status.UNAUTHORIZED);
         }
-        UsuarioResponse actualizado = servicio.actualizarPerfil((Long) sesion.getAttribute("usuarioId"), solicitud);
-        sesion.setAttribute("usuarioRol", actualizado.rol());
+        UsuarioResponse actualizado = servicio.actualizarPerfil(actual.usuarioId(), solicitud);
+        if (!actualizado.rol().equals(actual.rol())) {
+            reemitirToken(request, response, actualizado.rol(), actual.mfaVerificada(), actual.reautenticadoEn());
+        }
         return actualizado;
     }
 

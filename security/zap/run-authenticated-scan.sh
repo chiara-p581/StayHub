@@ -59,7 +59,9 @@ verify_admin_mfa() {
 
 session_cookie() {
   local jar="$1"
-  awk '$6 == "JSESSIONID" { value=$6 "=" $7 } END { print value }' "$jar"
+  # La identidad viaja en el JWT (cookie STAYHUB_TOKEN); JSESSIONID solo guarda el token CSRF.
+  # Se separan con ";" sin espacio porque ZAP corta las opciones de -z en los espacios.
+  awk '$6 == "JSESSIONID" || $6 == "STAYHUB_TOKEN" { value = value (value == "" ? "" : ";") $6 "=" $7 } END { print value }' "$jar"
 }
 
 run_zap() {
