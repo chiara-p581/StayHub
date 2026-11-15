@@ -2,7 +2,6 @@ package com.stayhub.seguridad;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.enterprise.inject.spi.CDI;
 
 import java.nio.charset.StandardCharsets;
@@ -50,9 +49,10 @@ public final class AuditoriaSeguridad {
 
     public static void registrar(HttpServletRequest request, String accion, String resultado,
                                  String recurso, String detalle) {
-        HttpSession sesion = request == null ? null : request.getSession(false);
-        Object actor = sesion == null ? null : sesion.getAttribute("usuarioId");
-        Object rol = sesion == null ? null : sesion.getAttribute("usuarioRol");
+        // El actor y el rol salen del JWT ya validado, no de la sesión.
+        CredencialActual credencial = CredencialActual.de(request);
+        Object actor = credencial == null ? null : credencial.usuarioId();
+        Object rol = credencial == null ? null : credencial.rol();
         String origen = request == null ? "desconocido" : huella(request.getRemoteAddr());
         Instant fecha = Instant.now();
         String correlacion = correlationId(request);
@@ -108,8 +108,8 @@ public final class AuditoriaSeguridad {
         else if (ruta.startsWith("/api/reservas") || ruta.startsWith("/api/carrito")) accion = "RESERVA_MUTADA";
         else if (ruta.matches("/api/canales-externos/otas/[^/]+/reservas(?:/[^/]+)?")) accion = "WEBHOOK_OTA_PROCESADO";
         else {
-            HttpSession s = request.getSession(false);
-            accion = s != null && "ADMIN".equals(s.getAttribute("usuarioRol"))
+            CredencialActual credencial = CredencialActual.de(request);
+            accion = credencial != null && credencial.admin()
                     ? "OPERACION_ADMINISTRATIVA" : "OPERACION_MUTABLE";
         }
         registrarUnaVez(request, accion, estado < 400 ? "EXITO" : "RECHAZADO", ruta, "HTTP_" + estado);

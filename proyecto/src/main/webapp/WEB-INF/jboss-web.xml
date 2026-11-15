@@ -6,7 +6,7 @@
   <!--
     Dominio exclusivo del WAR. El servidor mapea StayHubSecurity a
     ApplicationDomain con JASPI no integrado para aceptar únicamente la
-    identidad establecida por MecanismoSesionContenedor. No se modifica el
+    identidad establecida por MecanismoJwt (token validado). No se modifica el
     dominio compartido "other" ni el valor global de Undertow.
   -->
   <security-domain>StayHubSecurity</security-domain>

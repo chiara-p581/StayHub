@@ -41,9 +41,12 @@ RUN javac -d /opt/jboss/ci-tools /tmp/MfaTotpCode.java && rm /tmp/MfaTotpCode.ja
       -storepass stayhub-pms-local && \
     /opt/jboss/wildfly/bin/jboss-cli.sh --file=/opt/jboss/wildfly/configure.cli && \
     mfa_key="$(java -cp /opt/jboss/ci-tools MfaTotpCode --derive-key stayhub-docker-mfa-demo-only)" && \
+    jwt_key="$(head -c 48 /dev/urandom | base64 | tr -d '\n')" && \
+    test -n "$jwt_key" && \
     printf '%s\n' \
       'embed-server --server-config=standalone-full.xml --std-out=echo' \
       "/system-property=stayhub.mfa.master-key:add(value=\"$mfa_key\")" \
+      "/system-property=stayhub.jwt.secreto:add(value=\"$jwt_key\")" \
       'stop-embedded-server' > /tmp/configure-mfa-demo.cli && \
     /opt/jboss/wildfly/bin/jboss-cli.sh --file=/tmp/configure-mfa-demo.cli && \
     fingerprint="$(keytool -J-Duser.language=en -list -v -alias stayhub-pms \

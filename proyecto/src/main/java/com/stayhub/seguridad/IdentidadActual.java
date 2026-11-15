@@ -4,28 +4,30 @@ import com.stayhub.reservas.model.Reserva;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
-/** La identidad viene del contenedor HTTP, nunca de parámetros del cliente. */
+/**
+ * La identidad viene del JWT validado por {@link MecanismoJwt} (o del certificado del
+ * PMS en SOAP), nunca de parámetros del cliente.
+ */
 @RequestScoped
 public class IdentidadActual {
     public static final String PMS_HOTELES = "stayhub.pms.hoteles.autorizados";
     @Inject private HttpServletRequest request;
+
     public Long usuarioId() {
-        HttpSession s = request.getSession(false);
-        Long id = s == null ? null : (Long) s.getAttribute("usuarioId");
-        if (id == null) throw new SeguridadException(401, "Iniciá sesión para continuar");
-        return id;
+        CredencialActual credencial = CredencialActual.de(request);
+        if (credencial == null) throw new SeguridadException(401, "Iniciá sesión para continuar");
+        return credencial.usuarioId();
     }
     public boolean admin() {
-        HttpSession s = request.getSession(false);
-        return s != null && s.getAttribute("usuarioId") != null && "ADMIN".equals(s.getAttribute("usuarioRol"));
+        CredencialActual credencial = CredencialActual.de(request);
+        return credencial != null && credencial.admin();
     }
     public boolean pms() { return request.getAttribute(PMS_HOTELES) instanceof java.util.Set<?>; }
     public void exigirHuesped() {
         usuarioId();
-        HttpSession s = request.getSession(false);
-        if (!"HUESPED".equals(s.getAttribute("usuarioRol"))) throw new SeguridadException(403, "Solo huéspedes pueden reservar o pagar");
+        if (!Roles.HUESPED.equals(CredencialActual.de(request).rol()))
+            throw new SeguridadException(403, "Solo huéspedes pueden reservar o pagar");
     }
     public void autorizarHotel(Long hotelId) {
         Object autorizados = request.getAttribute(PMS_HOTELES);

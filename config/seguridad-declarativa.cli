@@ -1,11 +1,11 @@
 # Seguridad declarativa (@RolesAllowed) aislada para StayHub.
 #
-# StayHub valida usuario y contraseña contra su propia base y guarda el rol en
-# la sesión. MecanismoSesionContenedor le pasa esa identidad al contenedor en
+# StayHub valida usuario y contraseña contra su propia base y emite un JWT con
+# el rol. MecanismoJwt valida ese token y le pasa la identidad al contenedor en
 # cada request. Por defecto WildFly exige que ese usuario exista también en su
 # ApplicationRealm (integrated-jaspi=true). El dominio exclusivo
 # StayHubSecurity usa JASPI no integrado para aceptar la identidad que informa
-# MecanismoSesionContenedor, con los roles HUESPED o ADMIN, sin relajar el
+# MecanismoJwt, con los roles HUESPED o ADMIN, sin relajar el
 # dominio compartido "other" ni el valor global de Undertow.
 #
 # Uso (con WildFly prendido):
