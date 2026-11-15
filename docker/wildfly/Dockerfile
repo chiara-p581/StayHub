@@ -11,7 +11,7 @@ USER root
 RUN microdnf install --best --nodocs -y curl && microdnf clean all && \
     mkdir -p /opt/jboss/wildfly/modules/org/postgresql/main && \
     mkdir -p /opt/jboss/local-security /opt/jboss/ci-tools && \
-    curl --fail --location --output /opt/jboss/wildfly/modules/org/postgresql/main/postgresql.jar \
+    curl --fail --location --retry 6 --retry-delay 10 --output /opt/jboss/wildfly/modules/org/postgresql/main/postgresql.jar \
       https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.13/postgresql-42.7.13.jar && \
     chown -R jboss:root /opt/jboss/wildfly/modules/org/postgresql /opt/jboss/local-security /opt/jboss/ci-tools
 

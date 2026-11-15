@@ -23,15 +23,15 @@ public record CredencialActual(Long usuarioId, String rol, boolean mfaVerificada
     static final String ATRIBUTO = "stayhub.credencial";
     static final String ATRIBUTO_TOKEN_INVALIDO = "stayhub.tokenInvalido";
 
-    /** La credencial del request, o {@code null} si no trajo un JWT válido. */
+    /** La credencial del request, o {@code null} si no trajo un JWT válido. El request no puede ser null. */
     public static CredencialActual de(HttpServletRequest request) {
-        Object valor = request == null ? null : request.getAttribute(ATRIBUTO);
+        Object valor = request.getAttribute(ATRIBUTO);
         return valor instanceof CredencialActual credencial ? credencial : null;
     }
 
     /** {@code true} si el request trajo un JWT pero no pasó la validación. */
     public static boolean tokenInvalido(HttpServletRequest request) {
-        return request != null && Boolean.TRUE.equals(request.getAttribute(ATRIBUTO_TOKEN_INVALIDO));
+        return Boolean.TRUE.equals(request.getAttribute(ATRIBUTO_TOKEN_INVALIDO));
     }
 
     public boolean admin() {

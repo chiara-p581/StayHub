@@ -50,7 +50,7 @@ public final class AuditoriaSeguridad {
     public static void registrar(HttpServletRequest request, String accion, String resultado,
                                  String recurso, String detalle) {
         // El actor y el rol salen del JWT ya validado, no de la sesión.
-        CredencialActual credencial = CredencialActual.de(request);
+        CredencialActual credencial = request == null ? null : CredencialActual.de(request);
         Object actor = credencial == null ? null : credencial.usuarioId();
         Object rol = credencial == null ? null : credencial.rol();
         String origen = request == null ? "desconocido" : huella(request.getRemoteAddr());
