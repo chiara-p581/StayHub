@@ -577,6 +577,10 @@ jobs:
           npx playwright test tests/session-security.spec.cjs
           reiniciar_estado_pruebas
 
+          # JWT por HTTP: firma/payload alterados, alg=none, otro emisor, CSRF y replay tras logout → 401/403.
+          npx playwright test tests/jwt-security.spec.cjs
+          reiniciar_estado_pruebas
+
           escenarios_seguridad=(
             'mass assignment: registrarse nunca concede ADMIN'
             'BOLA/IDOR: un usuario no puede consultar el perfil de otro'

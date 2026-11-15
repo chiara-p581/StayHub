@@ -1,6 +1,7 @@
 package com.stayhub.seguridad;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
@@ -32,7 +33,11 @@ import javax.crypto.spec.SecretKeySpec;
  *   <li>Emisor ({@code iss}) y audiencia ({@code aud}) tienen que ser los de StayHub.</li>
  *   <li>Vence a los 15 minutos ({@code exp}); además, ninguna sesión dura más de 8 horas
  *       desde el login ({@code auth_time}).</li>
- *   <li>En el logout el token queda revocado por su {@code jti}.</li>
+ *   <li>En el logout el token queda revocado por su {@code jti}. La revocación se guarda
+ *       en la base ({@link RevocacionTokens}), así sigue valiendo después de reiniciar.</li>
+ *   <li>Al renovarse, el token anterior se revoca tras una gracia de 30 segundos
+ *       (para no cortar pedidos que ya estaban en viaje con el token viejo).</li>
+ *   <li>Solo un {@code Authorization: Bearer} <b>válido</b> evita el token CSRF.</li>
  * </ul>
  *
  * <p>La clave se lee de la propiedad {@code stayhub.jwt.secreto} o de la variable
@@ -52,16 +57,23 @@ public class TokenJwt {
     static final long DURACION_MS = 15 * 60_000L;
     static final long DURACION_MAXIMA_SESION_MS = 8L * 60 * 60_000L;
     static final long RENOVAR_ANTES_DE_MS = 5 * 60_000L;
+    static final long GRACIA_ROTACION_MS = 30_000L;
+    static final String ATRIBUTO_BEARER = "stayhub.autenticadoConBearer";
     private static final long TOLERANCIA_RELOJ_MS = 30_000L;
     private static final int LARGO_MAXIMO = 4096;
     private static final String CABECERA = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
     private static final Logger LOG = Logger.getLogger(TokenJwt.class.getName());
     private static final Base64.Encoder B64 = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder B64D = Base64.getUrlDecoder();
-    private static final Map<String, Long> REVOCADOS = new ConcurrentHashMap<>();
+    /** Copia en memoria de las revocaciones (y respaldo en pruebas unitarias sin base). */
+    private static final Map<String, Revocacion> REVOCADOS = new ConcurrentHashMap<>();
+    private record Revocacion(long desde, long expiraEn) { }
 
     private final byte[] clave;
     private final Clock reloj;
+
+    @Inject
+    RevocacionTokens revocaciones;
 
     public TokenJwt() {
         this(ClaveConfigurada.VALOR, Clock.systemUTC());
@@ -123,10 +135,11 @@ public class TokenJwt {
             if (!EMISOR.equals(texto(datos, "iss")) || !AUDIENCIA.equals(texto(datos, "aud"))) throw new TokenInvalidoException();
             if (exp <= ahora || iat > ahora + TOLERANCIA_RELOJ_MS || exp - iat > DURACION_MS) throw new TokenInvalidoException();
             if (autenticadoEn > ahora + TOLERANCIA_RELOJ_MS || ahora - autenticadoEn > DURACION_MAXIMA_SESION_MS) throw new TokenInvalidoException();
-            if (jti == null || jti.isBlank() || REVOCADOS.containsKey(jti)) throw new TokenInvalidoException();
+            if (jti == null || jti.isBlank() || jti.length() > 64) throw new TokenInvalidoException();
             if (!rolValido(rol)) throw new TokenInvalidoException();
             long usuarioId = Long.parseLong(texto(datos, "sub"));
             if (usuarioId <= 0) throw new TokenInvalidoException();
+            if (revocado(jti, ahora)) throw new TokenInvalidoException();
             boolean mfa = datos.get("mfa") == JsonValue.TRUE;
             return new CredencialActual(usuarioId, rol, mfa, autenticadoEn, reautenticadoEn, jti, exp);
         } catch (TokenInvalidoException ex) {
@@ -136,12 +149,45 @@ public class TokenJwt {
         }
     }
 
-    /** Revoca el token (logout). Sigue revocado hasta que vence. */
+    /** Revoca el token ya mismo (logout, cambio de MFA o de rol). */
     public void revocar(CredencialActual credencial) {
+        revocarDesde(credencial, reloj.millis());
+    }
+
+    /**
+     * Revoca el token que se acaba de renovar. Deja 30 segundos de gracia para los
+     * pedidos que el navegador ya había mandado con el token viejo.
+     */
+    public void revocarConGracia(CredencialActual credencial) {
+        revocarDesde(credencial, reloj.millis() + GRACIA_ROTACION_MS);
+    }
+
+    /** {@code true} si al token le quedan menos de 5 minutos y conviene renovarlo. */
+    public boolean debeRenovarse(CredencialActual credencial) {
+        return credencial.expiraEn() - reloj.millis() <= RENOVAR_ANTES_DE_MS;
+    }
+
+    private void revocarDesde(CredencialActual credencial, long desde) {
         if (credencial == null) return;
         long ahora = reloj.millis();
-        REVOCADOS.entrySet().removeIf(e -> e.getValue() <= ahora);
-        REVOCADOS.put(credencial.jti(), credencial.expiraEn());
+        REVOCADOS.entrySet().removeIf(e -> e.getValue().expiraEn() <= ahora);
+        REVOCADOS.merge(credencial.jti(), new Revocacion(desde, credencial.expiraEn()),
+                (vieja, nueva) -> vieja.desde() <= nueva.desde() ? vieja : nueva);
+        if (revocaciones == null) return;
+        try {
+            revocaciones.guardar(credencial.jti(), desde, credencial.expiraEn(), ahora);
+        } catch (RuntimeException ex) {
+            LOG.warning("No se pudo guardar la revocación del token en la base; queda revocado solo en memoria.");
+        }
+    }
+
+    private boolean revocado(String jti, long ahora) {
+        Revocacion enMemoria = REVOCADOS.get(jti);
+        if (enMemoria != null && ahora >= enMemoria.desde()) return true;
+        if (revocaciones == null) return false;
+        // Si la base no responde, falla la validación (fallar de forma segura → 401).
+        Long desde = revocaciones.revocadoDesde(jti);
+        return desde != null && ahora >= desde;
     }
 
     /** Toma el token del header {@code Authorization: Bearer} o, si no hay, de la cookie. */
@@ -155,10 +201,20 @@ public class TokenJwt {
         return null;
     }
 
-    /** {@code true} si el pedido usa {@code Authorization} y no la cookie (cliente de API, sin CSRF). */
-    public static boolean usaHeaderAuthorization(HttpServletRequest request) {
+    /** {@code true} si el pedido trae un header {@code Authorization: Bearer ...} (válido o no). */
+    public static boolean traeBearer(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
-        if (header == null || header.isBlank()) return false;
+        return header != null && header.regionMatches(true, 0, "Bearer ", 0, 7);
+    }
+
+    /**
+     * {@code true} solo si el pedido se autenticó con un {@code Authorization: Bearer} que
+     * {@link MecanismoJwt} ya validó, y sin la cookie del token. Es el único caso en que no
+     * se pide token CSRF: el navegador nunca agrega ese header solo. Un header inválido,
+     * de otro esquema o acompañado de la cookie sigue pasando por el control CSRF.
+     */
+    public static boolean autenticadoConBearer(HttpServletRequest request) {
+        if (!Boolean.TRUE.equals(request.getAttribute(ATRIBUTO_BEARER)) || CredencialActual.de(request) == null) return false;
         var cookies = request.getCookies();
         if (cookies != null) for (var cookie : cookies) if (COOKIE.equals(cookie.getName())) return false;
         return true;

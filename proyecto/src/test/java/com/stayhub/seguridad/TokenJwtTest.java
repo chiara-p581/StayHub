@@ -4,12 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Base64;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.Test;
@@ -147,5 +153,80 @@ class TokenJwtTest {
     @Test
     void claveCortaSeRechaza() {
         assertThrows(IllegalArgumentException.class, () -> new TokenJwt(new byte[16], Clock.systemUTC()));
+    }
+
+    @Test
+    void rotacionRevocaElTokenAnteriorDespuesDeUnaGraciaCorta() {
+        TokenJwt tokens = tokensEn(AHORA);
+        String viejo = tokens.emitir(7L, "HUESPED", true, AHORA, 0L);
+        tokens.revocarConGracia(tokens.validar(viejo));
+        // Pedidos que ya estaban en viaje con el token viejo siguen pasando unos segundos...
+        assertEquals(7L, tokensEn(AHORA + 10_000).validar(viejo).usuarioId());
+        // ...pero pasada la gracia el token renovado deja de valer (no queda vivo hasta su exp).
+        assertThrows(TokenJwt.TokenInvalidoException.class,
+                () -> tokensEn(AHORA + TokenJwt.GRACIA_ROTACION_MS + 1).validar(viejo));
+    }
+
+    @Test
+    void debeRenovarseSoloCuandoQuedanMenosDe5Minutos() {
+        TokenJwt tokens = tokensEn(AHORA);
+        CredencialActual c = tokens.validar(tokens.emitir(7L, "HUESPED", true, AHORA, 0L));
+        assertFalse(tokens.debeRenovarse(c));
+        assertTrue(tokensEn(AHORA + TokenJwt.DURACION_MS - TokenJwt.RENOVAR_ANTES_DE_MS).debeRenovarse(c));
+    }
+
+    @Test
+    void laRevocacionSeGuardaEnLaBaseYSeRespetaDespuesDeReiniciar() {
+        TokenJwt antes = tokensEn(AHORA);
+        RevocacionTokens base = mock(RevocacionTokens.class);
+        antes.revocaciones = base;
+        String token = antes.emitir(7L, "HUESPED", true, AHORA, 0L);
+        CredencialActual c = antes.validar(token);
+        antes.revocar(c);
+        verify(base).guardar(c.jti(), AHORA, c.expiraEn(), AHORA);
+
+        // Otra instancia (como después de reiniciar WildFly) consulta la base.
+        TokenJwt despues = tokensEn(AHORA + 1000);
+        RevocacionTokens baseDespues = mock(RevocacionTokens.class);
+        despues.revocaciones = baseDespues;
+        String otro = despues.emitir(8L, "HUESPED", true, AHORA, 0L);
+        CredencialActual c2 = despues.validar(otro);
+        when(baseDespues.revocadoDesde(c2.jti())).thenReturn(AHORA);
+        assertThrows(TokenJwt.TokenInvalidoException.class, () -> despues.validar(otro));
+    }
+
+    @Test
+    void siLaBaseNoRespondeElTokenNoSeAcepta() {
+        TokenJwt tokens = tokensEn(AHORA);
+        RevocacionTokens base = mock(RevocacionTokens.class);
+        when(base.revocadoDesde(anyString())).thenThrow(new IllegalStateException("sin base"));
+        tokens.revocaciones = base;
+        String token = tokens.emitir(7L, "HUESPED", true, AHORA, 0L);
+        assertThrows(TokenJwt.TokenInvalidoException.class, () -> tokens.validar(token));
+    }
+
+    @Test
+    void unHeaderAuthorizationInvalidoNoEvitaElCsrf() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getHeader("Authorization")).thenReturn("Bearer basura");
+        // MecanismoJwt no lo validó: no hay credencial ni marca de Bearer.
+        assertFalse(TokenJwt.autenticadoConBearer(request));
+
+        when(request.getHeader("Authorization")).thenReturn("Basic dXN1YXJpbzpjbGF2ZQ==");
+        assertFalse(TokenJwt.autenticadoConBearer(request));
+    }
+
+    @Test
+    void soloUnBearerValidoYSinCookieEvitaElCsrf() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getAttribute(TokenJwt.ATRIBUTO_BEARER)).thenReturn(Boolean.TRUE);
+        when(request.getAttribute(CredencialActual.ATRIBUTO)).thenReturn(IdentidadFixture.credencial(7L, "HUESPED"));
+        assertTrue(TokenJwt.autenticadoConBearer(request));
+
+        // Si además viene la cookie, el navegador podría estar mandándola solo: se pide CSRF.
+        Cookie cookie = mock(Cookie.class);
+        when(cookie.getName()).thenReturn(TokenJwt.COOKIE);
+        when(request.getCookies()).thenReturn(new Cookie[] {cookie});
+        assertFalse(TokenJwt.autenticadoConBearer(request));
     }
 }

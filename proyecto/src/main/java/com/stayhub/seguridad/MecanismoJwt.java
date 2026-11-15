@@ -22,8 +22,10 @@ import java.util.logging.Logger;
  *       contenedor el usuario y su rol, así funcionan los {@code @RolesAllowed};</li>
  *   <li>si es inválido (vencido, alterado, {@code alg=none}, de otro emisor o revocado),
  *       lo marca y {@code AutenticacionFilter} responde 401 en las rutas protegidas;</li>
- *   <li>si le quedan menos de 5 minutos y vino en la cookie, emite uno nuevo
- *       (la sesión se mantiene mientras se usa, con tope de 8 horas desde el login).</li>
+ *   <li>si le quedan menos de 5 minutos y vino en la cookie, emite uno nuevo y revoca
+ *       el anterior (la sesión se mantiene mientras se usa, con tope de 8 horas desde el login);</li>
+ *   <li>si vino en {@code Authorization: Bearer} y es válido, lo marca para que
+ *       {@code SeguridadHttpFilter} no pida token CSRF.</li>
  * </ul>
  *
  * <p>Reemplaza a MecanismoSesionContenedor: la identidad ya no vive en la sesión HTTP
@@ -56,7 +58,12 @@ public class MecanismoJwt implements HttpAuthenticationMechanism {
             return contexto.doNothing();
         }
         request.setAttribute(CredencialActual.ATRIBUTO, credencial);
-        renovarSiHaceFalta(request, response, credencial);
+        if (TokenJwt.traeBearer(request)) {
+            // Cliente de API: queda marcado para no pedirle CSRF; no se renueva (pide otro con login).
+            request.setAttribute(TokenJwt.ATRIBUTO_BEARER, Boolean.TRUE);
+        } else {
+            renovarSiHaceFalta(request, response, credencial);
+        }
         try {
             return contexto.notifyContainerAboutLogin(new CallerPrincipal(String.valueOf(credencial.usuarioId())),
                     Set.of(credencial.rol()));
@@ -69,9 +76,10 @@ public class MecanismoJwt implements HttpAuthenticationMechanism {
         }
     }
 
+    /** Renueva el token de la cookie y revoca el anterior (con 30 s de gracia). */
     private void renovarSiHaceFalta(HttpServletRequest request, HttpServletResponse response, CredencialActual c) {
-        if (TokenJwt.usaHeaderAuthorization(request)) return; // los clientes de API piden otro token con login
-        if (c.expiraEn() - System.currentTimeMillis() > TokenJwt.RENOVAR_ANTES_DE_MS) return;
+        if (!tokens.debeRenovarse(c)) return;
         TokenJwt.escribirCookie(request, response, tokens.reemitir(c, c.rol(), c.mfaVerificada(), c.reautenticadoEn()));
+        tokens.revocarConGracia(c);
     }
 }

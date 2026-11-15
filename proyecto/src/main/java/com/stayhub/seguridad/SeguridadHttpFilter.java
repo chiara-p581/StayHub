@@ -64,8 +64,9 @@ public class SeguridadHttpFilter implements Filter {
             if (soap) autenticarPms(request);
             boolean mutacion = Set.of("POST", "PUT", "PATCH", "DELETE").contains(request.getMethod());
             // CSRF solo aplica cuando la credencial viaja en una cookie que el navegador manda solo.
-            // Un cliente de API que manda "Authorization: Bearer" sin la cookie no es vulnerable a CSRF.
-            if (api && mutacion && !esWebhookOta(ruta) && !TokenJwt.usaHeaderAuthorization(request)) {
+            // Se omite únicamente si el pedido se autenticó con un "Authorization: Bearer" VÁLIDO y sin
+            // la cookie: un header inválido o de otro esquema no desactiva la protección.
+            if (api && mutacion && !esWebhookOta(ruta) && !TokenJwt.autenticadoConBearer(request)) {
                 validarOrigen(request);
                 if (!Csrf.valido(request.getSession(false), request.getHeader("X-CSRF-Token")))
                     throw new SeguridadException(403, "Token CSRF ausente o inválido");
