@@ -41,9 +41,9 @@
     }
     function afterAction() { dialog.close(); return load(); }
     Api.listarHoteles(false).then(function (list) { var select = document.getElementById("f-hotel"); list.forEach(function(h){hotels[h.id]=h.nombre; var o=document.createElement("option");o.value=h.id;o.textContent=h.nombre;select.appendChild(o);}); var preset=new URLSearchParams(location.search).get("bookingId"); if(preset)document.getElementById("f-id").value=preset; return load(); }).catch(function(e){mostrarError(error,e);});
-    document.getElementById("booking-filters").onsubmit = function(e){e.preventDefault();page=0;load();};
-    document.getElementById("clear-filters").onclick=function(){document.getElementById("booking-filters").reset();page=0;load();};
-    document.getElementById("prev").onclick=function(){if(page>0){page--;load();}}; document.getElementById("next").onclick=function(){if((page+1)*size<total){page++;load();}};
+    document.getElementById("booking-filters").onsubmit = function(e){e.preventDefault();page=0;void load();};
+    document.getElementById("clear-filters").onclick=function(){document.getElementById("booking-filters").reset();page=0;void load();};
+    document.getElementById("prev").onclick=function(){if(page>0){page--;void load();}}; document.getElementById("next").onclick=function(){if((page+1)*size<total){page++;void load();}};
     document.getElementById("close-detail").onclick=function(){dialog.close();};
     document.getElementById("booking-cancel-dismiss").onclick=function(){document.getElementById("booking-confirmation").classList.add("hidden");};
     document.getElementById("booking-cancel-approve").onclick=function(){if(!selected)return;Api.cancelarReserva(selected.id).then(afterAction).catch(function(e){mostrarError(error,e);});};
