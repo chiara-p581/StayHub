@@ -120,7 +120,7 @@ public final class AuditoriaSeguridad {
         boolean interno = estado >= 500;
         String codigoSeguro = interno || codigo == null || !codigo.matches("[A-Z][A-Z0-9_]{0,63}")
                 ? (interno ? "ERROR_INTERNO" : "HTTP_" + estado) : codigo;
-        String detalle = interno ? "Ocurrió un error interno. Intentá nuevamente más tarde." : mensaje;
+        String detalle = interno ? "An internal error occurred. Please try again later." : mensaje;
         String ruta = instancia == null || instancia.isBlank() ? "/" : instancia;
         return "{\"type\":\"urn:stayhub:problem:" + escape(codigoSeguro.toLowerCase(Locale.ROOT).replace('_', '-'))
                 + "\",\"title\":\"" + escape(sanitizar(RespuestaSeguraFilter.titulo(estado)))

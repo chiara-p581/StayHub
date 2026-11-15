@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StayHub Admin - Bookings</title>
+<link href="assets/css/tailwind.css" rel="stylesheet"/><link href="assets/css/fonts.css" rel="stylesheet"/><link href="assets/css/theme.css?v=20261115-status" rel="stylesheet"/><style>.admin-result-row:hover{background:#e8edf6!important}.admin-result-row:hover td{color:#13233e!important}html[data-theme="dark"] body .admin-result-row:hover{background:#263955!important}html[data-theme="dark"] body .admin-result-row:hover td{color:#f4f7fc!important}</style>
+<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<main class="max-w-container-max mx-auto px-md md:px-xl py-xl pb-24">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-xl">
+    <div><p class="text-xs uppercase tracking-[.18em] text-on-surface-variant">Administration</p><h1 class="font-headline-lg text-display-lg text-primary">Bookings</h1><p class="text-on-surface-variant mt-xs">Search, inspect and manage every booking without scrolling through the entire catalog.</p></div>
+    <a href="admin-dashboard.html" class="inline-flex items-center gap-xs text-primary"><span class="material-symbols-outlined">arrow_back</span>Overview</a>
+  </div>
+  <div id="error-banner" class="hidden mb-md p-md rounded-lg bg-error-container text-on-error-container"></div>
+  <form id="booking-filters" class="bg-surface rounded-2xl border border-outline-variant/30 p-lg grid sm:grid-cols-2 lg:grid-cols-4 gap-md">
+    <label class="text-sm">Booking ID<input id="f-id" type="number" min="1" class="mt-xs w-full rounded-lg border-outline-variant" placeholder="e.g. 41"/></label>
+    <label class="text-sm">Guest<input id="f-guest" class="mt-xs w-full rounded-lg border-outline-variant" placeholder="Name or email"/></label>
+    <label class="text-sm">Hotel<select id="f-hotel" class="mt-xs w-full rounded-lg border-outline-variant"><option value="">All hotels</option></select></label>
+    <label class="text-sm">Status<select id="f-status" class="mt-xs w-full rounded-lg border-outline-variant"><option value="">All statuses</option><option value="PENDIENTE">Pending</option><option value="CONFIRMADA">Confirmed</option><option value="MODIFICADA">Modified</option><option value="CANCELADA">Cancelled</option><option value="RECHAZADA">Rejected</option></select></label>
+    <label class="text-sm">Minimum amount<input id="f-min" type="number" min="0" step="0.01" class="mt-xs w-full rounded-lg border-outline-variant"/></label>
+    <label class="text-sm">Maximum amount<input id="f-max" type="number" min="0" step="0.01" class="mt-xs w-full rounded-lg border-outline-variant"/></label>
+    <div class="sm:col-span-2 flex items-end gap-sm"><button class="bg-primary text-on-primary rounded-full px-lg py-sm">Search bookings</button><button id="clear-filters" type="button" class="border border-outline-variant rounded-full px-lg py-sm">Clear</button></div>
+  </form>
+  <section class="mt-lg bg-surface rounded-2xl border border-outline-variant/30 overflow-hidden">
+    <div class="p-lg border-b border-outline-variant/30 flex justify-between"><h2 class="font-title-lg text-title-lg">Results</h2><span id="result-count" class="text-sm text-on-surface-variant"></span></div>
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Booking results table"><table class="w-full min-w-[820px] text-left"><thead class="bg-surface-container-low text-xs uppercase text-on-surface-variant"><tr><th class="p-md">ID</th><th class="p-md">Guest</th><th class="p-md">Hotel</th><th class="p-md">Stay</th><th class="p-md">Status</th><th class="p-md text-right">Amount</th><th class="p-md"></th></tr></thead><tbody id="bookings-body"></tbody></table></div>
+    <p id="empty" class="hidden p-xl text-center text-on-surface-variant">No bookings match these filters.</p>
+    <div class="p-md border-t border-outline-variant/30 flex items-center justify-between"><button id="prev" class="border rounded-full px-md py-xs disabled:opacity-40">Previous</button><span id="page-label" class="text-sm"></span><button id="next" class="border rounded-full px-md py-xs disabled:opacity-40">Next</button></div>
+  </section>
+</main>
+<dialog id="booking-dialog" class="w-[min(94vw,680px)] rounded-2xl bg-surface text-on-surface p-0 backdrop:bg-black/50">
+  <div class="p-xl"><div class="flex justify-between gap-md"><div><p class="text-xs uppercase tracking-wider text-on-surface-variant">Booking details</p><h2 id="detail-title" class="font-headline-md text-headline-md text-primary"></h2></div><button id="close-detail" aria-label="Close"><span class="material-symbols-outlined">close</span></button></div><div id="detail-content" class="mt-lg"></div><div id="detail-actions" class="mt-xl flex flex-wrap gap-sm"></div><div id="booking-confirmation" class="hidden mt-lg p-md rounded-xl border border-error/40 bg-error-container/20"><p class="font-semibold">Confirm cancellation</p><p class="text-sm mt-xs">This records the cancellation and cannot be undone.</p><div class="flex gap-sm mt-md"><button id="booking-cancel-approve" type="button" class="bg-error text-on-error rounded-full px-md py-sm">Cancel booking</button><button id="booking-cancel-dismiss" type="button" class="border border-outline-variant rounded-full px-md py-sm">Go back</button></div></div></div>
+</dialog>
+<script src="assets/js/api.js?v=20261115-admin4"></script><script src="assets/js/pages/admin-bookings.js?v=20261115-2"></script>
+</body></html>

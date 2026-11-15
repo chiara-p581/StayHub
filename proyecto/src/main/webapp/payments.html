@@ -1,106 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>StayHub - Payments</title>
-<link href="assets/css/tailwind.css" rel="stylesheet"/><link href="assets/css/fonts.css" rel="stylesheet"/>
-
-
-
-<link href="assets/css/theme.css?v=20261023-design2" rel="stylesheet"/>
-<style>
-.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-.icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-</style>
-<script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script>
-</head>
-<body class="bg-background text-on-background h-full flex flex-col antialiased">
-<!-- TopAppBar -->
-<header class="bg-surface border-b border-outline-variant transition-colors duration-200 ease-in-out">
-<div class="flex items-center justify-between px-md py-sm w-full max-w-container-max mx-auto h-16">
-<a href="index.html" class="font-headline-lg text-headline-lg text-primary flex items-center gap-sm"><span>StayHub</span><span id="brand-admin" class="hidden text-[10px] uppercase tracking-wider bg-secondary-container px-2 py-1 rounded-full">Admin</span></a>
-<div id="session-area" class="flex items-center gap-sm"></div>
-</div>
-</header>
-<div class="flex flex-1 overflow-hidden">
-<main class="flex-1 overflow-y-auto pb-24 md:pb-8 p-md md:p-gutter lg:p-xl max-w-container-max mx-auto w-full">
-<div class="mb-lg">
-<h1 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-primary mb-xs">Payments</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant">Pay for a booking and review completed payments.</p>
-</div>
-<section id="hotel-pago" class="hidden mb-lg bg-surface rounded-xl overflow-hidden border border-outline-variant/20 grid md:grid-cols-[220px_1fr]">
-<img id="hotel-pago-imagen" class="w-full h-44 md:h-full object-cover" alt="Booking hotel"/>
-<div class="p-lg"><p class="text-xs uppercase tracking-wider text-on-surface-variant">You are paying for</p><h2 id="hotel-pago-nombre" class="font-headline-md text-headline-md text-primary mt-xs"></h2><p id="hotel-pago-ubicacion" class="text-on-surface-variant mt-xs"></p><p class="mt-md text-sm text-on-surface-variant">Check the hotel and booking number before continuing.</p></div>
-</section>
-
-<div id="error-banner" class="hidden mb-lg p-md rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
-
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-<!-- Pagar reserva -->
-<div class="lg:col-span-5 flex flex-col gap-gutter">
-<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] border-t-2 border-tertiary-fixed-dim p-lg flex flex-col gap-md">
-<h2 class="font-title-lg text-title-lg text-primary mb-xs">Pay for a booking</h2>
-<p class="font-body-md text-body-md text-on-surface-variant mb-sm">StayHub does not store cards yet: each payment is processed against its booking number.</p>
-<div id="pago-error" class="hidden p-sm rounded-DEFAULT bg-error-container text-on-error-container font-body-md text-body-md"></div>
-<div id="pago-ok" class="hidden p-sm rounded-DEFAULT bg-secondary-container text-on-secondary-container font-body-md text-body-md"></div>
-<div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="reserva-id">Booking number</label>
-<input id="reserva-id" type="number" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
-</div>
-<div class="grid grid-cols-2 gap-md">
-<div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="monto">Amount</label>
-<input id="monto" type="number" step="0.01" min="0" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
-</div>
-<div>
-<label class="block font-label-md text-label-md text-on-surface-variant uppercase mb-xs" for="moneda">Currency</label>
-<input id="moneda" type="text" value="ARS" class="w-full border border-outline-variant rounded-DEFAULT px-md py-sm"/>
-</div>
-</div>
-<button id="btn-pagar" class="mt-sm w-full py-md bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary/90 transition-colors">
-                            Pagar
-                        </button>
-</div>
-
-<!-- Consultar pago -->
-<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] p-lg flex flex-col gap-md">
-<h3 class="font-title-lg text-title-lg text-primary border-b border-surface-container-highest pb-sm">Find a payment</h3>
-<div class="flex gap-sm">
-<input id="consulta-pago-id" aria-label="Payment number" type="number" placeholder="N° de pago" class="flex-1 border border-outline-variant rounded-DEFAULT px-md py-sm"/>
-<button id="btn-consultar-pago" class="px-lg py-sm border border-outline text-primary rounded-DEFAULT hover:bg-surface-container-low transition-colors">Search</button>
-</div>
-<div id="consulta-resultado" class="hidden font-body-md text-body-md text-on-surface"></div>
-</div>
-</div>
-
-<!-- Transaction History Panel (pagos hechos en esta sesión, con datos reales de cada respuesta del backend) -->
-<div class="lg:col-span-7">
-<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_24px_rgba(37,52,79,0.08)] h-full flex flex-col">
-<div class="p-lg border-b border-surface-container-highest flex justify-between items-center">
-<h2 class="font-title-lg text-title-lg text-primary">Payments in this session</h2>
-</div>
-<div class="flex-1 overflow-y-auto" tabindex="0" role="region" aria-label="Payments in this session">
-<div id="transacciones-lista" class="flex flex-col"></div>
-<p id="transacciones-vacio" class="font-body-md text-body-md text-on-surface-variant p-lg text-center">You have not made any payments in this session yet.</p>
-</div>
-</div>
-</div>
-</div>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>StayHub Admin - Payments</title>
+<link href="assets/css/tailwind.css" rel="stylesheet"/><link href="assets/css/fonts.css" rel="stylesheet"/><link href="assets/css/theme.css?v=20261115-status" rel="stylesheet"/><style>.admin-result-row:hover{background:#e8edf6!important}.admin-result-row:hover td{color:#13233e!important}html[data-theme="dark"] body .admin-result-row:hover{background:#263955!important}html[data-theme="dark"] body .admin-result-row:hover td{color:#f4f7fc!important}</style><script src="assets/js/vendor/purify.min.js"></script><script src="assets/js/dom-seguro.js"></script></head>
+<body class="bg-background text-on-background min-h-screen"><main class="max-w-container-max mx-auto px-md md:px-xl py-xl pb-24">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-xl"><div><p class="text-xs uppercase tracking-[.18em] text-on-surface-variant">Administration</p><h1 class="font-headline-lg text-display-lg text-primary">Payments</h1><p class="text-on-surface-variant mt-xs">Find payments, inspect their booking context and issue traceable refunds.</p></div><a href="admin-dashboard.html" class="inline-flex items-center gap-xs text-primary"><span class="material-symbols-outlined">arrow_back</span>Overview</a></div>
+<div id="error-banner" class="hidden mb-md p-md rounded-lg bg-error-container text-on-error-container"></div>
+<form id="payment-filters" class="bg-surface rounded-2xl border border-outline-variant/30 p-lg grid sm:grid-cols-2 lg:grid-cols-4 gap-md">
+<label class="text-sm">Payment ID<input id="f-id" type="number" min="1" class="mt-xs w-full rounded-lg border-outline-variant" placeholder="e.g. 41"/></label><label class="text-sm">User<input id="f-user" class="mt-xs w-full rounded-lg border-outline-variant" placeholder="Name or email"/></label><label class="text-sm">Hotel<select id="f-hotel" class="mt-xs w-full rounded-lg border-outline-variant"><option value="">All hotels</option></select></label><label class="text-sm">Status<select id="f-status" class="mt-xs w-full rounded-lg border-outline-variant"><option value="">All statuses</option><option value="PENDIENTE">Pending</option><option value="APROBADO">Approved</option><option value="RECHAZADO">Rejected</option><option value="REEMBOLSADO">Refunded</option></select></label><label class="text-sm">Minimum amount<input id="f-min" type="number" min="0" step="0.01" class="mt-xs w-full rounded-lg border-outline-variant"/></label><label class="text-sm">Maximum amount<input id="f-max" type="number" min="0" step="0.01" class="mt-xs w-full rounded-lg border-outline-variant"/></label><div class="sm:col-span-2 flex items-end gap-sm"><button class="bg-primary text-on-primary rounded-full px-lg py-sm">Search payments</button><button id="clear-filters" type="button" class="border border-outline-variant rounded-full px-lg py-sm">Clear</button></div></form>
+<section class="mt-lg bg-surface rounded-2xl border border-outline-variant/30 overflow-hidden"><div class="p-lg border-b border-outline-variant/30 flex justify-between"><h2 class="font-title-lg text-title-lg">Results</h2><span id="result-count" class="text-sm text-on-surface-variant"></span></div><div class="overflow-x-auto" tabindex="0" role="region" aria-label="Payment results table"><table class="w-full min-w-[780px] text-left"><thead class="bg-surface-container-low text-xs uppercase text-on-surface-variant"><tr><th class="p-md">Payment</th><th class="p-md">User</th><th class="p-md">Hotel / bookings</th><th class="p-md">Date</th><th class="p-md">Status</th><th class="p-md text-right">Amount</th><th class="p-md"></th></tr></thead><tbody id="payments-body"></tbody></table></div><p id="empty" class="hidden p-xl text-center text-on-surface-variant">No payments match these filters.</p><div class="p-md border-t border-outline-variant/30 flex items-center justify-between"><button id="prev" class="border rounded-full px-md py-xs disabled:opacity-40">Previous</button><span id="page-label" class="text-sm"></span><button id="next" class="border rounded-full px-md py-xs disabled:opacity-40">Next</button></div></section>
 </main>
-</div>
-<!-- BottomNavBar -->
-<nav class="bg-surface border-t border-outline-variant shadow-lg fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden">
-<a href="index.html" class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest p-2 rounded-lg transition-colors">
-<span class="material-symbols-outlined text-2xl mb-1">home</span>
-<span class="font-label-md-mobile text-label-md-mobile">Home</span>
-</a>
-<a href="settings.html" class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 scale-95 transition-all duration-200">
-<span class="material-symbols-outlined text-2xl mb-1 icon-fill">person</span>
-<span class="font-label-md-mobile text-label-md-mobile">Profile</span>
-</a>
-</nav>
-
-<script src="assets/js/api.js?v=20261023-motion2"></script>
-<script src="assets/js/pages/payments-1.js"></script>
-</body></html>
+<dialog id="payment-dialog" class="w-[min(94vw,720px)] rounded-2xl bg-surface text-on-surface p-0 backdrop:bg-black/50"><div class="p-xl"><div class="flex justify-between"><div><p class="text-xs uppercase tracking-wider text-on-surface-variant">Payment details</p><h2 id="detail-title" class="font-headline-md text-headline-md text-primary"></h2></div><button id="close-detail"><span class="material-symbols-outlined">close</span></button></div><div id="detail-content" class="mt-lg"></div><form id="refund-form" class="hidden mt-xl border-t border-outline-variant/30 pt-lg"><h3 class="font-title-lg">Issue refund</h3><p class="text-sm text-on-surface-variant mt-xs">A full refund automatically cancels every linked booking, so the payment and stay remain consistent.</p><label class="block mt-md text-sm">Reason<textarea id="refund-reason" minlength="8" maxlength="300" required class="mt-xs w-full rounded-lg border-outline-variant" rows="3" placeholder="Explain why this payment is being refunded"></textarea></label><button class="mt-md bg-error text-on-error rounded-full px-lg py-sm">Review refund and cancellation</button></form><div id="refund-confirmation" class="hidden mt-lg p-md rounded-xl border border-error/40 bg-error-container/20"><p class="font-semibold">Confirm refund and cancellation</p><p class="text-sm mt-xs">This permanently records the refund and cancels its linked bookings. The original payment remains in the audit history.</p><div class="flex gap-sm mt-md"><button id="refund-approve" type="button" class="bg-error text-on-error rounded-full px-md py-sm">Refund and cancel bookings</button><button id="refund-dismiss" type="button" class="border border-outline-variant rounded-full px-md py-sm">Go back</button></div></div><div id="refunded-note" class="hidden mt-xl p-md rounded-lg bg-secondary-container text-on-secondary-container"></div></div></dialog>
+<script src="assets/js/api.js?v=20261115-admin3"></script><script src="assets/js/pages/payments-1.js?v=20261115-admin3"></script></body></html>

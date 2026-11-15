@@ -135,6 +135,15 @@ html[data-theme="dark"] .text-on-secondary-fixed-variant { color:#e3edf8 !import
 html[data-theme="dark"] .bg-error-container { background:#552a31 !important; color:#ffd9d6 !important; }
 html[data-theme="dark"] .text-on-error-container { color:#ffd9d6 !important; }
 
+/* Estado operativo: el color no depende solamente del tema. */
+.status-pill { display:inline-flex; align-items:center; border-radius:999px; padding:.23rem .58rem; font-size:.72rem; font-weight:700; letter-spacing:.02em; }
+.status-confirmed,.status-approved { background:#d9f0df; color:#17633b; }
+.status-cancelled,.status-rejected,.status-refunded { background:#f8d9d7; color:#9d2722; }
+.status-pending,.status-modified { background:#f9edc8; color:#7a5710; }
+html[data-theme="dark"] .status-confirmed,html[data-theme="dark"] .status-approved { background:#1d583b !important; color:#c7f5d5 !important; }
+html[data-theme="dark"] .status-cancelled,html[data-theme="dark"] .status-rejected,html[data-theme="dark"] .status-refunded { background:#6a3032 !important; color:#ffd8d5 !important; }
+html[data-theme="dark"] .status-pending,html[data-theme="dark"] .status-modified { background:#67521e !important; color:#fff0b7 !important; }
+
 /* Acciones principales: deben distinguirse del fondo en ambos temas. */
 .stayhub-primary-action { background:#182944 !important; color:#fff !important; border:1px solid #182944 !important; box-shadow:0 8px 20px rgba(24,41,68,.22); }
 .stayhub-primary-action:hover { background:#294467 !important; border-color:#294467 !important; transform:translateY(-1px); }

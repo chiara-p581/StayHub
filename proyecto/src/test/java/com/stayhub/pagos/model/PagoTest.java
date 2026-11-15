@@ -76,6 +76,28 @@ class PagoTest {
     }
 
     @Test
+    void reembolsoConservaElPagoYRegistraMotivoYFecha() {
+        Pago p = new Pago(1L, BigDecimal.TEN, "ARS");
+        p.aprobar("MOCK-1");
+
+        p.reembolsar("Cancelación solicitada por el huésped");
+
+        assertEquals(EstadoPago.REEMBOLSADO, p.getEstado());
+        assertEquals("Cancelación solicitada por el huésped", p.getMotivoReembolso());
+        assertNotNull(p.getFechaReembolso());
+        assertEquals("MOCK-1", p.getReferenciaPasarela());
+    }
+
+    @Test
+    void soloUnPagoAprobadoPuedeReembolsarse() {
+        Pago p = new Pago(1L, BigDecimal.TEN, "ARS");
+        assertThrows(IllegalStateException.class, () -> p.reembolsar("Motivo suficientemente largo"));
+        p.aprobar("MOCK-1");
+        p.reembolsar("Motivo suficientemente largo");
+        assertThrows(IllegalStateException.class, () -> p.reembolsar("Segundo intento inválido"));
+    }
+
+    @Test
     void listaVaciaDeReservasEsInvalida() {
         assertThrows(IndexOutOfBoundsException.class, () -> new Pago(List.of(), BigDecimal.TEN, "ARS"));
     }

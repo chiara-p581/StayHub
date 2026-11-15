@@ -121,6 +121,7 @@ public class AutenticacionFilter implements ContainerRequestFilter {
     }
 
     boolean esCompra(String ruta, String metodo) {
+        if (ruta.matches("pagos/admin/[^/]+/reembolso")) return false;
         return !"GET".equals(metodo) && (ruta.startsWith("carrito")
                 || ruta.equals("reservas") || ruta.startsWith("pagos"));
     }
@@ -132,6 +133,8 @@ public class AutenticacionFilter implements ContainerRequestFilter {
                 || ruta.startsWith("notificaciones/")
                 || (!"GET".equals(metodo) && ruta.startsWith("hoteles"))
                 || (!"GET".equals(metodo) && ruta.startsWith("inventario-tarifas/"))
+                || ruta.startsWith("pagos/admin")
+                || ruta.startsWith("reservas/admin")
                 || ("GET".equals(metodo) && "reservas".equals(ruta));
     }
 

@@ -25,6 +25,7 @@ import jakarta.inject.Inject;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 /**
  * Núcleo de ServicioDeReservas.
@@ -228,6 +229,10 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
             // Cancelación repetida sobre la misma reserva: no repetimos la
             // liberación del hold (mismo criterio que cancelarDesdeCanal).
             return ReservaMapper.aResponse(reserva);
+        }
+        if (reserva.getCheckOut().isBefore(LocalDate.now())) {
+            throw new ReservaException(CodigoErrorReserva.TRANSICION_DE_ESTADO_INVALIDA,
+                    "A completed stay cannot be cancelled");
         }
         exigirTransicion(reserva, EstadoReserva.CANCELADA);
         liberarHoldSiExiste(reserva);
@@ -526,6 +531,18 @@ public class ServicioDeReservasImpl implements ServicioDeReservasPort, ServicioD
     public List<ReservaResponse> listarPorHotel(Long hotelId, int offset, int limite) {
         identidad.autorizarListado(hotelId);
         return repositorio.listarPorHotel(hotelId, offset, Limites.pagina(offset, limite)).stream().map(ReservaMapper::aResponse).toList();
+    }
+
+    @Override
+    @PermitAll
+    public PaginaResponse<ReservaResponse> buscarAdmin(Long id, String huesped, Long hotelId, String estado,
+            java.math.BigDecimal montoMin, java.math.BigDecimal montoMax, int offset, int limite) {
+        if (!identidad.admin()) throw new SeguridadException(403, "Esta operación requiere rol ADMIN");
+        int pagina = Limites.pagina(offset, limite);
+        var items = repositorio.buscarAdmin(id, huesped, hotelId, estado, montoMin, montoMax, offset, pagina)
+                .stream().map(ReservaMapper::aResponse).toList();
+        return new PaginaResponse<>(items,
+                repositorio.contarAdmin(id, huesped, hotelId, estado, montoMin, montoMax), offset, pagina);
     }
     @Override
     @PermitAll

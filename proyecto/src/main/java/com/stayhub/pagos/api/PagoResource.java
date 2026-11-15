@@ -4,6 +4,10 @@ import com.stayhub.pagos.contrato.ServicioDePagos;
 import com.stayhub.pagos.dto.PagoRequest;
 import com.stayhub.pagos.dto.PagoResponse;
 import com.stayhub.pagos.dto.PagoLoteRequest;
+import com.stayhub.pagos.dto.PagoAdminResponse;
+import com.stayhub.pagos.dto.ReembolsoRequest;
+import com.stayhub.seguridad.PaginaResponse;
+import java.math.BigDecimal;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -65,5 +69,31 @@ public class PagoResource {
     @Path("/{id}")
     public PagoResponse consultar(@PathParam("id") Long id) {
         return servicio.consultarPago(id);
+    }
+
+    @GET
+    @Path("/admin")
+    public PaginaResponse<PagoAdminResponse> buscarAdmin(
+            @QueryParam("id") Long id,
+            @QueryParam("usuario") String usuario,
+            @QueryParam("hotelId") Long hotelId,
+            @QueryParam("montoMin") BigDecimal montoMin,
+            @QueryParam("montoMax") BigDecimal montoMax,
+            @QueryParam("estado") String estado,
+            @QueryParam("offset") @DefaultValue("0") int offset,
+            @QueryParam("limite") @DefaultValue("10") int limite) {
+        return servicio.buscarAdmin(id, usuario, hotelId, montoMin, montoMax, estado, offset, limite);
+    }
+
+    @GET
+    @Path("/admin/{id}")
+    public PagoAdminResponse consultarAdmin(@PathParam("id") Long id) {
+        return servicio.consultarAdmin(id);
+    }
+
+    @POST
+    @Path("/admin/{id}/reembolso")
+    public PagoAdminResponse reembolsar(@PathParam("id") Long id, ReembolsoRequest solicitud) {
+        return servicio.reembolsar(id, solicitud);
     }
 }

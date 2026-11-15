@@ -41,7 +41,7 @@ public class RespuestaSeguraFilter implements ContainerResponseFilter {
         boolean interno = estado >= 500;
         String codigo = interno ? "ERROR_INTERNO" : codigoSeguro(extraer(entidad, "codigo"), estado);
         String detalle = interno
-                ? "Ocurrió un error interno. Intentá nuevamente más tarde."
+                ? "An internal error occurred. Please try again later."
                 : textoSeguro(extraerMensaje(entidad), detallePredeterminado(estado));
 
         Map<String, Object> problema = new LinkedHashMap<>();
@@ -90,31 +90,31 @@ public class RespuestaSeguraFilter implements ContainerResponseFilter {
 
     static String titulo(int estado) {
         return switch (estado) {
-            case 400 -> "Solicitud inválida";
-            case 401 -> "No autenticado";
-            case 403 -> "Acceso denegado";
-            case 404 -> "Recurso no encontrado";
-            case 409 -> "Conflicto";
-            case 422 -> "Entidad no procesable";
-            case 429 -> "Demasiadas solicitudes";
-            case 500 -> "Error interno";
-            case 502 -> "Respuesta externa inválida";
-            case 503 -> "Servicio no disponible";
-            case 504 -> "Tiempo de espera agotado";
-            default -> estado >= 500 ? "Error del servidor" : "Error de solicitud";
+            case 400 -> "Invalid request";
+            case 401 -> "Not authenticated";
+            case 403 -> "Access denied";
+            case 404 -> "Resource not found";
+            case 409 -> "Conflict";
+            case 422 -> "Unprocessable entity";
+            case 429 -> "Too many requests";
+            case 500 -> "Internal error";
+            case 502 -> "Invalid external response";
+            case 503 -> "Service unavailable";
+            case 504 -> "Request timed out";
+            default -> estado >= 500 ? "Server error" : "Request error";
         };
     }
 
     static String detallePredeterminado(int estado) {
         return switch (estado) {
-            case 400 -> "La solicitud no tiene un formato válido.";
-            case 401 -> "Iniciá sesión para continuar.";
-            case 403 -> "No tenés permisos para realizar esta operación.";
-            case 404 -> "El recurso solicitado no existe.";
-            case 409 -> "La operación entra en conflicto con el estado actual del recurso.";
-            case 422 -> "La solicitud es válida, pero no puede procesarse.";
-            case 429 -> "Se superó temporalmente el límite de solicitudes.";
-            default -> "La solicitud no pudo completarse.";
+            case 400 -> "The request format is not valid.";
+            case 401 -> "Sign in to continue.";
+            case 403 -> "You do not have permission to perform this action.";
+            case 404 -> "The requested resource does not exist.";
+            case 409 -> "The operation conflicts with the resource's current state.";
+            case 422 -> "The request is valid but cannot be processed.";
+            case 429 -> "The request limit has been reached temporarily.";
+            default -> "The request could not be completed.";
         };
     }
 }

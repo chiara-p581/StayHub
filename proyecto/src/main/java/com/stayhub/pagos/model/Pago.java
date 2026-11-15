@@ -41,6 +41,12 @@ public class Pago {
     @Column(name = "fecha_pago", nullable = false)
     private LocalDateTime fechaPago;
 
+    @Column(name = "fecha_reembolso")
+    private LocalDateTime fechaReembolso;
+
+    @Column(name = "motivo_reembolso", length = 300)
+    private String motivoReembolso;
+
     @Column(name = "clave_idempotencia", length = 80)
     private String claveIdempotencia;
 
@@ -83,6 +89,15 @@ public class Pago {
         this.estado = EstadoPago.RECHAZADO;
     }
 
+    public void reembolsar(String motivo) {
+        if (estado != EstadoPago.APROBADO) {
+            throw new IllegalStateException("Only an APPROVED payment can be refunded");
+        }
+        this.estado = EstadoPago.REEMBOLSADO;
+        this.fechaReembolso = LocalDateTime.now();
+        this.motivoReembolso = motivo;
+    }
+
     public Long getId() { return id; }
     public Long getReservaId() { return reservaId; }
     public Long getUsuarioId() { return usuarioId; }
@@ -92,5 +107,7 @@ public class Pago {
     public EstadoPago getEstado() { return estado; }
     public String getReferenciaPasarela() { return referenciaPasarela; }
     public LocalDateTime getFechaPago() { return fechaPago; }
+    public LocalDateTime getFechaReembolso() { return fechaReembolso; }
+    public String getMotivoReembolso() { return motivoReembolso; }
     public String getClaveIdempotencia() { return claveIdempotencia; }
 }

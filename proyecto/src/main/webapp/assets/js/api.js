@@ -125,6 +125,7 @@ const Api = (() => {
                 method,
                 headers,
                 credentials: "same-origin",
+                cache: "no-store",
                 body: body !== undefined ? JSON.stringify(body) : undefined,
             });
         } catch (networkErr) {
@@ -425,7 +426,7 @@ const Api = (() => {
             return;
         }
         var usuario = currentUser();
-        var adminPages = ["admin-dashboard.html", "inventory.html", "hotel-management.html", "channels-sync.html", "payments.html", "alerts.html"];
+        var adminPages = ["admin-dashboard.html", "admin-bookings.html", "inventory.html", "hotel-management.html", "channels-sync.html", "payments.html", "alerts.html"];
         var esAdminPage = usuario && usuario.rol === "ADMIN" && adminPages.indexOf(page) !== -1;
         document.body.classList.add("stayhub-unified");
         if (esAdminPage) document.body.classList.add("stayhub-admin-layout");
@@ -449,7 +450,7 @@ const Api = (() => {
                 ["admin-dashboard.html", "space_dashboard", "Overview"],
                 ["inventory.html", "inventory_2", "Inventory"],
                 ["hotel-management.html", "domain", "Hotels"],
-                ["admin-dashboard.html#reservas-table", "calendar_month", "Bookings"],
+                ["admin-bookings.html", "calendar_month", "Bookings"],
                 ["channels-sync.html", "hub", "Channels"],
                 ["payments.html", "payments", "Payments"],
                 ["alerts.html", "notifications", "Operations"]
@@ -473,9 +474,7 @@ const Api = (() => {
                     else link.removeAttribute("aria-current");
                 });
                 var pageTitle = document.getElementById("admin-page-title");
-                if (pageTitle && page === "admin-dashboard.html") {
-                    pageTitle.textContent = location.hash === "#reservas-table" ? "Bookings" : "Overview";
-                }
+                if (pageTitle && page === "admin-dashboard.html") pageTitle.textContent = "Overview";
             }
             window.addEventListener("hashchange", updateAdminNavigation);
             updateAdminNavigation();
@@ -587,6 +586,7 @@ const Api = (() => {
         cancelarReserva: (id) => request(`reservas/${id}`, { method: "DELETE", auth: true }),
         listarReservasPorHotel: (hotelId) =>
             request("reservas", { params: { hotelId }, auth: true }),
+        buscarReservasAdmin: (filtros) => request("reservas/admin", { params: filtros, auth: true }),
 
         // ---- datos demostrativos (solo ADMIN; persiste mediante APIs reales) ----
         cargarDatosDemo: () => request("demo/cargar", { method: "POST", auth: true }).then(r => (invalidateCache(), r)),
@@ -623,6 +623,9 @@ const Api = (() => {
             extraHeaders: { "Idempotency-Key": dto.claveIdempotencia } }),
         consultarPago: (id) => request(`pagos/${id}`, { auth: true }),
         listarMisPagos: () => request("pagos/mios", { auth: true }),
+        buscarPagosAdmin: (filtros) => request("pagos/admin", { params: filtros, auth: true }),
+        consultarPagoAdmin: (id) => request(`pagos/admin/${id}`, { auth: true }),
+        reembolsarPago: (id, dto) => request(`pagos/admin/${id}/reembolso`, { method: "POST", body: dto, auth: true }),
 
         // ---- operaciones ----
         enviarNotificacion: (dto) =>

@@ -3,6 +3,7 @@ package com.stayhub.reservas.repository;
 import com.stayhub.reservas.model.Reserva;
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 /**
  * Patrón DAO: aísla el acceso a datos del resto de la lógica de negocio.
@@ -35,4 +36,8 @@ public interface ReservaRepository {
     List<Reserva> pendientesVencidas(java.time.LocalDateTime antes);
     List<Reserva> listarLlegadas(Long hotelId, java.time.LocalDate fecha);
     List<Reserva> listarPorHotel(Long hotelId, int offset, int limite);
+    List<Reserva> buscarAdmin(Long id, String huesped, Long hotelId, String estado,
+            BigDecimal montoMin, BigDecimal montoMax, int offset, int limite);
+    long contarAdmin(Long id, String huesped, Long hotelId, String estado,
+            BigDecimal montoMin, BigDecimal montoMax);
 }

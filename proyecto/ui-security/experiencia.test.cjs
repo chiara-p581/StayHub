@@ -170,7 +170,7 @@ test('buscar hoteles y filtrar canal actualiza las tarjetas y el contador', asyn
 });
 
 const admin = { ...user, rol: 'ADMIN' };
-test('panel admin calcula solo confirmadas y mantiene monedas separadas', async () => {
+test('overview admin calcula confirmadas, mantiene monedas y presenta gráficos', async () => {
     const dom = page('admin-dashboard', {
         currentUser: () => admin,
         listarHoteles: async () => [{ id: 2, nombre: 'Hotel', ciudad: 'QA' }],
@@ -187,8 +187,8 @@ test('panel admin calcula solo confirmadas y mantiene monedas separadas', async 
     assert.equal(d.getElementById('kpi-confirmadas').textContent, '2');
     assert.equal(d.getElementById('kpi-pendientes').textContent, '1');
     assert.equal(d.getElementById('kpi-ingresos').textContent, 'ARS 100.00 · USD 50.00');
-    assert.equal(d.getElementById('reservas-body').rows.length, 4);
-    assert.equal(d.getElementById('reservas-body').rows[0].cells.length, 7);
+    assert.match(d.getElementById('status-chart').textContent, /Confirmed2 \(50%\)/);
+    assert.equal(d.getElementById('monthly-chart').children.length, 6);
     dom.window.close();
 });
 
@@ -224,18 +224,21 @@ test('una sincronizacion aceptada se muestra en cola con el contador del contrat
     dom.window.close();
 });
 
-test('consultar un pago inexistente oculta el resultado anterior', async () => {
+test('administración de pagos lista resultados y muestra el error de una búsqueda fallida', async () => {
     let calls = 0;
     const dom = page('payments', {
         currentUser: () => admin,
-        consultarHotel: async () => ({ id: 2, nombre: 'Hotel' }),
-        consultarPago: async () => { if (calls++) throw new Error('No existe el pago'); return { id: 9, reservaIds: [13,14], monto: 100, moneda: 'ARS', estado: 'APROBADO' }; }
+        listarHoteles: async () => [{ id: 2, nombre: 'Hotel' }],
+        buscarPagosAdmin: async () => {
+            if (calls++) throw new Error('No existe el pago');
+            return { total: 1, items: [{ id: 9, usuarioNombre: 'Ada Lovelace', usuarioEmail: 'ada@stayhub.local', reservas: [{ id: 13, hotelNombre: 'Hotel', estado: 'CONFIRMADA' }], monto: 100, moneda: 'ARS', estado: 'APROBADO', fechaPago: '2026-10-20T10:00:00' }] };
+        }
     });
-    await tick(); const d = dom.window.document;
-    d.getElementById('consulta-pago-id').value = '9'; d.getElementById('btn-consultar-pago').click(); await tick();
-    assert.match(d.getElementById('consulta-resultado').textContent, /#13, #14/);
-    d.getElementById('consulta-pago-id').value = '999999'; d.getElementById('btn-consultar-pago').click(); await tick();
-    assert.equal(d.getElementById('consulta-resultado').classList.contains('hidden'), true);
+    await tick(); const w = dom.window, d = w.document;
+    assert.match(d.getElementById('payments-body').textContent, /Ada Lovelace/);
+    assert.match(d.getElementById('payments-body').textContent, /#13/);
+    d.getElementById('f-id').value = '999999';
+    d.getElementById('payment-filters').dispatchEvent(new w.Event('submit', { cancelable: true })); await tick();
     assert.match(d.getElementById('error-banner').textContent, /No existe/);
     dom.window.close();
 });
