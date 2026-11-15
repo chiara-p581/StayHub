@@ -179,6 +179,8 @@ class TokenJwtTest {
     void laRevocacionSeGuardaEnLaBaseYSeRespetaDespuesDeReiniciar() {
         TokenJwt antes = tokensEn(AHORA);
         RevocacionTokens base = mock(RevocacionTokens.class);
+        // Mockito devuelve 0 (no null) para un Long: se aclara que el token no está revocado.
+        when(base.revocadoDesde(anyString())).thenReturn((Long) null);
         antes.revocaciones = base;
         String token = antes.emitir(7L, "HUESPED", true, AHORA, 0L);
         CredencialActual c = antes.validar(token);
@@ -188,6 +190,7 @@ class TokenJwtTest {
         // Otra instancia (como después de reiniciar WildFly) consulta la base.
         TokenJwt despues = tokensEn(AHORA + 1000);
         RevocacionTokens baseDespues = mock(RevocacionTokens.class);
+        when(baseDespues.revocadoDesde(anyString())).thenReturn((Long) null);
         despues.revocaciones = baseDespues;
         String otro = despues.emitir(8L, "HUESPED", true, AHORA, 0L);
         CredencialActual c2 = despues.validar(otro);
