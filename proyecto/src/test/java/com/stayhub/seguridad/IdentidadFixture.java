@@ -14,9 +14,15 @@ public final class IdentidadFixture {
         doAnswer(i -> {attrs.put(i.getArgument(0),i.getArgument(1));return null;}).when(session).setAttribute(anyString(),any());
         return session;
     }
+    /** Identidad como la deja MecanismoJwt: una credencial ya validada en el request. */
     public static IdentidadActual usuario(Long id, String rol) throws Exception {
-        var request = mock(HttpServletRequest.class); var session = sesion(id,rol); when(request.getSession(false)).thenReturn(session);
+        var request = mock(HttpServletRequest.class);
+        if (id != null && rol != null) when(request.getAttribute(CredencialActual.ATRIBUTO)).thenReturn(credencial(id, rol));
         var identidad = new IdentidadActual(); campo(identidad,"request",request);return identidad;
+    }
+    public static CredencialActual credencial(Long id, String rol) {
+        long ahora = System.currentTimeMillis();
+        return new CredencialActual(id, rol, true, ahora, ahora, "jti-test-" + id, ahora + 900_000L);
     }
     public static IdentidadActual pms(Set<Long> hoteles) throws Exception {
         var request = mock(HttpServletRequest.class);when(request.getAttribute(IdentidadActual.PMS_HOTELES)).thenReturn(hoteles);

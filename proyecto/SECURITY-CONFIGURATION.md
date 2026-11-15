@@ -23,7 +23,7 @@ a la lista. Esta validación de aplicación debe complementarse con reglas de eg
 ## Esquema de base de datos
 
 Antes de desplegar el WAR se debe ejecutar, con una cuenta de migraciones separada de la
-cuenta de la aplicación, en orden los scripts de `src/main/resources/db/migration/` (actualmente V2 y V3).
+cuenta de la aplicación, en orden los scripts de `src/main/resources/db/migration/` (actualmente V2 a V5).
 Hibernate quedó en modo `validate`: la aplicación ya no modifica el esquema al iniciar. V3 vincula la idempotencia al usuario, agrega restricciones de monto/moneda/estado e índices operativos.
 
 ## Verificaciones del build
@@ -45,14 +45,30 @@ Toda respuesta REST de error pasa por `RespuestaSeguraFilter`: agrega correlaci�
 
 ## Seguridad de sesiones (KAN-101)
 
-StayHub no usa JWT: la autenticación del navegador se implementa con una sesión HTTP
-administrada por WildFly. Por eso los casos de alteración de firma o claims de un JWT no
-aplican literalmente; se cubren sus riesgos equivalentes sobre `JSESSIONID`.
+StayHub autentica con **JWT** (HS256, `TokenJwt` + `MecanismoJwt`). Al hacer login se emite
+un token con `iss=stayhub`, `aud=stayhub-api`, `sub` (usuario), `rol`, `mfa`, `auth_time`, `iat`,
+`exp` (15 minutos) y `jti`. El navegador lo recibe en la cookie `STAYHUB_TOKEN` (`HttpOnly`,
+`SameSite=Lax` y `Secure` fuera del modo HTTP local); los clientes de API pueden enviarlo en
+`Authorization: Bearer <token>` (en ese caso no se pide token CSRF, porque el navegador no lo
+manda solo).
 
-La cookie se limita al canal HTTPS, es `HttpOnly`, usa `SameSite=Lax` y no admite el id de
-sesión en la URL. El login invalida cualquier sesión anterior, crea una nueva y rota su
-identificador; el logout la invalida. La inactividad vence a los 15 minutos y existe además
-un límite absoluto de ocho horas validado en cada request autenticada. Las mutaciones usan
+Un token vencido, con la firma alterada, con `alg=none` u otro algoritmo, de otro emisor u
+otra audiencia, revocado o con más de ocho horas desde el login recibe **401 `TOKEN_INVALIDO`**
+(`TokenJwtTest`, `MecanismoJwtTest` y, por HTTP contra la app desplegada,
+`e2e/tests/jwt-security.spec.cjs`). El logout revoca el `jti` y borra la cookie. Las revocaciones
+se guardan en la tabla `token_revocado` (migración `V5__revocacion_jwt.sql`), así siguen valiendo
+aunque se reinicie WildFly. Mientras se usa, el token se renueva cuando le quedan menos de cinco
+minutos y el anterior queda revocado tras 30 segundos de gracia (para los pedidos que ya estaban
+en viaje). Solo un `Authorization: Bearer` válido y sin la cookie evita el token CSRF: un header
+inválido o de otro esquema sigue pasando por el control.
+
+La clave se configura con la propiedad `stayhub.jwt.secreto` o la variable `STAYHUB_JWT_SECRETO`
+(Base64, 32 bytes o más) y nunca se versiona; si falta, WildFly genera una aleatoria al arrancar
+y cada reinicio obliga a iniciar sesión de nuevo. La imagen Docker genera una clave propia al
+construirse (`docker/wildfly/Dockerfile`); en un ambiente estable hay que definirla, por ejemplo:
+`/system-property=stayhub.jwt.secreto:add(value="<clave Base64>")`.
+La sesión HTTP (`JSESSIONID`) ya no guarda la identidad: solo el token CSRF y el paso pendiente
+de MFA durante el login, y se rota en cada login. Las mutaciones usan
 un token CSRF asociado a esa misma sesión.
 
 La suite automatizada verifica cookie manipulada, rotación al iniciar sesión, reutilización

@@ -37,14 +37,9 @@ public class AutenticacionFilter implements ContainerRequestFilter {
         if ("OPTIONS".equals(metodo)) return;
         if (esPublica(ruta, metodo)) return;
 
-        HttpSession sesion = request.getSession(false);
-        if (sesion != null && sesionExpirada(sesion, System.currentTimeMillis())) {
-            sesion.invalidate();
-            abortar(contexto, Response.Status.UNAUTHORIZED, "SESION_EXPIRADA",
-                    "La sesión expiró. Iniciá sesión nuevamente");
-            return;
-        }
-        String rol = sesion == null ? null : (String) sesion.getAttribute("usuarioRol");
+        // La identidad sale del JWT ya validado por MecanismoJwt (firma, emisor, vencimiento, revocación).
+        CredencialActual credencial = CredencialActual.de(request);
+        String rol = credencial == null ? null : credencial.rol();
 
         if (esWebhookOta(ruta)) {
             if (firmaWebhookValida(contexto, ruta, metodo)) {
@@ -55,12 +50,17 @@ public class AutenticacionFilter implements ContainerRequestFilter {
                     "La firma del webhook no es válida o el mensaje ya fue procesado");
             return;
         }
-        if (rol == null || sesion.getAttribute("usuarioId") == null) {
-            abortar(contexto, Response.Status.UNAUTHORIZED, "NO_AUTENTICADO", "Iniciá sesión para continuar");
+        if (credencial == null) {
+            if (CredencialActual.tokenInvalido(request)) {
+                abortar(contexto, Response.Status.UNAUTHORIZED, "TOKEN_INVALIDO",
+                        "El token de acceso no es válido o expiró. Iniciá sesión nuevamente");
+            } else {
+                abortar(contexto, Response.Status.UNAUTHORIZED, "NO_AUTENTICADO", "Iniciá sesión para continuar");
+            }
             return;
         }
         if ("ADMIN".equals(rol)
-                && !Boolean.TRUE.equals(sesion.getAttribute("mfaVerificada"))
+                && !credencial.mfaVerificada()
                 && !esFlujoMfaPermitido(ruta, metodo)) {
             abortar(contexto, Response.Status.FORBIDDEN, "MFA_REQUERIDO",
                     "Activá y validá MFA para continuar");
@@ -76,14 +76,14 @@ public class AutenticacionFilter implements ContainerRequestFilter {
             return;
         }
         if (requiereAdmin(ruta, metodo) && "ADMIN".equals(rol)
-                && !Boolean.TRUE.equals(sesion.getAttribute("mfaVerificada"))) {
+                && !credencial.mfaVerificada()) {
             abortar(contexto, Response.Status.FORBIDDEN, "MFA_REQUERIDO", "Activá y validá MFA para continuar");
             return;
         }
         if (requiereReautenticacion(ruta, metodo) && "ADMIN".equals(rol)) {
-            Object valor = sesion.getAttribute("reautenticadoEn");
+            long instante = credencial.reautenticadoEn();
             long ahora = System.currentTimeMillis();
-            if (!(valor instanceof Long instante) || instante > ahora || ahora - instante > 5 * 60_000L)
+            if (instante <= 0 || instante > ahora + 30_000L || ahora - instante > 5 * 60_000L)
                 abortar(contexto, Response.Status.FORBIDDEN, "REAUTENTICACION_REQUERIDA", "Volvé a confirmar contraseña y MFA");
         }
     }

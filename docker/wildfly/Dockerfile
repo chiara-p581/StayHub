@@ -11,7 +11,7 @@ USER root
 RUN microdnf install --best --nodocs -y curl && microdnf clean all && \
     mkdir -p /opt/jboss/wildfly/modules/org/postgresql/main && \
     mkdir -p /opt/jboss/local-security /opt/jboss/ci-tools && \
-    curl --fail --location --output /opt/jboss/wildfly/modules/org/postgresql/main/postgresql.jar \
+    curl --fail --location --retry 6 --retry-delay 10 --output /opt/jboss/wildfly/modules/org/postgresql/main/postgresql.jar \
       https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.13/postgresql-42.7.13.jar && \
     chown -R jboss:root /opt/jboss/wildfly/modules/org/postgresql /opt/jboss/local-security /opt/jboss/ci-tools
 
@@ -41,9 +41,12 @@ RUN javac -d /opt/jboss/ci-tools /tmp/MfaTotpCode.java && rm /tmp/MfaTotpCode.ja
       -storepass stayhub-pms-local && \
     /opt/jboss/wildfly/bin/jboss-cli.sh --file=/opt/jboss/wildfly/configure.cli && \
     mfa_key="$(java -cp /opt/jboss/ci-tools MfaTotpCode --derive-key stayhub-docker-mfa-demo-only)" && \
+    jwt_key="$(head -c 48 /dev/urandom | base64 | tr -d '\n')" && \
+    test -n "$jwt_key" && \
     printf '%s\n' \
       'embed-server --server-config=standalone-full.xml --std-out=echo' \
       "/system-property=stayhub.mfa.master-key:add(value=\"$mfa_key\")" \
+      "/system-property=stayhub.jwt.secreto:add(value=\"$jwt_key\")" \
       'stop-embedded-server' > /tmp/configure-mfa-demo.cli && \
     /opt/jboss/wildfly/bin/jboss-cli.sh --file=/tmp/configure-mfa-demo.cli && \
     fingerprint="$(keytool -J-Duser.language=en -list -v -alias stayhub-pms \
