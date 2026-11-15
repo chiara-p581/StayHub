@@ -188,6 +188,27 @@ function resolveSchema(schema, aliases, duplicates, source) {
   return schema;
 }
 
+function responseSchemaFor(javaType, aliases, duplicates, source, schemas) {
+  const normalized = javaType.replaceAll(/\s+/g, "");
+  const page = normalized.match(/^PaginaResponse<(.+)>$/);
+  if (!page) return resolveSchema(javaTypeSchema(javaType), aliases, duplicates, source);
+
+  const itemSchema = resolveSchema(javaTypeSchema(page[1]), aliases, duplicates, source);
+  const suffix = page[1].replaceAll(/[^A-Za-z0-9_.]/g, "");
+  const name = `PaginaResponse${suffix}`;
+  schemas[name] ??= {
+    type: "object",
+    required: ["items", "total", "offset", "limite"],
+    properties: {
+      items: { type: "array", items: itemSchema },
+      total: { type: "integer", format: "int64" },
+      offset: { type: "integer", format: "int32" },
+      limite: { type: "integer", format: "int32" }
+    }
+  };
+  return { $ref: `#/components/schemas/${name}` };
+}
+
 const javaFiles = (await files(javaRoot)).filter((file) => file.endsWith(".java"));
 const resourceFiles = javaFiles.filter((file) => file.endsWith("Resource.java"));
 const endpoints = (await Promise.all(resourceFiles.map(async (file) =>
@@ -217,7 +238,7 @@ for (const endpoint of endpoints) {
   const bodyParameter = endpoint.parameters.find((parameter) =>
     !parameter.location && !parameter.context && !/^(?:HttpServletRequest|HttpSession|UriInfo|SecurityContext)$/.test(parameter.type));
   const success = successStatus(endpoint.verb, endpoint.body);
-  const responseSchema = resolveSchema(javaTypeSchema(endpoint.returnType), aliases, duplicates, endpoint.source);
+  const responseSchema = responseSchemaFor(endpoint.returnType, aliases, duplicates, endpoint.source, schemas);
   const operation = {
     operationId: endpoint.operationId,
     tags: [endpoint.source.split("/").at(-3) ?? "StayHub"],
