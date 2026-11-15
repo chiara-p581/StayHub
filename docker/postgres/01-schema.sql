@@ -141,9 +141,11 @@ CREATE TABLE pago (
     usuario_id BIGINT NOT NULL REFERENCES usuario(id),
     monto NUMERIC(12,2) NOT NULL CHECK (monto > 0),
     moneda VARCHAR(3) NOT NULL CHECK (moneda ~ '^[A-Z]{3}$'),
-    estado VARCHAR(20) NOT NULL CHECK (estado IN ('PENDIENTE', 'APROBADO', 'RECHAZADO')),
+    estado VARCHAR(20) NOT NULL CHECK (estado IN ('PENDIENTE', 'APROBADO', 'RECHAZADO', 'REEMBOLSADO')),
     referencia_pasarela VARCHAR(60),
     fecha_pago TIMESTAMP(6) NOT NULL,
+    fecha_reembolso TIMESTAMP(6),
+    motivo_reembolso VARCHAR(300),
     clave_idempotencia VARCHAR(80),
     version BIGINT,
     CONSTRAINT uk_pago_usuario_idempotencia UNIQUE (usuario_id, clave_idempotencia)

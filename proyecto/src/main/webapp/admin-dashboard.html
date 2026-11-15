@@ -72,7 +72,7 @@ html[data-theme="dark"] .card-bg-subtle { background:#273247 !important; }
 <span class="material-symbols-outlined">domain</span>
 <span class="text-body-lg font-body-lg">Hotels</span>
 </a>
-<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="#reservas-table">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors duration-200" href="admin-bookings.html">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
 <span class="text-body-lg font-body-lg">Bookings</span>
 </a>
@@ -134,27 +134,12 @@ html[data-theme="dark"] .card-bg-subtle { background:#273247 !important; }
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
-<!-- Tabla de reservas -->
-<div id="reservas-table" class="dashboard-panel-card min-w-0 scroll-mt-24 md:col-span-8 bg-surface rounded-xl shadow-ambient p-lg border border-subtle">
-<div class="flex justify-between items-center mb-lg">
-<h2 class="font-title-lg text-title-lg text-on-surface">Bookings</h2>
-</div>
-<div class="dashboard-table-wrap">
-<table class="dashboard-table text-left">
-<thead>
-<tr class="text-label-md font-label-md text-on-surface-variant uppercase border-b border-outline-variant">
-<th class="cell-id">ID</th>
-<th class="cell-guest">Guest</th>
-<th class="cell-date">Check-in</th>
-<th class="cell-date">Checkout</th>
-<th class="cell-status">Status</th>
-<th class="cell-price">Price</th>
-<th class="cell-actions">Actions</th>
-</tr>
-</thead>
-<tbody id="reservas-body" class="font-body-md text-body-md text-on-surface"></tbody>
-</table>
-<p id="reservas-vacio" class="hidden font-body-md text-body-md text-on-surface-variant py-lg text-center">This hotel does not have any bookings yet.</p>
+<!-- Operational charts: booking management now lives on its own paginated page. -->
+<div class="dashboard-panel-card min-w-0 md:col-span-8 bg-surface rounded-xl shadow-ambient p-lg border border-subtle">
+<div class="flex justify-between items-center mb-lg"><div><h2 class="font-title-lg text-title-lg text-on-surface">Booking activity</h2><p class="text-sm text-on-surface-variant">Distribution and recent volume for the selected hotel.</p></div><a href="admin-bookings.html" class="text-primary text-sm underline">Manage bookings</a></div>
+<div class="grid sm:grid-cols-2 gap-xl">
+<div><h3 class="text-sm font-semibold mb-md">Bookings by status</h3><div id="status-chart" class="space-y-sm"></div></div>
+<div><h3 class="text-sm font-semibold mb-md">Created in the last 6 months</h3><div id="monthly-chart" class="h-48 flex items-end gap-sm border-b border-outline-variant px-sm"></div><div id="monthly-labels" class="flex gap-sm px-sm mt-xs text-[10px] text-on-surface-variant"></div></div>
 </div>
 </div>
 <!-- Upcoming arrivals (derivado de las reservas reales) -->
@@ -189,6 +174,6 @@ html[data-theme="dark"] .card-bg-subtle { background:#273247 !important; }
 </a>
 </nav>
 
-<script src="assets/js/api.js?v=20261023-motion2"></script>
-<script src="assets/js/pages/admin-dashboard-1.js?v=20261017-1"></script>
+<script src="assets/js/api.js?v=20261115-admin3"></script>
+<script src="assets/js/pages/admin-dashboard-1.js?v=20261115-overview3"></script>
 </body></html>

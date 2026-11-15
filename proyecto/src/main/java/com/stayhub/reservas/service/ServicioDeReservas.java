@@ -3,6 +3,8 @@ package com.stayhub.reservas.service;
 import com.stayhub.reservas.dto.ReservaRequest;
 import com.stayhub.reservas.dto.ReservaResponse;
 import java.util.List;
+import java.math.BigDecimal;
+import com.stayhub.seguridad.PaginaResponse;
 
 /**
  * Operaciones "internas": las usa StayHub cuando un usuario o administrador
@@ -48,4 +50,6 @@ public interface ServicioDeReservas {
     List<ReservaResponse> listarMias(int offset, int limite);
     List<ReservaResponse> listarPorHotel(Long hotelId, int offset, int limite);
     List<ReservaResponse> listarLlegadas(Long hotelId, java.time.LocalDate fecha);
+    PaginaResponse<ReservaResponse> buscarAdmin(Long id, String huesped, Long hotelId, String estado,
+            BigDecimal montoMin, BigDecimal montoMax, int offset, int limite);
 }

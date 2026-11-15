@@ -65,42 +65,18 @@
         document.getElementById("kpi-pendientes").textContent = pendientes.length;
         document.getElementById("kpi-ingresos").textContent = Object.keys(ingresos).map(function(moneda) { return moneda + " " + fmtMoney(ingresos[moneda]); }).join(" · ") || "ARS " + fmtMoney(0);
 
-        var body = document.getElementById("reservas-body");
-        body.innerHTML = StayHubDOM.html("");
-        document.getElementById("reservas-vacio").classList.toggle("hidden", reservas.length > 0);
-
-        reservas.forEach(function (r) {
-            var tr = document.createElement("tr");
-            tr.className = "border-b border-surface-container-high hover:bg-surface-container-low";
-            var estadoColor = r.estado === "CONFIRMADA" ? "text-secondary" : r.estado === "CANCELADA" ? "text-error" : "text-tertiary-fixed-dim";
-            var acciones = "";
-            if (r.estado === "PENDIENTE") {
-                acciones += '<button data-id="' + r.id + '" class="btn-confirmar text-label-md font-label-md text-secondary hover:underline mr-sm">Confirm</button>';
-            }
-            if (r.estado !== "CANCELADA") {
-                acciones += '<button data-id="' + r.id + '" class="btn-cancelar text-label-md font-label-md text-error hover:underline">Cancel</button>';
-            }
-            tr.innerHTML =
-                StayHubDOM.html('<td class="cell-id">' + StayHubDOM.text(r.id) + '</td>' +
-                '<td class="cell-guest">' + StayHubDOM.text(r.huespedNombre) + ' ' + StayHubDOM.text(r.huespedApellido) + '</td>' +
-                '<td class="cell-date">' + StayHubDOM.text(r.checkIn) + '</td>' +
-                '<td class="cell-date">' + StayHubDOM.text(r.checkOut) + '</td>' +
-                '<td class="cell-status ' + estadoColor + ' font-semibold">' + ({PENDIENTE:'PENDING',CONFIRMADA:'CONFIRMED',CANCELADA:'CANCELLED',RECHAZADA:'REJECTED'}[r.estado]||r.estado) + '</td>' +
-                '<td class="cell-price">' + StayHubDOM.text(r.moneda || 'ARS') + ' ' + fmtMoney(r.precioTotal) + '</td>' +
-                '<td class="cell-actions">' + acciones + '</td>');
-            body.appendChild(tr);
-        });
-
-        body.querySelectorAll(".btn-confirmar").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                Api.confirmarReserva(btn.dataset.id).then(function () { return cargarReservas(hotelSeleccionado()); }).catch(function (err) { mostrarError(errorBanner, err); });
-            });
-        });
-        body.querySelectorAll(".btn-cancelar").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                Api.cancelarReserva(btn.dataset.id).then(function () { return cargarReservas(hotelSeleccionado()); }).catch(function (err) { mostrarError(errorBanner, err); });
-            });
-        });
+        var estados = ["CONFIRMADA", "PENDIENTE", "MODIFICADA", "CANCELADA", "RECHAZADA"];
+        var nombres = {CONFIRMADA:"Confirmed",PENDIENTE:"Pending",MODIFICADA:"Modified",CANCELADA:"Cancelled",RECHAZADA:"Rejected"};
+        var colores = {CONFIRMADA:"#315f72",PENDIENTE:"#d5b893",MODIFICADA:"#6f7fa6",CANCELADA:"#a75050",RECHAZADA:"#7b5969"};
+        document.getElementById("status-chart").innerHTML = StayHubDOM.html(estados.map(function(e){
+            var n=reservas.filter(function(r){return r.estado===e}).length, pct=reservas.length?Math.round(n*100/reservas.length):0;
+            return '<div><div class="flex justify-between text-xs"><span>'+nombres[e]+'</span><b>'+n+' ('+pct+'%)</b></div><div class="h-2 rounded-full bg-surface-container-high mt-xs overflow-hidden"><div class="h-full" style="width:'+pct+'%;background:'+colores[e]+'"></div></div></div>';
+        }).join(""));
+        var meses=[];for(var mi=5;mi>=0;mi--){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()-mi);meses.push({key:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"),label:d.toLocaleDateString("en-US",{month:"short"}),count:0});}
+        reservas.forEach(function(r){var k=(r.fechaCreacion||"").slice(0,7),m=meses.find(function(x){return x.key===k});if(m)m.count++;});
+        var max=Math.max.apply(null,meses.map(function(m){return m.count}).concat([1]));
+        document.getElementById("monthly-chart").innerHTML=StayHubDOM.html(meses.map(function(m){return '<div class="flex-1 rounded-t bg-primary/70 min-h-[2px]" style="height:'+Math.max(2,Math.round(m.count*100/max))+'%" title="'+m.count+' bookings"></div>';}).join(""));
+        document.getElementById("monthly-labels").innerHTML=StayHubDOM.html(meses.map(function(m){return '<span class="flex-1 text-center">'+m.label+'</span>';}).join(""));
 
         // Upcoming arrivals: check-in dentro de los próximos 3 días, no canceladas
         var hoy = new Date(); hoy.setHours(0, 0, 0, 0);

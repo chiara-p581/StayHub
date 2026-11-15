@@ -16,6 +16,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
+import java.math.BigDecimal;
+import com.stayhub.seguridad.PaginaResponse;
 
 /**
  * Capa de presentación para las reservas hechas directamente en StayHub
@@ -96,5 +98,19 @@ public class ReservaResource {
     @GET
     public List<ReservaResponse> listarPorHotel(@QueryParam("hotelId") Long hotelId, @QueryParam("offset") @DefaultValue("0") int offset, @QueryParam("limite") @DefaultValue("100") int limite) {
         return servicio.listarPorHotel(hotelId, offset, limite);
+    }
+
+    @GET
+    @Path("/admin")
+    public PaginaResponse<ReservaResponse> buscarAdmin(
+            @QueryParam("id") Long id,
+            @QueryParam("huesped") String huesped,
+            @QueryParam("hotelId") Long hotelId,
+            @QueryParam("estado") String estado,
+            @QueryParam("montoMin") BigDecimal montoMin,
+            @QueryParam("montoMax") BigDecimal montoMax,
+            @QueryParam("offset") @DefaultValue("0") int offset,
+            @QueryParam("limite") @DefaultValue("10") int limite) {
+        return servicio.buscarAdmin(id, huesped, hotelId, estado, montoMin, montoMax, offset, limite);
     }
 }

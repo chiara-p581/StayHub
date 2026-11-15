@@ -7,6 +7,7 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 /**
  * Implementación JPA del DAO. @ApplicationScoped (bean CDI) para que se
@@ -113,5 +114,41 @@ public class ReservaRepositoryJpa implements ReservaRepository {
         return em.createQuery("SELECT r FROM Reserva r WHERE r.hotelId=:hotel AND r.checkIn=:fecha AND r.estado=:estado ORDER BY r.id", Reserva.class)
                 .setParameter("hotel", hotelId).setParameter("fecha", fecha).setParameter("estado", com.stayhub.reservas.model.EstadoReserva.CONFIRMADA)
                 .setMaxResults(100).getResultList();
+    }
+
+    @Override
+    public List<Reserva> buscarAdmin(Long id, String huesped, Long hotelId, String estado,
+            BigDecimal montoMin, BigDecimal montoMax, int offset, int limite) {
+        var q = consultaAdmin(false, id, huesped, hotelId, estado, montoMin, montoMax);
+        @SuppressWarnings("unchecked")
+        List<Reserva> resultado = (List<Reserva>) (List<?>) q.setFirstResult(offset).setMaxResults(limite).getResultList();
+        return resultado;
+    }
+
+    @Override
+    public long contarAdmin(Long id, String huesped, Long hotelId, String estado,
+            BigDecimal montoMin, BigDecimal montoMax) {
+        return (Long) consultaAdmin(true, id, huesped, hotelId, estado, montoMin, montoMax).getSingleResult();
+    }
+
+    private jakarta.persistence.TypedQuery<?> consultaAdmin(boolean contar, Long id, String huesped, Long hotelId,
+            String estado, BigDecimal montoMin, BigDecimal montoMax) {
+        StringBuilder jpql = new StringBuilder(contar ? "SELECT COUNT(r) FROM Reserva r" : "SELECT r FROM Reserva r");
+        jpql.append(" WHERE 1=1");
+        if (id != null) jpql.append(" AND r.id=:id");
+        if (hotelId != null) jpql.append(" AND r.hotelId=:hotelId");
+        if (estado != null && !estado.isBlank()) jpql.append(" AND r.estado=:estado");
+        if (montoMin != null) jpql.append(" AND r.precioTotal>=:montoMin");
+        if (montoMax != null) jpql.append(" AND r.precioTotal<=:montoMax");
+        if (huesped != null && !huesped.isBlank()) jpql.append(" AND (lower(r.huesped.nombre) LIKE :huesped OR lower(r.huesped.apellido) LIKE :huesped OR lower(r.huesped.email) LIKE :huesped)");
+        if (!contar) jpql.append(" ORDER BY r.fechaCreacion DESC, r.id DESC");
+        jakarta.persistence.TypedQuery<?> q = contar ? em.createQuery(jpql.toString(), Long.class) : em.createQuery(jpql.toString(), Reserva.class);
+        if (id != null) q.setParameter("id", id);
+        if (hotelId != null) q.setParameter("hotelId", hotelId);
+        if (estado != null && !estado.isBlank()) q.setParameter("estado", com.stayhub.reservas.model.EstadoReserva.valueOf(estado.toUpperCase()));
+        if (montoMin != null) q.setParameter("montoMin", montoMin);
+        if (montoMax != null) q.setParameter("montoMax", montoMax);
+        if (huesped != null && !huesped.isBlank()) q.setParameter("huesped", "%" + huesped.trim().toLowerCase() + "%");
+        return q;
     }
 }

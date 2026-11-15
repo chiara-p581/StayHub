@@ -7,6 +7,8 @@ import com.stayhub.pagos.contrato.ServicioDePagos;
 import com.stayhub.pagos.dto.PagoRequest;
 import com.stayhub.pagos.dto.PagoLoteRequest;
 import com.stayhub.pagos.dto.PagoResponse;
+import com.stayhub.pagos.dto.PagoAdminResponse;
+import com.stayhub.pagos.dto.ReembolsoRequest;
 import com.stayhub.pagos.exception.CodigoErrorPago;
 import com.stayhub.pagos.exception.PagoException;
 import com.stayhub.pagos.messaging.EventoPagoAprobado;
@@ -16,6 +18,8 @@ import com.stayhub.pagos.repository.PagoRepository;
 import com.stayhub.reservas.service.ServicioDeReservas;
 import java.math.BigDecimal;
 import java.util.List;
+import com.stayhub.hoteles.service.ServicioDeHoteles;
+import com.stayhub.usuarios.contrato.ServicioDeUsuarios;
 
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.PermitAll;
@@ -52,6 +56,9 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
     @Inject
     private ServicioDeReservas reservas;
+
+    @Inject private ServicioDeUsuarios usuarios;
+    @Inject private ServicioDeHoteles hoteles;
 
     @Override
     @RolesAllowed(Roles.HUESPED)
@@ -204,5 +211,57 @@ public class ServicioDePagosImpl implements ServicioDePagos {
 
     @Override public List<PagoResponse> listarMios(int offset, int limite) {
         return repositorio.listarPorUsuario(identidad.usuarioId(), offset, Limites.pagina(offset, limite)).stream().map(p -> consultarPago(p.getId())).toList();
+    }
+
+    @Override
+    @RolesAllowed(Roles.ADMIN)
+    public PaginaResponse<PagoAdminResponse> buscarAdmin(Long id, String usuario, Long hotelId,
+            BigDecimal montoMin, BigDecimal montoMax, String estado, int offset, int limite) {
+        if (!identidad.admin()) throw new SeguridadException(403, "This operation requires the ADMIN role");
+        int pagina = Limites.pagina(offset, limite);
+        var items = repositorio.buscarAdmin(id, usuario, hotelId, montoMin, montoMax, estado, offset, pagina)
+                .stream().map(this::aAdminResponse).toList();
+        return new PaginaResponse<>(items,
+                repositorio.contarAdmin(id, usuario, hotelId, montoMin, montoMax, estado), offset, pagina);
+    }
+
+    @Override
+    @RolesAllowed(Roles.ADMIN)
+    public PagoAdminResponse consultarAdmin(Long id) {
+        if (!identidad.admin()) throw new SeguridadException(403, "Esta operación requiere rol ADMIN");
+        Pago pago = repositorio.buscarPorId(id).orElseThrow(() -> new SeguridadException(404, "Pago no disponible"));
+        return aAdminResponse(pago);
+    }
+
+    @Override
+    @RolesAllowed(Roles.ADMIN)
+    public PagoAdminResponse reembolsar(Long id, ReembolsoRequest solicitud) {
+        if (!identidad.admin()) throw new SeguridadException(403, "This operation requires the ADMIN role");
+        String motivo = solicitud == null ? null : solicitud.motivo();
+        if (motivo == null || motivo.isBlank() || motivo.trim().length() < 8 || motivo.trim().length() > 300)
+            throw new SeguridadException(400, "Provide a refund reason between 8 and 300 characters");
+        Pago pago = repositorio.buscarPorId(id).orElseThrow(() -> new SeguridadException(404, "Payment was not found"));
+        try {
+            pago.reembolsar(motivo.trim());
+        } catch (IllegalStateException ex) {
+            throw new SeguridadException(409, ex.getMessage());
+        }
+        repositorio.guardar(pago);
+        // A full administrative refund invalidates the paid stay. Keeping the booking
+        // confirmed would create an inconsistent operational state.
+        pago.getReservaIds().forEach(reservas::cancelarReserva);
+        return aAdminResponse(pago);
+    }
+
+    private PagoAdminResponse aAdminResponse(Pago pago) {
+        var usuario = usuarios.buscarPorId(pago.getUsuarioId());
+        var detalles = pago.getReservaIds().stream().map(id -> {
+            var reserva = reservas.consultarReserva(id);
+            var hotel = hoteles.consultarHotel(reserva.hotelId());
+            return new PagoAdminResponse.ReservaPagoResponse(reserva.id(), reserva.hotelId(), hotel.nombre(), reserva.estado());
+        }).toList();
+        return new PagoAdminResponse(pago.getId(), pago.getUsuarioId(), usuario.nombre() + " " + usuario.apellido(),
+                usuario.email(), detalles, pago.getMonto(), pago.getMoneda(), pago.getEstado().name(),
+                pago.getReferenciaPasarela(), pago.getFechaPago(), pago.getFechaReembolso(), pago.getMotivoReembolso());
     }
 }
