@@ -231,7 +231,8 @@ public class TokenJwt {
     }
 
     private static String cookie(HttpServletRequest request, String valor, long maxAge) {
-        String ruta = request.getContextPath() == null || request.getContextPath().isBlank() ? "/" : request.getContextPath();
+        String contexto = request.getContextPath();
+        String ruta = contexto == null || contexto.isBlank() ? "/" : contexto;
         return COOKIE + "=" + valor + "; Path=" + ruta + "; Max-Age=" + maxAge + "; HttpOnly; SameSite=Lax"
                 + (SeguridadHttpFilter.httpLocalHabilitado() ? "" : "; Secure");
     }
@@ -275,6 +276,7 @@ public class TokenJwt {
 
     /** Clave única para toda la aplicación (se calcula una sola vez). */
     private static final class ClaveConfigurada {
+        private static final SecureRandom ALEATORIO = new SecureRandom();
         static final byte[] VALOR = cargar();
 
         private static byte[] cargar() {
@@ -286,7 +288,7 @@ public class TokenJwt {
             }
             LOG.warning("stayhub.jwt.secreto no está configurado: se usa una clave aleatoria y los tokens se invalidan al reiniciar.");
             byte[] clave = new byte[32];
-            new SecureRandom().nextBytes(clave);
+            ALEATORIO.nextBytes(clave);
             return clave;
         }
     }

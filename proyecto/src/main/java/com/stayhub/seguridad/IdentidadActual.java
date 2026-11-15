@@ -25,8 +25,9 @@ public class IdentidadActual {
     }
     public boolean pms() { return request.getAttribute(PMS_HOTELES) instanceof java.util.Set<?>; }
     public void exigirHuesped() {
-        usuarioId();
-        if (!Roles.HUESPED.equals(CredencialActual.de(request).rol()))
+        CredencialActual credencial = CredencialActual.de(request);
+        if (credencial == null) throw new SeguridadException(401, "Iniciá sesión para continuar");
+        if (!Roles.HUESPED.equals(credencial.rol()))
             throw new SeguridadException(403, "Solo huéspedes pueden reservar o pagar");
     }
     public void autorizarHotel(Long hotelId) {
